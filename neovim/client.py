@@ -1,4 +1,17 @@
 import msgpack
+from mixins import mixins
+
+
+class Remote(object):
+    """
+    Base class for all remote objects(Buffer, Window...).i
+    """
+    def __init__(self, handle):
+        """
+        This is the only initializer remote objects need
+        """
+        self.handle = handle
+
 
 class Client(object):
     """
@@ -49,10 +62,10 @@ class Client(object):
         self.vim = type('Vim', (), {})()
         # Build classes for manipulating the remote structures, assigning to a
         # dict using lower case names as keys, so we can easily match methods
-        # in the API
+        # in the API.
         classes = {'vim': self.vim} # The vim object is a singleton
         for cls in api['classes']:
-            klass = type(cls, (), {})
+            klass = type(cls + 'Base', (Remote,), {})
             # Methods of this class will pass an integer representing the
             # remote object as first argument
             klass.requires_handle = True
@@ -69,6 +82,10 @@ class Client(object):
                              function['id'],
                              function['return_type'],
                              function['parameters'])
+        # Now apply all available mixins to the generated classes
+        for name, mixin in mixins.items():
+            klass = type(name, (getattr(self.vim, name), mixin), {})
+            setattr(self.vim, name, klass)
 
 def generate_wrapper(client, klass, name, fid, return_type, parameters):
     """

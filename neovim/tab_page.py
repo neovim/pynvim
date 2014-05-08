@@ -1,0 +1,2 @@
+class TabPage(object):
+    pass
