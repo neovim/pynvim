@@ -124,8 +124,8 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
             raise Exception(result[2])
         if hasattr(client.vim, return_type):
             # result should be a handle, wrap in it's specialized class
-            getattr(client.vim, return_type)(result)
-        return result
+            return getattr(client.vim, return_type)(result[3])
+        return result[3]
     setattr(klass, name, rv)
 
 
