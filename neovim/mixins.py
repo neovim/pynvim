@@ -1,4 +1,4 @@
-import buffer, window, tab_page
+import buffer, window, tabpage
 
 
 __all__ = ['mixins']
@@ -7,5 +7,5 @@ __all__ = ['mixins']
 mixins = {
     'Buffer': buffer.Buffer,
     'Window': window.Window,
-    'TabPage': tab_page.TabPage
+    'Tabpage': tabpage.Tabpage
 }
