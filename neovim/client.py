@@ -7,11 +7,12 @@ class Remote(object):
     """
     Base class for all remote objects(Buffer, Window...).i
     """
-    def __init__(self, handle):
+    def __init__(self, vim, handle):
         """
         This is the only initializer remote objects need
         """
-        self.handle = handle
+        self._vim = vim
+        self._handle = handle
 
 
 class Client(object):
@@ -112,7 +113,7 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
             if hasattr(client.vim, parameters[i][0]):
                 # If the type is a remote object class, we use it's remote
                 # handle instead
-                arg = arg.handle
+                arg = arg._handle
             # Add to the argument vector 
             argv.append(arg)
         result = client._msgpack_rpc_request(fid, argv)
@@ -121,7 +122,7 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
             raise VimError(result[2])
         if hasattr(client.vim, return_type):
             # result should be a handle, wrap in it's specialized class
-            return getattr(client.vim, return_type)(result[3])
+            return getattr(client.vim, return_type)(client.vim, result[3])
         return result[3]
     setattr(klass, name, rv)
 

@@ -1,5 +1,6 @@
 class RemoteSequence(object):
-    def __init__(self, remote_klass, length_fn):
+    def __init__(self, vim, remote_klass, length_fn):
+        self._vim = vim
         self._remote_klass = remote_klass
         self._length_fn = length_fn
 
@@ -7,11 +8,11 @@ class RemoteSequence(object):
         return self._length_fn()
 
     def __getitem__(self, key):
-        return self._remote_klass(key + 1)
+        return self._remote_klass(self._vim, key + 1)
 
     def __iter__(self):
         for i in xrange(1, len(self) + 1):
-            yield self.remote_klass(i)
+            yield self.remote_klass(self._vim, i)
     
     def __contains__(self, item):
         return item.handle >= 1 and item.handle <= len(self) 
