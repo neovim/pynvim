@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='neovim',
-      version='0.0.1',
+      version='0.0.2',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
       download_url='https://github.com/neovim/python-client/archive/0.0.1.tar.gz',
