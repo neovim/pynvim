@@ -18,7 +18,7 @@ class UvStream(object):
         if port:
             # tcp
             self._stream = pyuv.TCP(self._loop)
-            self._stream.connect(address, port, None, None, connect_cb)
+            self._stream.connect((address, port), connect_cb)
         elif address:
             # named pipe or unix socket
             self._stream = pyuv.Pipe(self._loop)
