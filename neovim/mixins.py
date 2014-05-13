@@ -1,11 +1,12 @@
-import buffer, window, tabpage
+import vim, buffer, window, tabpage
 
 
 __all__ = ['mixins']
 
 
 mixins = {
-    'Buffer': buffer.Buffer,
-    'Window': window.Window,
-    'Tabpage': tabpage.Tabpage
+    'vim': vim.Vim,
+    'buffer': buffer.Buffer,
+    'window': window.Window,
+    'tabpage': tabpage.Tabpage
 }

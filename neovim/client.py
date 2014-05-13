@@ -58,19 +58,16 @@ class Client(object):
             # Only need to do this once
             return
         api = msgpack.unpackb(self._msgpack_rpc_request(0, [])[3])
-        # This singleton is the main entry point of the api
-        self.vim = type('Vim', (), {})()
+        # The 'Vim' class is the main entry point of the api
+        classes = {'vim': type('Vim', (), {})}
         # Build classes for manipulating the remote structures, assigning to a
         # dict using lower case names as keys, so we can easily match methods
         # in the API.
-        classes = {'vim': self.vim} # The vim object is a singleton
         for cls in api['classes']:
             klass = type(cls + 'Base', (Remote,), {})
             # Methods of this class will pass an integer representing the
             # remote object as first argument
-            klass.requires_handle = True
             classes[cls.lower()] = klass
-            setattr(self.vim, cls, klass)
         # now build function wrappers
         for function in api['functions']:
             # Split the name on underscores, the first part is the class name,
@@ -84,8 +81,13 @@ class Client(object):
                              function['parameters'])
         # Now apply all available mixins to the generated classes
         for name, mixin in mixins.items():
-            klass = type(name, (getattr(self.vim, name), mixin), {})
-            setattr(self.vim, name, klass)
+            classes[name] = type(mixin.__name__, (classes[name], mixin,), {})
+        # Create the 'vim object', which is a singleton of the 'Vim' class
+        self.vim = classes['vim']()
+        # Add attributes for each other class
+        for name, klass in classes.items():
+            if name != 'vim':
+                setattr(self.vim, klass.__name__, klass)
 
 def generate_wrapper(client, klass, name, fid, return_type, parameters):
     """
@@ -100,24 +102,18 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
     # This is the actual function
     @fname(name)
     def rv(*args, **kwargs):
-        argv = [None] * parameter_count
-        i = 0
+        if isinstance(args[0], client.vim.__class__):
+            # functions of the vim object don't need 'self'
+            args = args[1:]
+        argv = []
         # fill with positional arguments
-        for arg in args:
+        for i, arg in enumerate(args):
             if hasattr(client.vim, parameters[i][0]):
                 # If the type is a remote object class, we use it's remote
                 # handle instead
                 arg = arg.handle
             # Add to the argument vector 
-            argv[i] = arg
-            i += 1
-        # fill with keyword arguments
-        for kw, arg in kwargs.items():
-            i = parameter_names[kw]
-            if hasattr(client.vim, parameters[i][0]):
-                # Same as anove
-                arg = arg.handle
-            argv[i] = arg
+            argv.append(arg)
         result = client._msgpack_rpc_request(fid, argv)
         if result[2]:
             # error
