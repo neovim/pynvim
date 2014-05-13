@@ -1,5 +1,6 @@
 import msgpack
 from mixins import mixins
+from util import VimError
 
 
 class Remote(object):
@@ -117,7 +118,7 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
         result = client._msgpack_rpc_request(fid, argv)
         if result[2]:
             # error
-            raise Exception(result[2])
+            raise VimError(result[2])
         if hasattr(client.vim, return_type):
             # result should be a handle, wrap in it's specialized class
             return getattr(client.vim, return_type)(result[3])
