@@ -35,7 +35,7 @@ class UvStream(object):
     """
     def _on_connect(self, stream, error):
         if error:
-            self._error = error
+            self._error = IOError(pyuv.errno.strerror(error))
             return
         self._connected = True
         self._read_stream = self._write_stream = stream
@@ -45,7 +45,7 @@ class UvStream(object):
     """
     def _on_read(self, handle, data, error):
         if error:
-            self._error = error
+            self._error = IOError(pyuv.errno.strerror(error))
             return
         if not data:
             self._error = IOError('EOF')
@@ -57,7 +57,7 @@ class UvStream(object):
     """
     def _on_write(self, handle, error):
         if error:
-            self._errors.append(error)
+            self._error = IOError(pyuv.errno.strerror(error))
             return
         self._written = True
     
@@ -65,12 +65,12 @@ class UvStream(object):
     Runs the event loop until a certain condition
     """
     def _run(self, condition=lambda: True):
-        if self._error:
-            # Error occurred, throw it to the caller
-            err = self._error
-            self._error = None
-            raise err
         while not condition():
+            if self._error:
+                # Error occurred, throw it to the caller
+                err = self._error
+                self._error = None
+                raise err
             # Continue processing events
             self._loop.run(pyuv.UV_RUN_ONCE)
 
