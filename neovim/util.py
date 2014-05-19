@@ -47,6 +47,9 @@ class RemoteMap(object):
 
 
 class Current(object):
+    def __init__(self, vim):
+        self._vim = vim
+
     @property
     def line(self):
         return self._vim.get_current_line()
