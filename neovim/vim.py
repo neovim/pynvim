@@ -39,7 +39,7 @@ class Vim(object):
         if not hasattr(self, '_buffers'):
             self._buffers = RemoteSequence(self,
                                            self.Buffer,
-                                           lambda: self.get_buffer_count())
+                                           lambda: self.get_buffers())
         return self._buffers
 
     @property
@@ -47,7 +47,7 @@ class Vim(object):
         if not hasattr(self, '_windows'):
             self._windows = RemoteSequence(self,
                                            self.Window,
-                                           lambda: self.get_window_count())
+                                           lambda: self.get_windows())
         return self._windows
 
     @property
@@ -55,7 +55,7 @@ class Vim(object):
         if not hasattr(self, '_tabpages'):
             self._tabpages = RemoteSequence(self,
                                             self.Tabpage,
-                                            lambda: self.get_tabpage_count())
+                                            lambda: self.get_tabpages())
         return self._tabpages
 
     @property

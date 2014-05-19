@@ -2,6 +2,14 @@ from util import RemoteMap
 
 class Tabpage(object):
     @property
+    def windows(self):
+        if not hasattr(self, '_windows'):
+            self._windows = RemoteSequence(self,
+                                           self.Window,
+                                           lambda: self.get_windows())
+        return self._windows
+
+    @property
     def vars(self):
         if not hasattr(self, '_vars'):
             self._vars = RemoteMap(lambda k: self.get_var(k),
