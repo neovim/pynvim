@@ -1,11 +1,11 @@
-from util import RemoteMap
+from util import RemoteMap, RemoteSequence
 
 class Tabpage(object):
     @property
     def windows(self):
         if not hasattr(self, '_windows'):
             self._windows = RemoteSequence(self,
-                                           self.Window,
+                                           self._vim.Window,
                                            lambda: self.get_windows())
         return self._windows
 
