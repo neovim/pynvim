@@ -2,7 +2,7 @@ from util import RemoteMap
 
 class Buffer(object):
     def __len__(self):
-        return self._vim.get_buffer_count()
+        return self.get_length()
 
     def __getitem__(self, idx):
         if not isinstance(idx, slice):
