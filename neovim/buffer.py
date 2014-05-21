@@ -57,7 +57,7 @@ class Buffer(object):
 
     @property
     def number(self):
-        return self._handle
+        return self.get_number()
 
     @property
     def vars(self):
