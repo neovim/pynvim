@@ -14,6 +14,9 @@ class Remote(object):
         self._vim = vim
         self._handle = handle
 
+    def __eq__(self, other):
+        return hasattr(other, '_handle') and self._handle == other._handle
+
 
 class Client(object):
     """
