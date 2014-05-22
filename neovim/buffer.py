@@ -44,6 +44,9 @@ class Buffer(object):
             lines = [lines]
         self.insert(index, lines)
 
+    def mark(self, name):
+        return self.get_mark(name)
+
     def range(self, start, end):
         return Range(self, start, end)
 
