@@ -1,5 +1,7 @@
 ### Python client to [Neovim](https://github.com/neovim/neovim)
 
+[![Build Status](https://travis-ci.org/neovim/python-client?branch=master)](https://travis-ci.org/neovim/python-client)
+
 Library aims to emulate the current python-vim interface through Neovim
 msgpack-rpc API
 
