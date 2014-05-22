@@ -1,3 +1,5 @@
+from util import RemoteMap
+
 class Window(object):
     @property
     def buffer(self):
