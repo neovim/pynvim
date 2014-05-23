@@ -34,4 +34,6 @@ Open the python REPL with another terminal connect to Neovim:
 [1, 2, 3]
 ```
 
+See the test subdirectory for more examples
+
 This is still alpha and incomplete, use only for testing purposes
