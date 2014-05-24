@@ -11,6 +11,9 @@ class UvStream(object):
         self._data = None
         self._written = True
         self._connected = False
+        self._timed_out = False
+        self._timer = pyuv.Timer(self._loop)
+        self._timeout_cb = self._on_timeout.__get__(self, UvStream)
         self._read_cb = self._on_read.__get__(self, UvStream)
         self._write_cb = self._on_write.__get__(self, UvStream)
         connect_cb = self._on_connect.__get__(self, UvStream)
@@ -53,6 +56,13 @@ class UvStream(object):
         self._data = data
 
     """
+    Called when a timeout occurs
+    """
+    def _on_timeout(self, handle):
+        self._timed_out = True
+        self._loop.stop()
+
+    """
     Called when data is written to the libuv stream
     """
     def _on_write(self, handle, error):
@@ -64,9 +74,17 @@ class UvStream(object):
     """
     Runs the event loop until a certain condition
     """
-    def _run(self, condition=lambda: True):
-        while not condition():
+    def _run(self, condition=lambda: True, timeout=None):
+        if timeout == 0 and not condition():
+            return
+
+        if timeout:
+            self._timer.start(self._timeout_cb, timeout, 0)
+
+        while not (condition() or self._timed_out):
             if self._error:
+                if timeout and not self._timed_out:
+                    self._timer.stop()
                 # Error occurred, throw it to the caller
                 err = self._error
                 self._error = None
@@ -74,16 +92,20 @@ class UvStream(object):
             # Continue processing events
             self._loop.run(pyuv.UV_RUN_ONCE)
 
+        if timeout and not self._timed_out:
+            self._timer.stop()
+        self._timed_out = False
+
     """
     Read some data
     """
-    def read(self):
+    def read(self, timeout=None):
         # first ensure the stream is connected
         self._run(lambda: self._connected)
         # start reading
         self._read_stream.start_read(self._read_cb)
         # wait until some data is read
-        self._run(lambda: self._data)
+        self._run(lambda: self._data, timeout)
         # stop reading
         self._read_stream.stop_read()
         # return a chunk of data

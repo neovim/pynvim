@@ -6,6 +6,7 @@ os_fchdir = os.fchdir
 
 
 class Vim(object):
+
     def foreach_rtp(self, cb):
         """
         Call the given callable for each path in 'runtimepath' until either 
