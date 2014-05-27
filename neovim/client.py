@@ -93,7 +93,7 @@ class Client(object):
         # type(http://wiki.msgpack.org/display/MSGPACK/RPC+specification). The
         # only other possible message type the server will send is a
         # response(1), but those must be received from `msgpack_rpc_request`
-        assert message[0] == 2
+        assert not message or message[0] == 2
         if message:
             return message[1:]
 
