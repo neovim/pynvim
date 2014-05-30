@@ -25,8 +25,9 @@ Open the python REPL with another terminal connect to Neovim:
 ```
 >>> import neovim
 >>> vim = neovim.connect('/tmp/neovim')
->>> vim.buffers[0] = 'replace first line'
->>> vim.buffers[:] = ['replace whole buffer']
+>>> buffer = vim.buffers[0] # get the first buffer
+>>> buffer[0] = 'replace first line'
+>>> buffer[:] = ['replace whole buffer']
 >>> vim.command('vsplit')
 >>> vim.windows[1].width = 10
 >>> vim.vars['global_var'] = [1, 2, 3]
