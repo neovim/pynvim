@@ -32,6 +32,9 @@ class UvStream(object):
             self._read_stream.open(sys.stdin.fileno())
             self._write_stream = pyuv.Pipe(self._loop) 
             self._write_stream.open(sys.stdout.fileno())
+        async_cb = self._on_async.__get__(self, UvStream)
+        self._async = pyuv.Async(self._loop, async_cb)
+        self._interrupted = False
 
     """
     Called when the libuv stream is connected
@@ -50,10 +53,19 @@ class UvStream(object):
         if error:
             self._error = IOError(pyuv.errno.strerror(error))
             return
-        if not data:
+        elif not data:
             self._error = IOError('EOF')
             return
-        self._data = data
+        else:
+            self._data = data
+        self._loop.stop()
+
+    """
+    Called when the async handle is fired
+    """
+    def _on_async(self, handle):
+        self._interrupted = True
+        self._loop.stop()
 
     """
     Called when a timeout occurs
@@ -70,6 +82,7 @@ class UvStream(object):
             self._error = IOError(pyuv.errno.strerror(error))
             return
         self._written = True
+        self._loop.stop()
     
     """
     Runs the event loop until a certain condition
@@ -81,7 +94,7 @@ class UvStream(object):
         if timeout:
             self._timer.start(self._timeout_cb, timeout, 0)
 
-        while not (condition() or self._timed_out):
+        while not (condition() or self._timed_out or self._interrupted):
             if self._error:
                 if timeout and not self._timed_out:
                     self._timer.stop()
@@ -95,6 +108,8 @@ class UvStream(object):
         if timeout and not self._timed_out:
             self._timer.stop()
         self._timed_out = False
+        # Always resed this
+        self._interrupted = False
 
     """
     Read some data
@@ -126,3 +141,8 @@ class UvStream(object):
         # wait for the flag
         self._run(lambda: self._written)
 
+    """
+    Interrupts a `read` call from another thread.
+    """
+    def interrupt(self):
+        self._async.send()

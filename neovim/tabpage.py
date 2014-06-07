@@ -1,20 +1,13 @@
 from util import RemoteMap, RemoteSequence
 
 class Tabpage(object):
-    @property
-    def windows(self):
-        if not hasattr(self, '_windows'):
-            self._windows = RemoteSequence(self,
-                                           self._vim.Window,
-                                           lambda: self.get_windows())
-        return self._windows
-
-    @property
-    def vars(self):
-        if not hasattr(self, '_vars'):
-            self._vars = RemoteMap(lambda k: self.get_var(k),
-                                   lambda k, v: self.set_var(k, v))
-        return self._vars
+    @classmethod
+    def initialize(self, tabpage):
+        tabpage.windows = RemoteSequence(tabpage._vim,
+                                         tabpage._vim.Window,
+                                         lambda: tabpage.get_windows())
+        tabpage.vars = RemoteMap(lambda k: tabpage.get_var(k),
+                                 lambda k, v: tabpage.set_var(k, v))
 
     @property
     def number(self):

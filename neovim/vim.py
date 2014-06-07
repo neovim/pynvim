@@ -6,6 +6,25 @@ os_fchdir = os.fchdir
 
 
 class Vim(object):
+    @classmethod
+    def initialize(self, vim, classes, channel_id):
+        vim.buffers = RemoteSequence(vim,
+                                     classes['buffer'],
+                                     lambda: vim.get_buffers())
+        vim.windows = RemoteSequence(vim,
+                                     classes['window'],
+                                     lambda: vim.get_windows())
+        vim.tabpages = RemoteSequence(vim,
+                                      classes['tabpage'],
+                                      lambda: vim.get_tabpages())
+        vim.current = Current(vim)
+        vim.vars = RemoteMap(lambda k: vim.get_var(k),
+                             lambda k, v: vim.set_var(k, v))
+        vim.vvars = RemoteMap(lambda k: vim.get_vvar(k),
+                              None)
+        vim.options = RemoteMap(lambda k: vim.get_option(k),
+                                lambda k, v: vim.set_option(k, v))
+        vim.channel_id = channel_id
 
     def foreach_rtp(self, cb):
         """
@@ -34,54 +53,3 @@ class Vim(object):
         """
         os_fchdir(dir_fd)
         self.change_directory(os.getcwd())
-
-    @property
-    def buffers(self):
-        if not hasattr(self, '_buffers'):
-            self._buffers = RemoteSequence(self,
-                                           self.Buffer,
-                                           lambda: self.get_buffers())
-        return self._buffers
-
-    @property
-    def windows(self):
-        if not hasattr(self, '_windows'):
-            self._windows = RemoteSequence(self,
-                                           self.Window,
-                                           lambda: self.get_windows())
-        return self._windows
-
-    @property
-    def tabpages(self):
-        if not hasattr(self, '_tabpages'):
-            self._tabpages = RemoteSequence(self,
-                                            self.Tabpage,
-                                            lambda: self.get_tabpages())
-        return self._tabpages
-
-    @property
-    def current(self):
-        if not hasattr(self, '_current'):
-            self._current = Current(self)
-        return self._current
-
-    @property
-    def vars(self):
-        if not hasattr(self, '_vars'):
-            self._vars = RemoteMap(lambda k: self.get_var(k),
-                                   lambda k, v: self.set_var(k, v))
-        return self._vars
-
-    @property
-    def vvars(self):
-        if not hasattr(self, '_vvars'):
-            self._vvars = RemoteMap(lambda k: self.get_vvar(k),
-                                    None)
-        return self._vvars
-
-    @property
-    def options(self):
-        if not hasattr(self, '_options'):
-            self._options = RemoteMap(lambda k: self.get_option(k),
-                                      lambda k, v: self.set_option(k, v))
-        return self._options
