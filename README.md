@@ -13,7 +13,7 @@ pip install neovim
 
 #### Usage
 
-Start Neovim with a known address or query the value of $NEOVIM_LISTEN_ADRESS
+Start Neovim with a known address or query the value of $NEOVIM_LISTEN_ADDRESS
 after startup: 
 
 ```sh
