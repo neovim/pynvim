@@ -1,6 +1,13 @@
 from util import RemoteMap
 
 class Buffer(object):
+    @classmethod
+    def initialize(self, buffer):
+        buffer.vars = RemoteMap(lambda k: buffer.get_var(k),
+                                lambda k, v: buffer.set_var(k, v))
+        buffer.options = RemoteMap(lambda k: buffer.get_option(k),
+                                   lambda k, v: buffer.set_option(k, v))
+
     def __len__(self):
         return self.get_length()
 
@@ -61,20 +68,6 @@ class Buffer(object):
     @property
     def number(self):
         return self.get_number()
-
-    @property
-    def vars(self):
-        if not hasattr(self, '_vars'):
-            self._vars = RemoteMap(lambda k: self.get_var(k),
-                                   lambda k, v: self.set_var(k, v))
-        return self._vars
-
-    @property
-    def options(self):
-        if not hasattr(self, '_options'):
-            self._options = RemoteMap(lambda k: self.get_option(k),
-                                      lambda k, v: self.set_option(k, v))
-        return self._options
 
     @property
     def valid(self):

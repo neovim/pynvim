@@ -1,6 +1,13 @@
 from util import RemoteMap
 
 class Window(object):
+    @classmethod
+    def initialize(self, window):
+        window.vars = RemoteMap(lambda k: window.get_var(k),
+                                lambda k, v: window.set_var(k, v))
+        window.options = RemoteMap(lambda k: window.get_option(k),
+                                   lambda k, v: window.set_option(k, v))
+
     @property
     def buffer(self):
         return self.get_buffer()
@@ -28,20 +35,6 @@ class Window(object):
     @width.setter
     def width(self, width):
         self.set_width(width)
-
-    @property
-    def vars(self):
-        if not hasattr(self, '_vars'):
-            self._vars = RemoteMap(lambda k: self.get_var(k),
-                                   lambda k, v: self.set_var(k, v))
-        return self._vars
-
-    @property
-    def options(self):
-        if not hasattr(self, '_options'):
-            self._options = RemoteMap(lambda k: self.get_option(k),
-                                      lambda k, v: self.set_option(k, v))
-        return self._options
 
     @property
     def number(self):
