@@ -22,6 +22,39 @@ class Remote(object):
         return hasattr(other, '_handle') and self._handle == other._handle
 
 
+class BorrowedStreamMutex(object):
+    """
+    Helper class used to safely acquire or "borrow" the stream mutex from a
+    thread that is blocking on a `next_event` call
+    """
+    def __init__(self, stream, stream_mutex, switcher):
+        self.stream = stream
+        self.stream_mutex = stream_mutex
+        self.switcher = switcher
+        self.inner_mutex = Lock()
+
+    def __enter__(self):
+        self.inner_mutex.acquire()
+        if not self.stream_mutex.acquire(False):
+            # Another thread is currently blocking on a 'next_event' call,
+            # we need to interrupt it and try to acquire `stream_mutex`
+            # ourselves, or else we would have to wait until an event is
+            # received
+            with self.switcher:
+                # Send the interrupt
+                self.stream.interrupt()
+                # Assert that the other thread was interrupted in time before
+                # waiting on the switcher condition
+                if not self.stream_mutex.acquire(False):
+                    self.switcher.wait()
+                    self.stream_mutex.acquire()
+                    self.switcher.notify()
+
+    def __exit__(self, type, value, traceback):
+        self.stream_mutex.release()
+        self.inner_mutex.release()
+
+
 class Client(object):
     """
     Neovim client. It depends on a stream, an object that implements two
@@ -31,10 +64,12 @@ class Client(object):
 
     Both methods should be fully blocking.
     """
+
+
     def __init__(self, stream):
         self._request_id = 0
-        self._stream = stream
-        self._unpacker = msgpack.Unpacker()
+        self.stream = stream
+        self.unpacker = msgpack.Unpacker()
         self.pending_events = deque()
         self.vim = None
         # These are the constructs used to synchronize access:
@@ -45,14 +80,16 @@ class Client(object):
         # - switcher: Helper mutex/condition used to pass `stream_mutex` from a
         # thread blocking on `next_event` to another thread calling
         # `msgpack_rpc_request`
-        self.request_mutex = Lock()
         self.stream_mutex = Lock()
         self.switcher = Condition(Lock())
+        self.borrowed_stream_mutex = BorrowedStreamMutex(self.stream,
+                                                     self.stream_mutex,
+                                                     self.switcher)
 
     def pop_events(self, max_index=None):
         if max_index is None:
             rv = list(self.pending_events)
-            self.pending_events = deque()
+            self.pending_events.clear()
         else:
             rv = []
             i = 0
@@ -68,57 +105,34 @@ class Client(object):
         """
         while True:
             try:
-                return self._unpacker.next()
+                return self.unpacker.next()
             except StopIteration:
-                chunk = self._stream.read(timeout)
+                chunk = self.stream.read(timeout)
                 if not chunk:
                     return
-                self._unpacker.feed(chunk)
+                self.unpacker.feed(chunk)
 
     def msgpack_rpc_request(self, method_id, params):
         """
         Sends a msgpack-rpc request to Neovim and returns the response
         """
-        try:
-            self.request_mutex.acquire()
-            if not self.stream_mutex.acquire(False):
-                # Another thread is currently blocking on a 'next_event' call,
-                # we need to interrupt it and try to acquire `stream_mutex`
-                # ourselves, or else we would have to wait until an event is
-                # received
-                with self.switcher:
-                    # Send the interrupt
-                    self._stream.interrupt()
-                    # Assert that the other thread was interrupted in time
-                    # before waiting on the switcher condition
-                    if not self.stream_mutex.acquire(False):
-                        self.switcher.wait()
-                        self.stream_mutex.acquire()
-                        self.switcher.notify()
-                # At this point the thread calling `next_event` is waiting on
-                # `stream_mutex`, so we can probably acquire it in the next
-                # iteration.
+        with self.borrowed_stream_mutex:
             request_id = self._request_id + 1
             # Send the request
-            self._stream.write(
+            self.stream.write(
                 msgpack.packb([0, request_id, method_id, params]))
             # Enter a loop feeding the unpacker with data until we parse the
             # response
             message = None
             while not message:
                 message = self.next_message()
-                if message[0] == 2:
+                if message and message[0] == 2:
                     # event, add to the pending queue
                     self.pending_events.append(message[1:])
                     message = None
             # Update request id
             self._request_id = request_id
             return message
-        finally:
-            # Let any interrupted threads continue reading events
-            self.stream_mutex.release()
-            # Allow other threads enter this function
-            self.request_mutex.release()
 
     def next_event(self, timeout=None):
         """
@@ -147,6 +161,15 @@ class Client(object):
                     assert not message or message[0] == 2
                     if message:
                         return message[1:]
+
+    def push_event(self, event_name, event_data):
+        """
+        Pushes a "virtual event" that will be returned by `next_event`.  This
+        method can called from other threads for integration with event loops,
+        such as those provided by GUI libraries.
+        """
+        with self.borrowed_stream_mutex:
+            self.pending_events.append([event_name, event_data])
 
     def expect(self, event_type, timeout=None, predicate=lambda e: True):
         """
@@ -205,6 +228,8 @@ class Client(object):
         classes = {'vim': type('Vim', (), {})}
         setattr(classes['vim'], 'next_event',
                 lambda s, *args, **kwargs: self.next_event(*args, **kwargs))
+        setattr(classes['vim'], 'push_event',
+                lambda s, *args, **kwargs: self.push_event(*args, **kwargs))
         setattr(classes['vim'], 'expect',
                 lambda s, *args, **kwargs: self.expect(*args, **kwargs))
         # Build classes for manipulating the remote structures, assigning to a
