@@ -1,5 +1,7 @@
 import msgpack
+import traceback
 from collections import deque
+from threading import Condition, Lock
 from time import time
 from mixins import mixins
 from util import VimError
@@ -35,6 +37,17 @@ class Client(object):
         self._unpacker = msgpack.Unpacker()
         self.pending_events = deque()
         self.vim = None
+        # These are the constructs used to synchronize access:
+        #
+        # - request_mutex: mutual exclusion on the `msgpack_rpc_request` method
+        # - stream_mutex: mutual exlusion on the stream. It must be acquired
+        #   by both `msgpack_rpc_request` and `next_event`.
+        # - switcher: Helper mutex/condition used to pass `stream_mutex` from a
+        # thread blocking on `next_event` to another thread calling
+        # `msgpack_rpc_request`
+        self.request_mutex = Lock()
+        self.stream_mutex = Lock()
+        self.switcher = Condition(Lock())
 
     def pop_events(self, max_index=None):
         if max_index is None:
@@ -66,36 +79,74 @@ class Client(object):
         """
         Sends a msgpack-rpc request to Neovim and returns the response
         """
-        # increment request id
-        request_id = self._request_id + 1
-        self._stream.write(msgpack.packb([0, request_id, method_id, params]))
-        # Enter a loop feeding the unpacker with data until we parse
-        # the response
-        message = None
-        while not message:
-            message = self.next_message()
-            if message[0] == 2:
-                # event, add to the pending queue
-                self.pending_events.append(message[1:])
-                message = None
-        # update request id
-        self._request_id = request_id
-        return message
+        try:
+            self.request_mutex.acquire()
+            if not self.stream_mutex.acquire(False):
+                # Another thread is currently blocking on a 'next_event' call,
+                # we need to interrupt it and try to acquire `stream_mutex`
+                # ourselves, or else we would have to wait until an event is
+                # received
+                with self.switcher:
+                    # Send the interrupt
+                    self._stream.interrupt()
+                    # Assert that the other thread was interrupted in time
+                    # before waiting on the switcher condition
+                    if not self.stream_mutex.acquire(False):
+                        self.switcher.wait()
+                        self.stream_mutex.acquire()
+                        self.switcher.notify()
+                # At this point the thread calling `next_event` is waiting on
+                # `stream_mutex`, so we can probably acquire it in the next
+                # iteration.
+            request_id = self._request_id + 1
+            # Send the request
+            self._stream.write(
+                msgpack.packb([0, request_id, method_id, params]))
+            # Enter a loop feeding the unpacker with data until we parse the
+            # response
+            message = None
+            while not message:
+                message = self.next_message()
+                if message[0] == 2:
+                    # event, add to the pending queue
+                    self.pending_events.append(message[1:])
+                    message = None
+            # Update request id
+            self._request_id = request_id
+            return message
+        finally:
+            # Let any interrupted threads continue reading events
+            self.stream_mutex.release()
+            # Allow other threads enter this function
+            self.request_mutex.release()
 
     def next_event(self, timeout=None):
         """
         Returns the next server event
         """
-        if len(self.pending_events):
-            return self.pending_events.popleft()
-        message = self.next_message(timeout)
-        # The message type must be 2, which is the msgpack-rpc notification
-        # type(http://wiki.msgpack.org/display/MSGPACK/RPC+specification). The
-        # only other possible message type the server will send is a
-        # response(1), but those must be received from `msgpack_rpc_request`
-        assert not message or message[0] == 2
-        if message:
-            return message[1:]
+        with self.stream_mutex:
+            while True:
+                if len(self.pending_events):
+                    return self.pending_events.popleft()
+                message = self.next_message(timeout)
+                with self.switcher:
+                    if not message:
+                        # If interrupted by a `msgpack_rpc_request` call from
+                        # another thread, wait for a signal and try again
+                        self.stream_mutex.release()
+                        self.switcher.notify()
+                        self.switcher.wait()
+                        self.stream_mutex.acquire()
+                        continue
+                    # The message type must be 2, which is the msgpack-rpc
+                    # notification type
+                    # (http://wiki.msgpack.org/display/MSGPACK/RPC+specification).
+                    # The only other possible message type the server will send
+                    # is a response(1), but those must be received from
+                    # `msgpack_rpc_request`
+                    assert not message or message[0] == 2
+                    if message:
+                        return message[1:]
 
     def expect(self, event_type, timeout=None, predicate=lambda e: True):
         """
@@ -119,6 +170,9 @@ class Client(object):
             # block until the first line redraws with the string 'test'
             vim.expect('redraw', timeout=2, lambda e: e['lines'][0] == 'test')
         ```
+
+        Warning: This function probably should not be called in multithreaded
+        programs
         """
         for i, event in enumerate(self.pending_events):
             if event[0] == event_type and predicate(event):
@@ -134,8 +188,6 @@ class Client(object):
             if event[0] == event_type and predicate(event):
                 return self.pop_events()
             timeout -= time() - start
-
-        raise Exception('Timed out')
 
     def discover_api(self):
         """
@@ -179,7 +231,8 @@ class Client(object):
             classes[name] = type(mixin.__name__, (classes[name], mixin,), {})
         # Create the 'vim object', which is a singleton of the 'Vim' class
         self.vim = classes['vim']()
-        self.vim.channel_id = channel_id
+        # Initialize with some useful attributes
+        classes['vim'].initialize(self.vim, classes, channel_id)
         # Add attributes for each other class
         for name, klass in classes.items():
             if name != 'vim':
@@ -216,7 +269,11 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
             raise VimError(result[2])
         if hasattr(client.vim, return_type):
             # result should be a handle, wrap in it's specialized class
-            return getattr(client.vim, return_type)(client.vim, result[3])
+            klass = getattr(client.vim, return_type)
+            rv = klass(client.vim, result[3])
+            klass.initialize(rv)
+            return rv
+
         return result[3]
     setattr(klass, name, rv)
 
@@ -229,3 +286,5 @@ def fname(name):
         f.__name__ = name
         return f
     return dec
+
+

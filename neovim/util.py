@@ -1,7 +1,12 @@
 class RemoteSequence(object):
     # TODO Need to add better support for this class on the server
     def __init__(self, vim, remote_klass, handle_array_fn):
-        self._wrap_fn = lambda handle: remote_klass(vim, handle)
+        def wrap(handle):
+            rv = remote_klass(vim, handle)
+            remote_klass.initialize(rv)
+            return rv
+
+        self._wrap_fn = wrap
         self._handle_array_fn = handle_array_fn
 
     def __len__(self):
@@ -11,7 +16,6 @@ class RemoteSequence(object):
         if not isinstance(idx, slice):
             return self._wrap_fn(self._handle_array_fn()[idx])
         return map(self._wrap_fn, self._handle_array_fn()[idx.start:idx.stop])
-
 
     def __iter__(self):
         handles = self._handle_array_fn()
