@@ -1,3 +1,4 @@
+from collections import deque
 import sys, pyuv
 
 class UvStream(object):
@@ -8,7 +9,7 @@ class UvStream(object):
     def __init__(self, address=None, port=None):
         self._loop = pyuv.Loop()
         self._error = None
-        self._data = None
+        self._data = deque()
         self._written = True
         self._connected = False
         self._timed_out = False
@@ -45,6 +46,7 @@ class UvStream(object):
             return
         self._connected = True
         self._read_stream = self._write_stream = stream
+        self._read_stream.start_read(self._read_cb)
 
     """
     Called when data is read from the libuv stream
@@ -57,7 +59,7 @@ class UvStream(object):
             self._error = IOError('EOF')
             return
         else:
-            self._data = data
+            self._data.append(data)
         self._loop.stop()
 
     """
@@ -94,7 +96,7 @@ class UvStream(object):
         if timeout:
             self._timer.start(self._timeout_cb, timeout, 0)
 
-        while not (condition() or self._timed_out or self._interrupted):
+        while not (condition() or self._timed_out):
             if self._error:
                 if timeout and not self._timed_out:
                     self._timer.stop()
@@ -108,8 +110,6 @@ class UvStream(object):
         if timeout and not self._timed_out:
             self._timer.stop()
         self._timed_out = False
-        # Always resed this
-        self._interrupted = False
 
     """
     Read some data
@@ -117,15 +117,14 @@ class UvStream(object):
     def read(self, timeout=None):
         # first ensure the stream is connected
         self._run(lambda: self._connected)
-        # start reading
-        self._read_stream.start_read(self._read_cb)
         # wait until some data is read
-        self._run(lambda: self._data, timeout)
-        # stop reading
-        self._read_stream.stop_read()
+        self._run(lambda: self._interrupted or len(self._data), timeout)
+        if self._interrupted:
+            # Always reset this
+            self._interrupted = False
+            return
         # return a chunk of data
-        rv = self._data
-        self._data = None
+        rv = self._data.popleft()
         return rv
 
     """

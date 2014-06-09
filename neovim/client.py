@@ -89,7 +89,7 @@ class Client(object):
     def pop_events(self, max_index=None):
         if max_index is None:
             rv = list(self.pending_events)
-            self.pending_events = deque()
+            self.pending_events.clear()
         else:
             rv = []
             i = 0
