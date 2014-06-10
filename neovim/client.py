@@ -257,7 +257,7 @@ class Client(object):
         # Create the 'vim object', which is a singleton of the 'Vim' class
         self.vim = classes['vim']()
         # Initialize with some useful attributes
-        classes['vim'].initialize(self.vim, classes, channel_id)
+        classes['vim'].initialize(self.vim, classes, channel_id, VimError)
         # Add attributes for each other class
         for name, klass in classes.items():
             if name != 'vim':
