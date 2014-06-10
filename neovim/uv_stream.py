@@ -41,6 +41,7 @@ class UvStream(object):
     Called when the libuv stream is connected
     """
     def _on_connect(self, stream, error):
+        self._loop.stop()
         if error:
             self._error = IOError(pyuv.errno.strerror(error))
             return
@@ -52,6 +53,7 @@ class UvStream(object):
     Called when data is read from the libuv stream
     """
     def _on_read(self, handle, data, error):
+        self._loop.stop()
         if error:
             self._error = IOError(pyuv.errno.strerror(error))
             return
@@ -60,7 +62,6 @@ class UvStream(object):
             return
         else:
             self._data.append(data)
-        self._loop.stop()
 
     """
     Called when the async handle is fired
@@ -80,11 +81,11 @@ class UvStream(object):
     Called when data is written to the libuv stream
     """
     def _on_write(self, handle, error):
+        self._loop.stop()
         if error:
             self._error = IOError(pyuv.errno.strerror(error))
             return
         self._written = True
-        self._loop.stop()
     
     """
     Runs the event loop until a certain condition
