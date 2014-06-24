@@ -1,11 +1,12 @@
-import msgpack
-import traceback
+import msgpack, logging, os, os.path
 from collections import deque
 from threading import Condition, Lock
-from time import time
 from mixins import mixins
-from util import VimError
+from util import VimError, VimExit, VimTimeout
+import cProfile, pstats, StringIO
 
+logger = logging.getLogger(__name__)
+debug, info, warn = (logger.debug, logger.info, logger.warn,)
 
 class Promise(object):
     def __init__(self, client, request_id, expected_type=None):
@@ -27,6 +28,7 @@ class Promise(object):
                 if interrupted:
                     with client.interrupt_lock:
                         pass
+                client.invoke_message_cb()
                 with client.stream_lock:
                     if self.message:
                         return process_response(self.message)
@@ -38,8 +40,8 @@ class Promise(object):
 class Message(object):
     def __init__(self, client, name=None, arg=None, result=None, error=None,
                  request_id=None, response_id=None, ):
-        def reply(value, is_error=False):
-            if is_error:
+        def reply(value, error=False):
+            if error:
                 resp = msgpack.packb([1, request_id, value, None])
             else:
                 resp = msgpack.packb([1, request_id, None, value])
@@ -98,22 +100,26 @@ class FifoLock(object):
 
 class Client(object):
     """
-    Neovim client. It depends on a stream, an object that implements two
+    Neovim client. It depends on a stream, an object that implements three
     methods:
         - read(): Returns any amount of data as soon as it's available
         - write(chunk): Writes data
+        - interrupt(): Interrupts a blocking `read()` call from another thread.
 
     Both methods should be fully blocking.
     """
-    def __init__(self, stream):
+    def __init__(self, stream, vim_compatible=False):
         self.next_request_id = 1
         self.stream = stream
         self.unpacker = msgpack.Unpacker()
         self.pending_messages = deque()
         self.pending_requests = {}
+        self.vim_compatible = vim_compatible
         self.vim = None
         self.stream_lock = FifoLock()
         self.interrupt_lock = Lock()
+        self.message_cb = None
+        self.loop_running = False
 
     def unpack_message(self, timeout=None):
         """
@@ -122,7 +128,9 @@ class Client(object):
         """
         while True:
             try:
+                debug('waiting for message...')
                 msg = self.unpacker.next()
+                debug('received message: %s', msg)
                 name = arg = error = result = request_id = response_id = None
                 msg_type = msg[0]
                 if msg_type == 0:
@@ -142,11 +150,13 @@ class Client(object):
                                error=error, request_id=request_id,
                                response_id=response_id)
             except StopIteration:
+                debug('unpacker needs more data...')
                 chunk = self.stream.read(timeout)
                 if not chunk:
                     if chunk == False:
-                        raise TimeoutError()
+                        raise VimTimeout()
                     return
+                debug('feeding data to the unpacker')
                 self.unpacker.feed(chunk)
 
     def queue_message(self, timeout=None):
@@ -188,10 +198,53 @@ class Client(object):
             if interrupted:
                 with self.interrupt_lock:
                     pass
+            self.invoke_message_cb()
             with self.stream_lock:
                 if self.pending_messages:
                     return self.pending_messages.popleft()
                 interrupted = self.queue_message(timeout)
+
+    def invoke_message_cb(self):
+        cb = self.message_cb
+        debug('registered callback: %s', self)
+        if cb:
+            try:
+                # If there's a callback registered for messages, invoke it
+                # immediately
+                cb(self.pending_messages.popleft())
+            except IndexError:
+                pass
+
+    def message_loop(self, message_cb):
+        profiling = 'NEOVIM_PYTHON_PROFILE' in os.environ
+        try:
+            assert not self.loop_running
+            info('starting message loop')
+            self.message_cb = message_cb
+            self.loop_running = True
+            if profiling:
+                info('starting profiler')
+                pr = cProfile.Profile()
+                pr.enable()
+            while True:
+                try:
+                    self.next_message()
+                except VimExit:
+                    break
+        finally:
+            if profiling:
+                pr.disable()
+                report = os.path.abspath('.nvim-python-client.profile')
+                info('stopped profiler, writing report to %s', report)
+                s = StringIO.StringIO()
+                ps = pstats.Stats(pr, stream=s)
+                ps.strip_dirs().sort_stats('tottime').print_stats(30)
+                with open(report, 'w') as f:
+                    f.write(s.getvalue())
+            info('exiting message loop')
+            self.message_cb = None
+            self.loop_running = False
+
 
     def push_message(self, name, arg):
         """
@@ -219,6 +272,8 @@ class Client(object):
         classes = {'vim': type('Vim', (), {})}
         setattr(classes['vim'], 'next_message',
                 lambda s, *args, **kwargs: self.next_message(*args, **kwargs))
+        setattr(classes['vim'], 'message_loop',
+                lambda s, *args, **kwargs: self.message_loop(*args, **kwargs))
         setattr(classes['vim'], 'push_message',
                 lambda s, *args, **kwargs: self.push_message(*args, **kwargs))
         # Build classes for manipulating the remote structures, assigning to a
@@ -240,13 +295,15 @@ class Client(object):
                              function['id'],
                              function['return_type'],
                              function['parameters'])
+        if self.vim_compatible:
+            make_vim_compatible(classes['vim'])
         # Now apply all available mixins to the generated classes
         for name, mixin in mixins.items():
             classes[name] = type(mixin.__name__, (classes[name], mixin,), {})
         # Create the 'vim object', which is a singleton of the 'Vim' class
         self.vim = classes['vim']()
         # Initialize with some useful attributes
-        classes['vim'].initialize(self.vim, classes, channel_id, VimError)
+        classes['vim'].initialize(self.vim, classes, channel_id)
         # Add attributes for each other class
         for name, klass in classes.items():
             if name != 'vim':
@@ -295,4 +352,28 @@ def fname(name):
         return f
     return dec
 
+def process_eval_result(obj):
+    def process_dict(d):
+        for k, v in d.items():
+            d[k] = process_value(v)
+        return d
 
+    def process_list(l):
+        for i, v in enumerate(l):
+            l[i] = process_value(v)
+        return l
+
+    def process_value(v):
+        if isinstance(v, (int, long, float)):
+            return str(v)
+        if isinstance(v, dict):
+            return process_dict(v)
+        if isinstance(v, list):
+            return process_list(v)
+        return v
+
+    return process_value(obj)
+
+def make_vim_compatible(vim_class):
+    eval_orig = vim_class.eval
+    vim_class.eval = lambda *a, **ka: process_eval_result(eval_orig(*a, **ka))

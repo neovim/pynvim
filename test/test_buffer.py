@@ -125,5 +125,5 @@ def test_get_exceptions():
     try:
         vim.current.buffer.options['invalid-option']
         ok(False)
-    except vim.VimError:
+    except vim.error:
         pass

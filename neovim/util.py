@@ -89,5 +89,11 @@ class Current(object):
         self._vim.set_current_tabpage(tabpage)
 
 
+class VimExit(IOError):
+    pass
+
 class VimError(Exception):
+    pass
+
+class VimTimeout(VimError):
     pass
