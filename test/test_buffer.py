@@ -118,3 +118,12 @@ def test_mark():
     vim.current.window.cursor = [3, 4]
     vim.command('mark V')
     eq(vim.current.buffer.mark('V'), [3, 0])
+
+
+@with_setup(setup=cleanup)
+def test_get_exceptions():
+    try:
+        vim.current.buffer.options['invalid-option']
+        ok(False)
+    except vim.VimError:
+        pass

@@ -20,20 +20,20 @@ def test_concurrent_calls():
 
     integers = []
     while len(integers) < count:
-        integers.append(vim.next_event()[1])
+        integers.append(vim.next_message().arg)
 
     for i in xrange(count):
         ok(i in integers)
 
 
 @with_setup(setup=cleanup)
-def test_custom_events():
+def test_custom_messages():
     def produce(i):
         if i % 2 == 0:
-            str = 'call send_event(%d, "nvim-event", 0)' % (vim.channel_id)
+            str = 'call send_event(%d, "nvim-message", 0)' % (vim.channel_id)
             vim.command(str)
         else:
-            vim.push_event('custom-event', None)
+            vim.push_message('custom-message', None)
         sleep(0.05 * random())
 
     count = 50
@@ -42,14 +42,14 @@ def test_custom_events():
         t.daemon = True
         t.start()
 
-    nvim_events = []
-    custom_events = []
-    while len(nvim_events) < 25 or len(custom_events) < 25 :
-        event = vim.next_event()
-        if event[0] == 'nvim-event':
-            nvim_events.append(event)
-        elif event[0] == 'custom-event':
-            custom_events.append(event)
+    nvim_messages = []
+    custom_messages = []
+    while len(nvim_messages) < 25 or len(custom_messages) < 25 :
+        message = vim.next_message()
+        if message.name == 'nvim-message':
+            nvim_messages.append(message)
+        elif message.name == 'custom-message':
+            custom_messages.append(message)
 
-    eq(len(nvim_events), 25)
-    eq(len(custom_events), 25)
+    eq(len(nvim_messages), 25)
+    eq(len(custom_messages), 25)

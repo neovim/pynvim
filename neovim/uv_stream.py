@@ -8,7 +8,7 @@ class UvStream(object):
     """
     def __init__(self, address=None, port=None):
         self._loop = pyuv.Loop()
-        self._error = None
+        self._errors = deque()
         self._data = deque()
         self._written = True
         self._connected = False
@@ -43,7 +43,7 @@ class UvStream(object):
     def _on_connect(self, stream, error):
         self._loop.stop()
         if error:
-            self._error = IOError(pyuv.errno.strerror(error))
+            self._errors.append(IOError(pyuv.errno.strerror(error)))
             return
         self._connected = True
         self._read_stream = self._write_stream = stream
@@ -55,10 +55,10 @@ class UvStream(object):
     def _on_read(self, handle, data, error):
         self._loop.stop()
         if error:
-            self._error = IOError(pyuv.errno.strerror(error))
+            self._errors.append(IOError(pyuv.errno.strerror(error)))
             return
         elif not data:
-            self._error = IOError('EOF')
+            self._errors.append(IOError('EOF'))
             return
         else:
             self._data.append(data)
@@ -83,7 +83,7 @@ class UvStream(object):
     def _on_write(self, handle, error):
         self._loop.stop()
         if error:
-            self._error = IOError(pyuv.errno.strerror(error))
+            self._errors.append(IOError(pyuv.errno.strerror(error)))
             return
         self._written = True
     
@@ -91,42 +91,48 @@ class UvStream(object):
     Runs the event loop until a certain condition
     """
     def _run(self, condition=lambda: True, timeout=None):
-        if timeout == 0 and not condition():
+        if self._errors:
+            # Pending errors, throw it now
+            raise self._errors.popleft()
+        if timeout == 0:
+            self._loop.run(pyuv.UV_RUN_NOWAIT)
+            if not condition():
+                self._timed_out = True
             return
 
         if timeout:
             self._timer.start(self._timeout_cb, timeout, 0)
 
-        while not (condition() or self._timed_out):
-            if self._error:
-                if timeout and not self._timed_out:
-                    self._timer.stop()
-                # Error occurred, throw it to the caller
-                err = self._error
-                self._error = None
-                raise err
-            # Continue processing events
-            self._loop.run(pyuv.UV_RUN_ONCE)
+        try:
+            while not (condition() or self._timed_out):
+                if self._errors:
+                    # Error occurred, throw it to the caller
+                    raise self._errors.popleft()
+                # Continue processing events
+                self._loop.run(pyuv.UV_RUN_ONCE)
 
-        if timeout and not self._timed_out:
-            self._timer.stop()
-        self._timed_out = False
+        finally:
+            if timeout and not self._timed_out:
+                self._timer.stop()
 
     """
     Read some data
     """
     def read(self, timeout=None):
+        if self._data:
+            return self._data.popleft()
         # first ensure the stream is connected
         self._run(lambda: self._connected)
         # wait until some data is read
-        self._run(lambda: self._interrupted or len(self._data), timeout)
+        self._run(lambda: self._interrupted or self._data, timeout)
+        if self._timed_out:
+            self._timed_out = False
+            return False
         if self._interrupted:
-            # Always reset this
             self._interrupted = False
             return
         # return a chunk of data
-        rv = self._data.popleft()
-        return rv
+        return self._data.popleft()
 
     """
     Write some data

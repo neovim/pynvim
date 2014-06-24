@@ -7,6 +7,55 @@ from mixins import mixins
 from util import VimError
 
 
+class Promise(object):
+    def __init__(self, client, request_id, expected_type=None):
+        def process_response(message):
+            if message.error:
+                # error
+                raise VimError(message.error)
+            if expected_type and hasattr(client.vim, expected_type):
+                # result should be a handle, wrap in it's specialized class
+                klass = getattr(client.vim, expected_type)
+                rv = klass(client.vim, message.result)
+                klass.initialize(rv)
+                return rv
+            return message.result
+
+        def wait(timeout=None):
+            interrupted = False
+            while True:
+                if interrupted:
+                    with client.interrupt_lock:
+                        pass
+                with client.stream_lock:
+                    if self.message:
+                        return process_response(self.message)
+                    interrupted = client.queue_message(timeout)
+
+        self.message = None
+        self.wait = wait
+
+class Message(object):
+    def __init__(self, client, name=None, arg=None, result=None, error=None,
+                 request_id=None, response_id=None, ):
+        def reply(value, is_error=False):
+            if is_error:
+                resp = msgpack.packb([1, request_id, value, None])
+            else:
+                resp = msgpack.packb([1, request_id, None, value])
+            client.stream.write(resp)
+        self.name = name
+        self.arg = arg
+        self.result = result
+        self.error = error
+        self.type = 'event'
+        if request_id:
+            self.type = 'request'
+            self.reply = reply
+        elif response_id:
+            self.type = 'response'
+            self.response_id = response_id
+
 class Remote(object):
     """
     Base class for all remote objects(Buffer, Window...).i
@@ -22,38 +71,30 @@ class Remote(object):
         return hasattr(other, '_handle') and self._handle == other._handle
 
 
-class BorrowedStreamMutex(object):
-    """
-    Helper class used to safely acquire or "borrow" the stream mutex from a
-    thread that is blocking on a `next_event` call
-    """
-    def __init__(self, stream, stream_mutex, switcher):
-        self.stream = stream
-        self.stream_mutex = stream_mutex
-        self.switcher = switcher
-        self.inner_mutex = Lock()
+# FIFO Mutex algorithm to ensure there's no lock starvation. Adapted from
+# this SO answer: http://stackoverflow.com/a/12703543/304141
+class FifoLock(object):
+    def __init__(self):
+        self.inner = Condition(Lock())
+        self.head = self.tail = 0
+
+    def acquire(self, steal=False):
+        with self.inner:
+            position = self.tail
+            self.tail += 1
+            while position != self.head:
+                self.inner.wait()
+
+    def release(self):
+        with self.inner:
+            self.head += 1
+            self.inner.notify_all()
 
     def __enter__(self):
-        self.inner_mutex.acquire()
-        if not self.stream_mutex.acquire(False):
-            # Another thread is currently blocking on a 'next_event' call,
-            # we need to interrupt it and try to acquire `stream_mutex`
-            # ourselves, or else we would have to wait until an event is
-            # received
-            with self.switcher:
-                # Send the interrupt
-                self.stream.interrupt()
-                # Assert that the other thread was interrupted in time before
-                # waiting on the switcher condition
-                if not self.stream_mutex.acquire(False):
-                    self.switcher.wait()
-                    self.stream_mutex.acquire()
-                    self.switcher.notify()
+        self.acquire()
 
     def __exit__(self, type, value, traceback):
-        self.stream_mutex.release()
-        self.inner_mutex.release()
-
+        self.release()
 
 class Client(object):
     """
@@ -64,153 +105,103 @@ class Client(object):
 
     Both methods should be fully blocking.
     """
-
-
     def __init__(self, stream):
-        self._request_id = 0
+        self.next_request_id = 1
         self.stream = stream
         self.unpacker = msgpack.Unpacker()
-        self.pending_events = deque()
+        self.pending_messages = deque()
+        self.pending_requests = {}
         self.vim = None
-        # These are the constructs used to synchronize access:
-        #
-        # - request_mutex: mutual exclusion on the `msgpack_rpc_request` method
-        # - stream_mutex: mutual exlusion on the stream. It must be acquired
-        #   by both `msgpack_rpc_request` and `next_event`.
-        # - switcher: Helper mutex/condition used to pass `stream_mutex` from a
-        # thread blocking on `next_event` to another thread calling
-        # `msgpack_rpc_request`
-        self.stream_mutex = Lock()
-        self.switcher = Condition(Lock())
-        self.borrowed_stream_mutex = BorrowedStreamMutex(self.stream,
-                                                     self.stream_mutex,
-                                                     self.switcher)
+        self.stream_lock = FifoLock()
+        self.interrupt_lock = Lock()
 
-    def pop_events(self, max_index=None):
-        if max_index is None:
-            rv = list(self.pending_events)
-            self.pending_events.clear()
-        else:
-            rv = []
-            i = 0
-            while i <= max_index:
-                rv.append(self.pending_events.popleft())
-                i += 1
-        return rv
-
-    def next_message(self, timeout=None):
+    def unpack_message(self, timeout=None):
         """
-        Returns the next msgpack object from the input stream. This blocks
-        until `timeout` or forever if timeout=None
+        Unpacks the next message from the input stream. This blocks until
+        `timeout` or forever if timeout=None
         """
         while True:
             try:
-                return self.unpacker.next()
+                msg = self.unpacker.next()
+                name = arg = error = result = request_id = response_id = None
+                msg_type = msg[0]
+                if msg_type == 0:
+                    request_id = msg[1]
+                    name = msg[2]
+                    arg = msg[3]
+                elif msg_type == 1:
+                    response_id = msg[1]
+                    error = msg[2]
+                    result = msg[3]
+                elif msg_type == 2:
+                    name = msg[1]
+                    arg = msg[2]
+                else:
+                    raise Exception('Received invalid message type')
+                return Message(self, name=name, arg=arg, result=result,
+                               error=error, request_id=request_id,
+                               response_id=response_id)
             except StopIteration:
                 chunk = self.stream.read(timeout)
                 if not chunk:
+                    if chunk == False:
+                        raise TimeoutError()
                     return
                 self.unpacker.feed(chunk)
 
-    def msgpack_rpc_request(self, method_id, params):
-        """
-        Sends a msgpack-rpc request to Neovim and returns the response
-        """
-        with self.borrowed_stream_mutex:
-            request_id = self._request_id + 1
-            # Send the request
-            self.stream.write(
-                msgpack.packb([0, request_id, method_id, params]))
-            # Enter a loop feeding the unpacker with data until we parse the
-            # response
-            message = None
-            while not message:
-                message = self.next_message()
-                if message and message[0] == 2:
-                    # event, add to the pending queue
-                    self.pending_events.append(message[1:])
-                    message = None
-            # Update request id
-            self._request_id = request_id
-            return message
+    def queue_message(self, timeout=None):
+        message = self.unpack_message(timeout)
+        if not message:
+            # interrupted
+            return True
+        if message.type is 'response':
+            promise = self.pending_requests.pop(message.response_id)
+            promise.message = message
+        else:
+            self.pending_messages.append(message)
+        return False
 
-    def next_event(self, timeout=None):
+    def msgpack_rpc_request(self, method_id, args, expected_type=None):
         """
-        Returns the next server event
+        Sends a msgpack-rpc request to Neovim and return a Promise for the
+        response
         """
-        with self.stream_mutex:
-            while True:
-                if len(self.pending_events):
-                    return self.pending_events.popleft()
-                message = self.next_message(timeout)
-                with self.switcher:
-                    if not message:
-                        # If interrupted by a `msgpack_rpc_request` call from
-                        # another thread, wait for a signal and try again
-                        self.stream_mutex.release()
-                        self.switcher.notify()
-                        self.switcher.wait()
-                        self.stream_mutex.acquire()
-                        continue
-                    # The message type must be 2, which is the msgpack-rpc
-                    # notification type
-                    # (http://wiki.msgpack.org/display/MSGPACK/RPC+specification).
-                    # The only other possible message type the server will send
-                    # is a response(1), but those must be received from
-                    # `msgpack_rpc_request`
-                    assert not message or message[0] == 2
-                    if message:
-                        return message[1:]
+        with self.interrupt_lock:
+            self.stream.interrupt() # interrupt ongoing reads 
+            with self.stream_lock:
+                request_id = self.next_request_id
+                # Update request id
+                self.next_request_id = request_id + 1
+                # Send the request
+                data = msgpack.packb([0, request_id, method_id, args])
+                self.stream.write(data)
+                rv = Promise(self, request_id, expected_type)
+                self.pending_requests[request_id] = rv
+                return rv
 
-    def push_event(self, event_name, event_data):
+    def next_message(self, timeout=None):
         """
-        Pushes a "virtual event" that will be returned by `next_event`.  This
-        method can called from other threads for integration with event loops,
-        such as those provided by GUI libraries.
+        Returns the next server message
         """
-        with self.borrowed_stream_mutex:
-            self.pending_events.append([event_name, event_data])
+        interrupted = False
+        while True:
+            if interrupted:
+                with self.interrupt_lock:
+                    pass
+            with self.stream_lock:
+                if self.pending_messages:
+                    return self.pending_messages.popleft()
+                interrupted = self.queue_message(timeout)
 
-    def expect(self, event_type, timeout=None, predicate=lambda e: True):
+    def push_message(self, name, arg):
         """
-        Blocks until an expected event happens. By default, only the event type
-        will be used to determine if a received event is being expected. An
-        optional predicate(function that receives the event and returns a
-        boolean) can be passed, and in this case it must return true for the
-        event to be considered as expected.
-
-        It returns a list containing all events up to and including the
-        expected event. If a timeout is given and no expected event happens
-        until then, an Exception will be raised. 
-
-        This function is inspired by the 'expect' program, and was designed to
-        make it simple to test asynchronous editor responses. For example:
-
-        ```python
-        def test_insert_mode():
-            vim.current.window.cursor = [1, 0]
-            vim.command('normal dditest')
-            # block until the first line redraws with the string 'test'
-            vim.expect('redraw', timeout=2, lambda e: e['lines'][0] == 'test')
-        ```
-
-        Warning: This function probably should not be called in multithreaded
-        programs
+        Pushes a "virtual message" that will be returned by `next_message`.
+        This method can called from other threads for integration with event
+        loops, such as those provided by GUI libraries.
         """
-        for i, event in enumerate(self.pending_events):
-            if event[0] == event_type and predicate(event):
-                return self.pop_events(i)
-
-        while timeout is None or timeout > 0:
-            start = time()
-            event = self.next_message(timeout)
-            if not event:
-                break
-            event = event[1:]
-            self.pending_events.append(event)
-            if event[0] == event_type and predicate(event):
-                return self.pop_events()
-            timeout -= time() - start
+        with self.interrupt_lock:
+            self.stream.interrupt()
+            self.pending_messages.append(Message(self, name, arg))
 
     def discover_api(self):
         """
@@ -222,16 +213,14 @@ class Client(object):
         if self.vim:
             # Only need to do this once
             return
-        channel_id, api = self.msgpack_rpc_request(0, [])[3]
+        channel_id, api = self.msgpack_rpc_request(0, []).wait()
         api = msgpack.unpackb(api)
         # The 'Vim' class is the main entry point of the api
         classes = {'vim': type('Vim', (), {})}
-        setattr(classes['vim'], 'next_event',
-                lambda s, *args, **kwargs: self.next_event(*args, **kwargs))
-        setattr(classes['vim'], 'push_event',
-                lambda s, *args, **kwargs: self.push_event(*args, **kwargs))
-        setattr(classes['vim'], 'expect',
-                lambda s, *args, **kwargs: self.expect(*args, **kwargs))
+        setattr(classes['vim'], 'next_message',
+                lambda s, *args, **kwargs: self.next_message(*args, **kwargs))
+        setattr(classes['vim'], 'push_message',
+                lambda s, *args, **kwargs: self.push_message(*args, **kwargs))
         # Build classes for manipulating the remote structures, assigning to a
         # dict using lower case names as keys, so we can easily match methods
         # in the API.
@@ -273,9 +262,10 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
     for param in parameters:
         parameter_names[param[1]] = parameter_count
         parameter_count += 1
-    # This is the actual function
-    @fname(name)
-    def rv(*args, **kwargs):
+    async_name = 'send_' + name
+    # These are the actual functions
+    @fname(async_name)
+    def async_func(*args, **kwargs):
         if isinstance(args[0], client.vim.__class__):
             # functions of the vim object don't need 'self'
             args = args[1:]
@@ -288,20 +278,13 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
                 arg = arg._handle
             # Add to the argument vector 
             argv.append(arg)
-        result = client.msgpack_rpc_request(fid, argv)
-        if result[2]:
-            # error
-            raise VimError(result[2])
-        if hasattr(client.vim, return_type):
-            # result should be a handle, wrap in it's specialized class
-            klass = getattr(client.vim, return_type)
-            rv = klass(client.vim, result[3])
-            klass.initialize(rv)
-            return rv
+        return client.msgpack_rpc_request(fid, argv, return_type)
+    @fname(name)
+    def func(*args, **kwargs):
+        return async_func(*args, **kwargs).wait()
 
-        return result[3]
-    setattr(klass, name, rv)
-
+    setattr(klass, async_name, async_func)
+    setattr(klass, name, func)
 
 def fname(name):
     """
