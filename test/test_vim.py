@@ -68,8 +68,6 @@ def test_vars():
 
 @with_setup(setup=cleanup)
 def test_options():
-    eq(vim.options['compatible'], True)
-    vim.options['compatible'] = False
     eq(vim.options['compatible'], False)
 
 
