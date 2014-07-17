@@ -1,10 +1,10 @@
 from setuptools import setup
 
 setup(name='neovim',
-      version='0.0.6',
+      version='0.0.7',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
-      download_url='https://github.com/neovim/python-client/archive/0.0.6.tar.gz',
+      download_url='https://github.com/neovim/python-client/archive/0.0.7.tar.gz',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='MIT',
