@@ -1,6 +1,5 @@
 import msgpack, logging, os, os.path
 from collections import deque
-from threading import Condition, Lock
 from mixins import mixins
 from util import VimError, VimExit, VimTimeout
 import cProfile, pstats, StringIO
@@ -23,16 +22,11 @@ class Promise(object):
             return message.result
 
         def wait(timeout=None):
-            interrupted = False
             while True:
-                if interrupted:
-                    with client.interrupt_lock:
-                        pass
                 client.invoke_message_cb()
-                with client.stream_lock:
-                    if self.message:
-                        return process_response(self.message)
-                    interrupted = client.queue_message(timeout)
+                if self.message:
+                    return process_response(self.message)
+                client.queue_message(timeout)
 
         self.message = None
         self.wait = wait
@@ -73,31 +67,6 @@ class Remote(object):
         return hasattr(other, '_handle') and self._handle == other._handle
 
 
-# FIFO Mutex algorithm to ensure there's no lock starvation. Adapted from
-# this SO answer: http://stackoverflow.com/a/12703543/304141
-class FifoLock(object):
-    def __init__(self):
-        self.inner = Condition(Lock())
-        self.head = self.tail = 0
-
-    def acquire(self, steal=False):
-        with self.inner:
-            position = self.tail
-            self.tail += 1
-            while position != self.head:
-                self.inner.wait()
-
-    def release(self):
-        with self.inner:
-            self.head += 1
-            self.inner.notify_all()
-
-    def __enter__(self):
-        self.acquire()
-
-    def __exit__(self, type, value, traceback):
-        self.release()
-
 class Client(object):
     """
     Neovim client. It depends on a stream, an object that implements three
@@ -116,8 +85,6 @@ class Client(object):
         self.pending_requests = {}
         self.vim_compatible = vim_compatible
         self.vim = None
-        self.stream_lock = FifoLock()
-        self.interrupt_lock = Lock()
         self.message_cb = None
         self.loop_running = False
 
@@ -162,52 +129,42 @@ class Client(object):
     def queue_message(self, timeout=None):
         message = self.unpack_message(timeout)
         if not message:
-            # interrupted
-            return True
+            return
         if message.type is 'response':
             promise = self.pending_requests.pop(message.response_id)
             promise.message = message
         else:
             self.pending_messages.append(message)
-        return False
 
     def msgpack_rpc_request(self, method_id, args, expected_type=None):
         """
         Sends a msgpack-rpc request to Neovim and return a Promise for the
         response
         """
-        with self.interrupt_lock:
-            self.stream.interrupt() # interrupt ongoing reads 
-            with self.stream_lock:
-                request_id = self.next_request_id
-                # Update request id
-                self.next_request_id = request_id + 1
-                # Send the request
-                data = msgpack.packb([0, request_id, method_id, args])
-                self.stream.write(data)
-                rv = Promise(self, request_id, expected_type)
-                self.pending_requests[request_id] = rv
-                return rv
+        request_id = self.next_request_id
+        # Update request id
+        self.next_request_id = request_id + 1
+        # Send the request
+        data = msgpack.packb([0, request_id, method_id, args])
+        self.stream.write(data)
+        rv = Promise(self, request_id, expected_type)
+        self.pending_requests[request_id] = rv
+        return rv
 
     def next_message(self, timeout=None):
         """
         Returns the next server message
         """
-        interrupted = False
         while True:
-            if interrupted:
-                with self.interrupt_lock:
-                    pass
             self.invoke_message_cb()
-            with self.stream_lock:
-                if self.pending_messages:
-                    return self.pending_messages.popleft()
-                interrupted = self.queue_message(timeout)
+            if self.pending_messages:
+                return self.pending_messages.popleft()
+            self.queue_message(timeout)
 
     def invoke_message_cb(self):
         cb = self.message_cb
         debug('registered callback: %s', self)
-        if cb:
+        if cb and self.pending_messages:
             try:
                 # If there's a callback registered for messages, invoke it
                 # immediately
@@ -252,9 +209,9 @@ class Client(object):
         This method can called from other threads for integration with event
         loops, such as those provided by GUI libraries.
         """
-        with self.interrupt_lock:
-            self.stream.interrupt()
-            self.pending_messages.append(Message(self, name, arg))
+        self.pending_messages.append(Message(self, name, arg))
+        self.stream.interrupt()
+
 
     def discover_api(self):
         """

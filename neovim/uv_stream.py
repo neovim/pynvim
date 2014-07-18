@@ -41,8 +41,7 @@ class UvStream(object):
             self._write_stream.open(sys.stdout.fileno())
             self._connected = True
             self._read_stream.start_read(self._on_read)
-        async_cb = self._on_async
-        self._async = pyuv.Async(self._loop, async_cb)
+        self._async = pyuv.Async(self._loop, self._on_async)
         self._interrupted = False
         self._term = pyuv.Signal(self._loop)
         self._term.start(self._on_term, SIGTERM)
