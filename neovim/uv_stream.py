@@ -20,21 +20,18 @@ class UvStream(object):
         self._connected = False
         self._timed_out = False
         self._timer = pyuv.Timer(self._loop)
-        self._timeout_cb = self._on_timeout.__get__(self, UvStream)
-        self._read_cb = self._on_read.__get__(self, UvStream)
-        self._write_cb = self._on_write.__get__(self, UvStream)
-        connect_cb = self._on_connect.__get__(self, UvStream)
+        self._timeout_cb = self._on_timeout
         # Select the type of handle
         if port:
             debug('TCP address was provided, connecting...')
             # tcp
             self._stream = pyuv.TCP(self._loop)
-            self._stream.connect((address, port), connect_cb)
+            self._stream.connect((address, port), self._on_connect)
         elif address:
             debug('Pipe address was provided, connecting...')
             # named pipe or unix socket
             self._stream = pyuv.Pipe(self._loop)
-            self._stream.connect(address, connect_cb)
+            self._stream.connect(address, self._on_connect)
         else:
             debug('No addresses were provided, will use stdin/stdout')
             # stdin/stdout
@@ -43,12 +40,12 @@ class UvStream(object):
             self._write_stream = pyuv.Pipe(self._loop) 
             self._write_stream.open(sys.stdout.fileno())
             self._connected = True
-            self._read_stream.start_read(self._read_cb)
-        async_cb = self._on_async.__get__(self, UvStream)
+            self._read_stream.start_read(self._on_read)
+        async_cb = self._on_async
         self._async = pyuv.Async(self._loop, async_cb)
         self._interrupted = False
         self._term = pyuv.Signal(self._loop)
-        self._term.start(self._on_term.__get__(self, UvStream), SIGTERM)
+        self._term.start(self._on_term, SIGTERM)
 
     """
     Called when the libuv stream is connected
@@ -62,7 +59,7 @@ class UvStream(object):
             return
         self._connected = True
         self._read_stream = self._write_stream = stream
-        self._read_stream.start_read(self._read_cb)
+        self._read_stream.start_read(self._on_read)
 
 
     def _on_term(self, handle, signum):
@@ -181,7 +178,7 @@ class UvStream(object):
         # queue the chunk for writing
         self.last_write_size = len(chunk)
         debug('writing %d bytes of data', self.last_write_size)
-        self._write_stream.write(chunk, self._write_cb)
+        self._write_stream.write(chunk, self._on_write)
         # unset the written flag
         self._written = False
         # wait for the flag
