@@ -94,6 +94,3 @@ class VimExit(IOError):
 
 class VimError(Exception):
     pass
-
-class VimTimeout(VimError):
-    pass

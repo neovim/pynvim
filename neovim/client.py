@@ -1,7 +1,7 @@
 import msgpack, logging, os, os.path
 from collections import deque
 from mixins import mixins
-from util import VimError, VimExit, VimTimeout
+from util import VimError, VimExit
 import cProfile, pstats, StringIO
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,12 @@ class Promise(object):
                 return rv
             return message.result
 
-        def wait(timeout=None):
+        def wait():
             while True:
                 client.invoke_message_cb()
                 if self.message:
                     return process_response(self.message)
-                client.queue_message(timeout)
+                client.queue_message()
 
         self.message = None
         self.wait = wait
@@ -88,10 +88,9 @@ class Client(object):
         self.message_cb = None
         self.loop_running = False
 
-    def unpack_message(self, timeout=None):
+    def unpack_message(self):
         """
-        Unpacks the next message from the input stream. This blocks until
-        `timeout` or forever if timeout=None
+        Unpacks the next message from the input stream.
         """
         while True:
             try:
@@ -118,16 +117,14 @@ class Client(object):
                                response_id=response_id)
             except StopIteration:
                 debug('unpacker needs more data...')
-                chunk = self.stream.read(timeout)
+                chunk = self.stream.read()
                 if not chunk:
-                    if chunk == False:
-                        raise VimTimeout()
                     return
                 debug('feeding data to the unpacker')
                 self.unpacker.feed(chunk)
 
-    def queue_message(self, timeout=None):
-        message = self.unpack_message(timeout)
+    def queue_message(self):
+        message = self.unpack_message()
         if not message:
             return
         if message.type is 'response':
@@ -151,7 +148,7 @@ class Client(object):
         self.pending_requests[request_id] = rv
         return rv
 
-    def next_message(self, timeout=None):
+    def next_message(self):
         """
         Returns the next server message
         """
@@ -159,7 +156,7 @@ class Client(object):
             self.invoke_message_cb()
             if self.pending_messages:
                 return self.pending_messages.popleft()
-            self.queue_message(timeout)
+            self.queue_message()
 
     def invoke_message_cb(self):
         cb = self.message_cb

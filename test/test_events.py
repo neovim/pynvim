@@ -38,11 +38,3 @@ def test_broadcast():
     eq(msg.name, 'event1')
     eq(msg.arg, [13, 14, 15])
 
-
-@with_setup(setup=cleanup)
-def test_timeout():
-    try:
-        event = vim.next_message(0)
-    except vim.timeout:
-        return
-    ok(False)

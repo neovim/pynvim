@@ -18,9 +18,6 @@ class UvStream(object):
         self._data = deque()
         self._written = True
         self._connected = False
-        self._timed_out = False
-        self._timer = pyuv.Timer(self._loop)
-        self._timeout_cb = self._on_timeout
         # Select the type of handle
         if port:
             debug('TCP address was provided, connecting...')
@@ -93,14 +90,6 @@ class UvStream(object):
         self._loop.stop()
 
     """
-    Called when a timeout occurs
-    """
-    def _on_timeout(self, handle):
-        debug('timed out')
-        self._timed_out = True
-        self._loop.stop()
-
-    """
     Called when data is written to the libuv stream
     """
     def _on_write(self, handle, error):
@@ -116,51 +105,32 @@ class UvStream(object):
     """
     Runs the event loop until a certain condition
     """
-    def _run(self, condition=lambda: True, timeout=None):
+    def _run(self, condition=lambda: True):
         if self._errors:
             debug('pending errors collected in previous event loop iteration')
             # Pending errors, throw it now
             raise self._errors.popleft()
-        if timeout == 0:
-            debug('0 timeout, run a non-blocking event loop iteration')
-            self._loop.run(pyuv.UV_RUN_NOWAIT)
-            if not condition():
-                self._timed_out = True
-            return
+        while not condition():
+            if self._errors:
+                debug('caught error in event loop')
+                # Error occurred, throw it to the caller
+                raise self._errors.popleft()
+            # Continue processing events
+            debug('run a blocking event event loop iteration...')
+            self._loop.run(pyuv.UV_RUN_ONCE)
 
-        if timeout:
-            debug('prepare timer of %d seconds', timeout)
-            self._timer.start(self._timeout_cb, timeout, 0)
-
-        try:
-            while not (condition() or self._timed_out):
-                if self._errors:
-                    debug('caught error in event loop')
-                    # Error occurred, throw it to the caller
-                    raise self._errors.popleft()
-                # Continue processing events
-                debug('run a blocking event event loop iteration...')
-                self._loop.run(pyuv.UV_RUN_ONCE)
-
-        finally:
-            if timeout and not self._timed_out:
-                debug('stop timer')
-                self._timer.stop()
 
     """
     Read some data
     """
-    def read(self, timeout=None):
+    def read(self):
         if self._data:
             return self._data.popleft()
         # first ensure the stream is connected
         if not self._connected:
             self._run(lambda: self._connected)
         # wait until some data is read
-        self._run(lambda: self._interrupted or self._data, timeout)
-        if self._timed_out:
-            self._timed_out = False
-            return False
+        self._run(lambda: self._interrupted or self._data)
         if self._interrupted:
             self._interrupted = False
             return

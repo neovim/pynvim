@@ -1,5 +1,5 @@
 import os
-from util import RemoteSequence, RemoteMap, Current, VimError, VimTimeout
+from util import RemoteSequence, RemoteMap, Current, VimError
 
 os_chdir = os.chdir
 os_fchdir = os.fchdir
@@ -26,7 +26,6 @@ class Vim(object):
                                 lambda k, v: vim.set_option(k, v))
         vim.channel_id = channel_id
         vim.error = VimError
-        vim.timeout = VimTimeout
 
     def foreach_rtp(self, cb):
         """
