@@ -10,6 +10,7 @@ setup(name='neovim',
       license='MIT',
       packages=['neovim'],
       install_requires=[
+          'greenlet',
           'msgpack-python',
           'pyuv',
       ],
