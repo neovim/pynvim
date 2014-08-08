@@ -1,56 +1,13 @@
-import msgpack, logging, os, os.path
+import greenlet, logging, os, os.path, msgpack
 from collections import deque
 from mixins import mixins
 from util import VimError, VimExit
+from traceback import format_exc
 import cProfile, pstats, StringIO
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
 
-class Promise(object):
-    def __init__(self, client, request_id, expected_type=None):
-        def process_response(message):
-            if message.error:
-                # error
-                raise VimError(message.error)
-            if expected_type and hasattr(client.vim, expected_type):
-                # result should be a handle, wrap in it's specialized class
-                klass = getattr(client.vim, expected_type)
-                rv = klass(client.vim, message.result)
-                klass.initialize(rv)
-                return rv
-            return message.result
-
-        def wait():
-            while True:
-                client.invoke_message_cb()
-                if self.message:
-                    return process_response(self.message)
-                client.queue_message()
-
-        self.message = None
-        self.wait = wait
-
-class Message(object):
-    def __init__(self, client, name=None, arg=None, result=None, error=None,
-                 request_id=None, response_id=None, ):
-        def reply(value, error=False):
-            if error:
-                resp = msgpack.packb([1, request_id, value, None])
-            else:
-                resp = msgpack.packb([1, request_id, None, value])
-            client.stream.write(resp)
-        self.name = name
-        self.arg = arg
-        self.result = result
-        self.error = error
-        self.type = 'event'
-        if request_id:
-            self.type = 'request'
-            self.reply = reply
-        elif response_id:
-            self.type = 'response'
-            self.response_id = response_id
 
 class Remote(object):
     """
@@ -69,122 +26,197 @@ class Remote(object):
 
 class Client(object):
     """
-    Neovim client. It depends on a stream, an object that implements three
+    Neovim client. It depends on a rpc stream, an object that implements four
     methods:
-        - read(): Returns any amount of data as soon as it's available
-        - write(chunk): Writes data
-        - interrupt(): Interrupts a blocking `read()` call from another thread.
-
-    Both methods should be fully blocking.
+        - loop_start(request_cb, notification_cb error_cb): Start the event
+            loop to receive rpc requests and notifications
+        - loop_stop(): Stop the event loop
+        - send(method, args, response_cb): Send a method call with args,
+            and invoke response_cb when the response is available
+        - post(name, args): Post a notification from another thread
     """
     def __init__(self, stream, vim_compatible=False):
-        self.next_request_id = 1
         self.stream = stream
-        self.unpacker = msgpack.Unpacker()
-        self.pending_messages = deque()
-        self.pending_requests = {}
         self.vim_compatible = vim_compatible
+        self.greenlets = set()
         self.vim = None
-        self.message_cb = None
         self.loop_running = False
+        self.pending = deque()
 
-    def unpack_message(self):
-        """
-        Unpacks the next message from the input stream.
-        """
-        while True:
-            try:
-                debug('waiting for message...')
-                msg = self.unpacker.next()
-                debug('received message: %s', msg)
-                name = arg = error = result = request_id = response_id = None
-                msg_type = msg[0]
-                if msg_type == 0:
-                    request_id = msg[1]
-                    name = msg[2]
-                    arg = msg[3]
-                elif msg_type == 1:
-                    response_id = msg[1]
-                    error = msg[2]
-                    result = msg[3]
-                elif msg_type == 2:
-                    name = msg[1]
-                    arg = msg[2]
-                else:
-                    raise Exception('Received invalid message type')
-                return Message(self, name=name, arg=arg, result=result,
-                               error=error, request_id=request_id,
-                               response_id=response_id)
-            except StopIteration:
-                debug('unpacker needs more data...')
-                chunk = self.stream.read()
-                if not chunk:
-                    return
-                debug('feeding data to the unpacker')
-                self.unpacker.feed(chunk)
 
-    def queue_message(self):
-        message = self.unpack_message()
-        if not message:
-            return
-        if message.type is 'response':
-            promise = self.pending_requests.pop(message.response_id)
-            promise.message = message
+    def rpc_yielding_request(self, method, args):
+        gr = greenlet.getcurrent()
+        parent = gr.parent
+
+        def response_cb(err, result):
+            debug('response is available for greenlet %s, switching back', gr)
+            gr.switch(err, result)
+
+        self.stream.send(method, args, response_cb)
+        debug('yielding from greenlet %s to wait for response', gr)
+        return parent.switch()
+
+
+    def rpc_blocking_request(self, method, args):
+        response = {}
+
+        def response_cb(err, result):
+            response['err'] = err
+            response['result'] = result
+            self.stream.loop_stop()
+
+        debug('will now perform a blocking rpc request: %s, %s', method, args)
+        self.stream.send(method, args, response_cb)
+        queue = []
+        msg = self.next_message()
+
+        while msg:
+            debug('message received while waiting for rpc response: %s', msg)
+            queue.append(msg)
+            if response:
+                break
+            msg = self.next_message()
+
+        self.pending.extend(queue)
+
+        return response.get('err', None), response.get('result', None)
+
+
+    def rpc_request(self, method, args, expected_type=None):
+        """
+        Sends a rpc request to Neovim.
+        """
+        if self.loop_running:
+            err, result = self.rpc_yielding_request(method, args)
         else:
-            self.pending_messages.append(message)
+            err, result = self.rpc_blocking_request(method, args)
 
-    def msgpack_rpc_request(self, method_id, args, expected_type=None):
-        """
-        Sends a msgpack-rpc request to Neovim and return a Promise for the
-        response
-        """
-        request_id = self.next_request_id
-        # Update request id
-        self.next_request_id = request_id + 1
-        # Send the request
-        data = msgpack.packb([0, request_id, method_id, args])
-        self.stream.write(data)
-        rv = Promise(self, request_id, expected_type)
-        self.pending_requests[request_id] = rv
-        return rv
+        if err:
+            raise VimError(err)
+
+        if expected_type and hasattr(self.vim, expected_type):
+            # result should be a handle, wrap in it's specialized class
+            klass = getattr(self.vim, expected_type)
+            result = klass(self.vim, result)
+            klass.initialize(result)
+
+        return result
+
 
     def next_message(self):
         """
-        Returns the next server message
+        Blocks until a message is received. This is mostly for testing and
+        interactive usage.
         """
-        while True:
-            self.invoke_message_cb()
-            if self.pending_messages:
-                return self.pending_messages.popleft()
-            self.queue_message()
+        if self.pending:
+            msg = self.pending.popleft()
+            debug('returning queued message: %s', msg)
+            return msg
 
-    def invoke_message_cb(self):
-        cb = self.message_cb
-        debug('registered callback: %s', self)
-        if cb and self.pending_messages:
+        def request_cb(name, args, reply_fn):
+            self.pending.append(('request', name, args, reply_fn,))
+            self.stream.loop_stop()
+
+        def notification_cb(name, args):
+            self.pending.append(('notification', name, args,))
+            self.stream.loop_stop()
+
+        def error_cb(err):
+            self.stream.loop_stop()
+            raise err
+
+        debug('will block until a message is available')
+        self.stream.loop_start(request_cb, notification_cb, error_cb)
+
+        if self.pending:
+            msg = self.pending.popleft()
+            debug('message available: %s', msg)
+            return msg
+
+
+    def post(self, name, args=None):
+        self.stream.post(name, args)
+
+
+    def on_request(self, name, args, reply_fn):
+        def request_handler():
             try:
-                # If there's a callback registered for messages, invoke it
-                # immediately
-                cb(self.pending_messages.popleft())
-            except IndexError:
-                pass
+                rv = self.request_cb(name, args)
+                debug('greenlet %s completed, sending %s as response', gr, rv)
+                reply_fn(rv)
+            except Exception as e:
+                self.error_cb(e)
+                if self.loop_running:
+                    err_str = format_exc(5)
+                    warn("error caught while processing call '%s %s': %s",
+                         name,
+                         args,
+                         err_str)
+                    reply_fn(err_str, error=True)
+                    debug('sent "%s" as response', err_str)
+            debug('greenlet %s is now dying...', gr)
+            self.greenlets.remove(gr)
 
-    def message_loop(self, message_cb):
+        gr = greenlet.greenlet(request_handler)
+        debug('received rpc request, greenlet %s will handle it', gr)
+        self.greenlets.add(gr)
+        gr.switch()
+
+
+    def on_notification(self, name, args):
+        def notification_handler():
+            try:
+                self.notification_cb(name, args)
+                debug('greenlet %s completed', gr)
+            except Exception as e:
+                self.error_cb(e)
+                if self.loop_running:
+                    err_str = format_exc(5)
+                    warn("error caught while processing event '%s %s': %s",
+                         name,
+                         args,
+                         err_str)
+            debug('greenlet %s is now dying...', gr)
+            self.greenlets.remove(gr)
+
+        gr = greenlet.greenlet(notification_handler)
+        debug('received rpc notification, greenlet %s will handle it', gr)
+        self.greenlets.add(gr)
+        gr.switch()
+
+
+    def on_error(self, err):
+        warn('caught error: %s', err)
+        self.error_cb(err)
+
+
+    def loop_start(self, request_cb, notification_cb, error_cb):
         profiling = 'NEOVIM_PYTHON_PROFILE' in os.environ
+
         try:
             assert not self.loop_running
             info('starting message loop')
-            self.message_cb = message_cb
+            self.request_cb = request_cb
+            self.notification_cb = notification_cb
+            self.error_cb = error_cb
             self.loop_running = True
+
             if profiling:
                 info('starting profiler')
                 pr = cProfile.Profile()
                 pr.enable()
-            while True:
-                try:
-                    self.next_message()
-                except VimExit:
-                    break
+
+            while self.pending:
+                msg = self.pending.popleft()
+                if msg[0] == 'request':
+                    self.on_request(msg[1], msg[2], msg[3])
+                else:
+                    self.on_notification(msg[1], msg[2])
+
+            self.stream.loop_start(self.on_request,
+                                   self.on_notification,
+                                   self.on_error)
+
         finally:
             if profiling:
                 pr.disable()
@@ -193,21 +225,20 @@ class Client(object):
                 s = StringIO.StringIO()
                 ps = pstats.Stats(pr, stream=s)
                 ps.strip_dirs().sort_stats('tottime').print_stats(30)
+
                 with open(report, 'w') as f:
                     f.write(s.getvalue())
+
             info('exiting message loop')
-            self.message_cb = None
             self.loop_running = False
+            self.request_cb = None
+            self.notification_cb = None
+            self.error_cb = None
 
 
-    def push_message(self, name, arg):
-        """
-        Pushes a "virtual message" that will be returned by `next_message`.
-        This method can called from other threads for integration with event
-        loops, such as those provided by GUI libraries.
-        """
-        self.pending_messages.append(Message(self, name, arg))
-        self.stream.interrupt()
+    def loop_stop(self):
+        self.loop_running = False
+        self.stream.loop_stop()
 
 
     def discover_api(self):
@@ -220,16 +251,18 @@ class Client(object):
         if self.vim:
             # Only need to do this once
             return
-        channel_id, api = self.msgpack_rpc_request(0, []).wait()
+        channel_id, api = self.rpc_request(0, [])
         api = msgpack.unpackb(api)
         # The 'Vim' class is the main entry point of the api
         classes = {'vim': type('Vim', (), {})}
+        setattr(classes['vim'], 'loop_start',
+                lambda s, *args, **kwargs: self.loop_start(*args, **kwargs))
+        setattr(classes['vim'], 'loop_stop',
+                lambda s, *args, **kwargs: self.loop_stop(*args, **kwargs))
         setattr(classes['vim'], 'next_message',
                 lambda s, *args, **kwargs: self.next_message(*args, **kwargs))
-        setattr(classes['vim'], 'message_loop',
-                lambda s, *args, **kwargs: self.message_loop(*args, **kwargs))
-        setattr(classes['vim'], 'push_message',
-                lambda s, *args, **kwargs: self.push_message(*args, **kwargs))
+        setattr(classes['vim'], 'post',
+                lambda s, *args, **kwargs: self.post(*args, **kwargs))
         # Build classes for manipulating the remote structures, assigning to a
         # dict using lower case names as keys, so we can easily match methods
         # in the API.
@@ -263,6 +296,7 @@ class Client(object):
             if name != 'vim':
                 setattr(self.vim, klass.__name__, klass)
 
+
 def generate_wrapper(client, klass, name, fid, return_type, parameters):
     """
     Generate an API call wrapper
@@ -273,10 +307,9 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
     for param in parameters:
         parameter_names[param[1]] = parameter_count
         parameter_count += 1
-    async_name = 'send_' + name
-    # These are the actual functions
-    @fname(async_name)
-    def async_func(*args, **kwargs):
+    # This is the actual generated function
+    @fname(name)
+    def func(*args, **kwargs):
         if isinstance(args[0], client.vim.__class__):
             # functions of the vim object don't need 'self'
             args = args[1:]
@@ -289,13 +322,10 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
                 arg = arg._handle
             # Add to the argument vector 
             argv.append(arg)
-        return client.msgpack_rpc_request(fid, argv, return_type)
-    @fname(name)
-    def func(*args, **kwargs):
-        return async_func(*args, **kwargs).wait()
+        return client.rpc_request(fid, argv, return_type)
 
-    setattr(klass, async_name, async_func)
     setattr(klass, name, func)
+
 
 def fname(name):
     """
@@ -305,6 +335,7 @@ def fname(name):
         f.__name__ = name
         return f
     return dec
+
 
 def process_eval_result(obj):
     def process_dict(d):
@@ -327,6 +358,7 @@ def process_eval_result(obj):
         return v
 
     return process_value(obj)
+
 
 def make_vim_compatible(vim_class):
     eval_orig = vim_class.eval

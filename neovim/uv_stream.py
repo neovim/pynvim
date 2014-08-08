@@ -8,16 +8,16 @@ debug, warn = (logger.debug, logger.warn,)
 
 class UvStream(object):
     """
-    Blocking read/write stream implemented with libuv. Provides the read/write
-    interface required by `Client`
+    Stream abstraction implemented on top of libuv
     """
     def __init__(self, address=None, port=None):
         debug('initializing UvStream instance')
         self._loop = pyuv.Loop()
-        self._errors = deque()
-        self._data = deque()
-        self._written = True
         self._connected = False
+        self._data_cb = None
+        self._error_cb = None
+        self._connection_error = None
+        self._pending_writes = 0
         # Select the type of handle
         if port:
             debug('TCP address was provided, connecting...')
@@ -37,124 +37,110 @@ class UvStream(object):
             self._write_stream = pyuv.Pipe(self._loop) 
             self._write_stream.open(sys.stdout.fileno())
             self._connected = True
-            self._read_stream.start_read(self._on_read)
         self._async = pyuv.Async(self._loop, self._on_async)
-        self._interrupted = False
         self._term = pyuv.Signal(self._loop)
         self._term.start(self._on_term, SIGTERM)
+
 
     """
     Called when the libuv stream is connected
     """
     def _on_connect(self, stream, error):
-        self._loop.stop()
+        self.loop_stop()
         if error:
             msg = pyuv.errno.strerror(error)
             warn('error connecting to neovim: %s', msg)
-            self._errors.append(VimExit(msg))
+            self._connection_error = IOError(msg)
             return
         self._connected = True
         self._read_stream = self._write_stream = stream
-        self._read_stream.start_read(self._on_read)
 
 
     def _on_term(self, handle, signum):
-        self._loop.stop()
-        self._errors.append(VimExit('Received SIGTERM'))
+        self.loop_stop()
+        self._error_cb(IOError('Received SIGTERM'))
 
 
-    """
-    Called when data is read from the libuv stream
-    """
-    def _on_read(self, handle, data, error):
-        self._loop.stop()
-        if error:
-            msg = pyuv.errno.strerror(error)
-            warn('error reading data: %s', msg)
-            self._errors.append(VimExit(msg))
-            return
-        elif not data:
-            warn('connection was closed by neovim')
-            self._errors.append(VimExit('EOF'))
-            return
-        else:
-            debug('successfully read %d bytes of data', len(data))
-            self._data.append(data)
-
-    """
-    Called when the async handle is fired
-    """
     def _on_async(self, handle):
-        debug('interrupted')
-        self._interrupted = True
-        self._loop.stop()
+        """
+        Called when the async handle is fired
+        """
+        self.loop_stop()
 
-    """
-    Called when data is written to the libuv stream
-    """
-    def _on_write(self, handle, error):
-        self._loop.stop()
-        if error:
-            msg = pyuv.errno.strerror(error)
-            warn('error writing data: %s', msg)
-            self._errors.append(VimExit(msg))
-            return
-        debug('successfully wrote %d bytes of data', self.last_write_size)
-        self._written = True
-    
-    """
-    Runs the event loop until a certain condition
-    """
-    def _run(self, condition=lambda: True):
-        if self._errors:
-            debug('pending errors collected in previous event loop iteration')
-            # Pending errors, throw it now
-            raise self._errors.popleft()
-        while not condition():
-            if self._errors:
-                debug('caught error in event loop')
-                # Error occurred, throw it to the caller
-                raise self._errors.popleft()
-            # Continue processing events
-            debug('run a blocking event event loop iteration...')
+
+    def _connect(self):
+        while not self._connected and not self._connection_error:
             self._loop.run(pyuv.UV_RUN_ONCE)
 
 
-    """
-    Read some data
-    """
-    def read(self):
-        if self._data:
-            return self._data.popleft()
-        # first ensure the stream is connected
-        if not self._connected:
-            self._run(lambda: self._connected)
-        # wait until some data is read
-        self._run(lambda: self._interrupted or self._data)
-        if self._interrupted:
-            self._interrupted = False
-            return
-        # return a chunk of data
-        return self._data.popleft()
+    def _on_read(self, handle, data, error):
+        """
+        Called when data is read from the libuv stream
+        """
+        if error:
+            msg = pyuv.errno.strerror(error)
+            warn('error reading data: %s', msg)
+            self._error_cb(IOError(msg))
+        elif not data:
+            warn('connection was closed by neovim')
+            self._error_cb(IOError('EOF'))
+        else:
+            debug('successfully read %d bytes of data', len(data))
+            self._data_cb(data)
 
-    """
-    Write some data
-    """
-    def write(self, chunk):
-        if not self._connected:
-            # first ensure the stream is connected
-            self._run(lambda: self._connected)
-        # queue the chunk for writing
-        self.last_write_size = len(chunk)
-        debug('writing %d bytes of data', self.last_write_size)
-        self._write_stream.write(chunk, self._on_write)
-        # unset the written flag
-        self._written = False
-        # wait for the flag
-        self._run(lambda: self._written)
 
-    """
-    Interrupts a `read` call from another thread.
-    """
     def interrupt(self):
+        """
+        Stops the event loop from another thread.
+        """
         self._async.send()
+
+
+    def send(self, data):
+        if not self._connected:
+            self._connect()
+            if self._connection_error:
+                err = self._connection_error
+                self._connection_error = None
+                raise err
+        self._pending_writes += 1
+        data_len = len(data)
+
+        def write_cb(handle, error):
+            self._pending_writes -= 1
+            if error:
+                msg = pyuv.errno.strerror(error)
+                warn('error writing data: %s', msg)
+                self._error_cb(IOError(msg))
+            debug('successfully wrote %d bytes of data', data_len)
+
+        debug('writing %d bytes of data', data_len)
+        # queue the data for writing
+        self._write_stream.write(data, write_cb)
+
+
+    def loop_start(self, data_cb, error_cb):
+        if not self._connected:
+            self._connect()
+            if self._connection_error:
+                err = self._connection_error
+                self._connection_error = None
+                return error_cb(err)
+
+        self._data_cb = data_cb
+        self._error_cb = error_cb
+        self._read_stream.start_read(self._on_read)
+        debug('entering libuv event loop')
+        self._loop.run(pyuv.UV_RUN_DEFAULT)
+        debug('exited libuv event loop')
+        self._read_stream.stop_read()
+        self._data_cb = None
+        self._error_cb = None
+
+
+    def loop_stop(self):
+        """
+        Stops the event loop
+        """
+        self._loop.stop()
+        debug('stopped event loop')

@@ -8,7 +8,7 @@ from threading import Thread
 @with_setup(setup=cleanup)
 def test_custom_messages():
     def produce(i):
-        vim.push_message('custom-message', None)
+        vim.post('custom-message', None)
         sleep(0.05 * random())
 
     count = 50
