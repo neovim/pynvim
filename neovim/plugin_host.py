@@ -32,6 +32,7 @@ class PluginHost(object):
         self.installed_plugins = []
         sys.modules['vim'] = vim
 
+
     def __enter__(self):
         vim = self.vim
         info('install import hook/path')
@@ -48,6 +49,7 @@ class PluginHost(object):
         self.install_plugins()
         return self
 
+
     def __exit__(self, type, value, traceback):
         for plugin in self.installed_plugins:
             if hasattr(plugin, 'on_plugin_teardown'):
@@ -59,6 +61,7 @@ class PluginHost(object):
         info('restore sys.stdout and sys.stderr')
         sys.stdout = self.saved_stdout
         sys.stderr = self.saved_stderr
+
 
     def discover_plugins(self):
         loaded = set()
@@ -136,59 +139,42 @@ class PluginHost(object):
             self.installed_plugins.append(plugin)
 
 
-    def on_message(self, message):
-        method_handlers = self.method_handlers
-        event_handlers = self.event_handlers
-        if message.type == 'request':
-            handler = method_handlers.get(message.name, None)
-            if not handler:
-                msg = 'no method handlers registered for %s' % message.name
-                debug(msg)
-                message.reply(msg , error=True)
-                return
-            try:
-                debug("running method handler for '%s %s'", message.name,
-                      message.arg)
-                if message.arg:
-                    rv = handler(message.arg)
-                else:
-                    rv = handler()
-                debug("method handler for '%s %s' returns: %s",
-                      message.name,
-                      message.arg,
-                      rv)
-                message.reply(rv)
-            except Exception as e:
-                if isinstance(e, VimExit):
-                    raise e
-                err_str = format_exc(5)
-                warn("error caught while processing call '%s %s': %s",
-                     message.name,
-                     message.arg,
-                     err_str)
-                message.reply(err_str, error=True)
-        elif message.type == 'event':
-            handlers = event_handlers.get(message.name, None)
-            if not handlers:
-                debug("no event handlers registered for %s", message.name)
-                return
-            debug('running event handler for %s', message.name)
-            try:
-                for handler in handlers:
-                    handler(message.arg)
-            except Exception as e:
-                if isinstance(e, VimExit):
-                    raise e
-                err_str = format_exc(5)
-                warn("error caught while processing event '%s %s': %s",
-                     message.name,
-                     message.arg,
-                     err_str)
+    def on_request(self, name, args):
+        handler = self.method_handlers.get(name, None)
+        if not handler:
+            msg = 'no method handlers registered for %s' % name
+            debug(msg)
+            raise Exception(msg)
+
+        debug("running method handler for '%s %s'", name, args)
+        if args:
+            rv = handler(args)
         else:
-            assert False
+            rv = handler()
+        debug("method handler for '%s %s' returns: %s", name, args, rv)
+        return rv
+
+
+    def on_notification(self, name, args):
+        handlers = self.event_handlers.get(name, None)
+        if not handlers:
+            debug("no event handlers registered for %s", name)
+            return
+
+        debug('running event handlers for %s', name)
+        for handler in handlers:
+            handler(args)
+
+
+    def on_error(self, err):
+        warn('exiting due to error: %s', err)
+        self.vim.loop_stop()
+
 
     def run(self):
-        self.vim.message_loop(lambda m: self.on_message(m))
+        self.vim.loop_start(self.on_request,
+                            self.on_notification,
+                            self.on_error)
 
 
 # This was copied/adapted from vim-python help

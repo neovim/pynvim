@@ -17,6 +17,7 @@ def test_python_nested_commands():
     vim.command(nested)
     eq(vim.vars['set_by_nested_python'], 555)
 
+
 @with_setup(setup=cleanup)
 def test_pyfile():
     fname = 'pyfile.py'

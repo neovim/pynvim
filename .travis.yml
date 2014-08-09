@@ -4,14 +4,14 @@ python:
 before_install:
   - sudo apt-get install expect
   - git clone --depth=1 -b master git://github.com/neovim/neovim nvim
-  - cd /opt && sudo git clone --depth=1 git://github.com/tarruda/neovim-deps && cd -
+  - cd /opt && sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps && cd -
 install:
   - pip install .
   - prefix="/opt/neovim-deps"
   - eval $($prefix/bin/luarocks path)
   - export PATH="$prefix/bin:$PATH"
   - export PKG_CONFIG_PATH="$prefix/lib/pkgconfig"
-  - export DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LIBUV=OFF -DUSE_BUNDLED_LUAJIT=OFF -DUSE_BUNDLED_MSGPACK=OFF -DUSE_BUNDLED_LUAROCKS=OFF"
+  - export USE_BUNDLED_DEPS=OFF
   - cd nvim && make && cd ..
 script:
   - ./nvim/scripts/run-api-tests.exp "nosetests --verbosity=2" "./nvim/build/bin/nvim -u NONE"
