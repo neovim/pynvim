@@ -43,8 +43,9 @@ class Buffer(object):
         return self.set_slice(start, end, True, include_end, lines)
 
     def __iter__(self):
-        for i in xrange(len(self)):
-            yield self.get_line(i)
+        lines = self[:]
+        for line in lines:
+            yield line
 
     def append(self, lines, index=-1):
         if isinstance(lines, basestring):
