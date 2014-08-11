@@ -103,14 +103,24 @@ class Client(object):
         return result
 
 
+    def next_pending_message(self):
+        if self.pending:
+            msg = self.pending.popleft()
+            if msg[0] == 'eof':
+                # never leave this state
+                self.pending.appendleft(msg)
+                raise msg[1]
+            debug('returning message: %s', msg)
+            return msg
+
+
     def next_message(self):
         """
         Blocks until a message is received. This is mostly for testing and
         interactive usage.
         """
-        if self.pending:
-            msg = self.pending.popleft()
-            debug('returning queued message: %s', msg)
+        msg = self.next_pending_message()
+        if msg:
             return msg
 
         def request_cb(name, args, reply_fn):
@@ -122,15 +132,14 @@ class Client(object):
             self.stream.loop_stop()
 
         def error_cb(err):
+            self.pending.append(('eof', err,))
             self.stream.loop_stop()
-            raise err
 
         debug('will block until a message is available')
         self.stream.loop_start(request_cb, notification_cb, error_cb)
 
-        if self.pending:
-            msg = self.pending.popleft()
-            debug('message available: %s', msg)
+        msg = self.next_pending_message()
+        if msg:
             return msg
 
 
