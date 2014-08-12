@@ -16,6 +16,13 @@ def connect(address=None, port=None, vim_compatible=False):
     client.discover_api()
     return client.vim
 
+
+def spawn(argv):
+    client = Client(RPCStream(MsgpackStream(UvStream(spawn_argv=argv))))
+    client.discover_api()
+    return client.vim
+
+
 def start_host(address=None, port=None):
     logging.root.addHandler(logging.NullHandler())
     logger = logging.getLogger(__name__)
