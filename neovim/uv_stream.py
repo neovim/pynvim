@@ -10,7 +10,7 @@ class UvStream(object):
     """
     Stream abstraction implemented on top of libuv
     """
-    def __init__(self, address=None, port=None):
+    def __init__(self, address=None, port=None, embed=False):
         debug('initializing UvStream instance')
         self._loop = pyuv.Loop()
         self._connected = False
@@ -18,28 +18,40 @@ class UvStream(object):
         self._error_cb = None
         self._connection_error = None
         self._pending_writes = 0
-        # Select the type of handle
-        if port:
-            debug('TCP address was provided, connecting...')
-            # tcp
-            self._stream = pyuv.TCP(self._loop)
-            self._stream.connect((address, port), self._on_connect)
-        elif address:
-            debug('Pipe address was provided, connecting...')
-            # named pipe or unix socket
-            self._stream = pyuv.Pipe(self._loop)
-            self._stream.connect(address, self._on_connect)
-        else:
-            debug('No addresses were provided, will use stdin/stdout')
-            # stdin/stdout
-            self._read_stream = pyuv.Pipe(self._loop) 
-            self._read_stream.open(sys.stdin.fileno())
-            self._write_stream = pyuv.Pipe(self._loop) 
-            self._write_stream.open(sys.stdout.fileno())
-            self._connected = True
         self._async = pyuv.Async(self._loop, self._on_async)
         self._term = pyuv.Signal(self._loop)
         self._term.start(self._on_term, SIGTERM)
+        # Select the type of handle
+        if port:
+            self.init_tcp(address, port)
+        elif address:
+            self.init_pipe(address)
+        else:
+            self.init_stdio()
+
+
+    def init_tcp(self, address, port):
+        # tcp/ip
+        debug('TCP address was provided, connecting...')
+        self._stream = pyuv.TCP(self._loop)
+        self._stream.connect((address, port), self._on_connect)
+
+
+    def init_pipe(self, address):
+        # named pipe or unix socket
+        debug('Pipe address was provided, connecting...')
+        self._stream = pyuv.Pipe(self._loop)
+        self._stream.connect(address, self._on_connect)
+
+
+    def init_stdio(self):
+        # stdin/stdout
+        debug('No addresses were provided, will use stdin/stdout')
+        self._read_stream = pyuv.Pipe(self._loop) 
+        self._read_stream.open(sys.stdin.fileno())
+        self._write_stream = pyuv.Pipe(self._loop) 
+        self._write_stream.open(sys.stdout.fileno())
+        self._connected = True
 
 
     """
