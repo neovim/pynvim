@@ -19,7 +19,6 @@ class NullHandler(logging.Handler):
 def connect(address=None, port=None, vim_compatible=False):
     client = Client(RPCStream(MsgpackStream(UvStream(address, port))),
                     vim_compatible)
-    client.discover_api()
     return client.vim
 
 

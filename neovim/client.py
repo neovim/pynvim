@@ -45,6 +45,7 @@ class Client(object):
         self.vim = None
         self.loop_running = False
         self.pending = deque()
+        self._discover_api()
 
 
     def rpc_yielding_request(self, method, args):
@@ -243,7 +244,7 @@ class Client(object):
         self.stream.loop_stop()
 
 
-    def discover_api(self):
+    def _discover_api(self):
         """
         Discovers the remote API using the special method '0'. After this
         the client will have a `vim` attribute containing an object

@@ -27,7 +27,6 @@ class MsgpackStream(object):
         for name, info in vim.api_metadata['types'].items():
             self.types[info['id']] = getattr(vim, name)
 
-
     def interrupt(self):
         self.stream.interrupt()
 
