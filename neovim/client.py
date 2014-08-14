@@ -43,6 +43,7 @@ class Client(object):
         self.vim = None
         self.loop_running = False
         self.pending = deque()
+        self._discover_api()
 
 
     def rpc_yielding_request(self, method, args):
@@ -251,7 +252,7 @@ class Client(object):
         self.stream.loop_stop()
 
 
-    def discover_api(self):
+    def _discover_api(self):
         """
         Discovers the remote API using the special method '0'. After this
         the client will have a `vim` attribute containing an object
@@ -262,7 +263,7 @@ class Client(object):
             # Only need to do this once
             return
         channel_id, api = self.rpc_request(0, [])
-        api = msgpack.unpackb(api)
+        api = msgpack.unpackb(api, encoding='utf8')
         # The 'Vim' class is the main entry point of the api
         classes = {'vim': type('Vim', (), {})}
         setattr(classes['vim'], 'loop_start',

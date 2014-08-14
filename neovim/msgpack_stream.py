@@ -6,7 +6,7 @@ debug, warn = (logger.debug, logger.warn,)
 class MsgpackStream(object):
     def __init__(self, stream):
         self.stream = stream
-        self.unpacker = msgpack.Unpacker()
+        self.unpacker = msgpack.Unpacker(encoding='utf8')
 
 
     def interrupt(self):
