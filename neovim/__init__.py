@@ -1,9 +1,9 @@
-from client import Client
-from script_host import ScriptHost
-from plugin_host import PluginHost
-from uv_stream import UvStream
-from msgpack_stream import MsgpackStream
-from rpc_stream import RPCStream
+from .client import Client
+from .script_host import ScriptHost
+from .plugin_host import PluginHost
+from .uv_stream import UvStream
+from .msgpack_stream import MsgpackStream
+from .rpc_stream import RPCStream
 from time import sleep
 import logging, os
 

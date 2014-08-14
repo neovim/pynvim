@@ -29,7 +29,7 @@ def test_height():
     eq(vim.windows[1].height, vim.windows[0].height)
     vim.current.window = vim.windows[1]
     vim.command('split')
-    eq(vim.windows[1].height, vim.windows[0].height / 2)
+    eq(vim.windows[1].height, vim.windows[0].height // 2)
     vim.windows[1].height = 2
     eq(vim.windows[1].height, 2)
 
@@ -40,7 +40,7 @@ def test_width():
     eq(vim.windows[1].width, vim.windows[0].width)
     vim.current.window = vim.windows[1]
     vim.command('vsplit')
-    eq(vim.windows[1].width, vim.windows[0].width / 2)
+    eq(vim.windows[1].width, vim.windows[0].width // 2)
     vim.windows[1].width = 2
     eq(vim.windows[1].width, 2)
 
