@@ -1,4 +1,4 @@
-import vim, buffer, window, tabpage
+from . import vim, buffer, window, tabpage
 
 
 __all__ = ['mixins']

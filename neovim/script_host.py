@@ -22,10 +22,10 @@ class ScriptHost(object):
         self.module = new_module('__main__')
         vim.script_context = self.module
         # it seems some plugins assume 'sys' is already imported, so do it now
-        exec 'import sys' in self.module.__dict__
+        exec('import sys', self.module.__dict__)
 
     def python_execute(self, script):
-        exec script in self.module.__dict__
+        exec(script, self.module.__dict__)
 
     def python_execute_file(self, file_path):
         execfile(file_path, self.module.__dict__)
@@ -37,7 +37,7 @@ class ScriptHost(object):
         fname = '_vim_pydo'
         # define the function
         function_def = 'def %s(line, linenr):\n %s' % (fname, arg[2],)
-        exec function_def in self.module.__dict__
+        exec(function_def, self.module.__dict__)
         # get the function
         function = self.module.__dict__[fname]
         while start <= stop:

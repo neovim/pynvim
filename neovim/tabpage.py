@@ -1,4 +1,4 @@
-from util import RemoteMap, RemoteSequence
+from .util import RemoteMap, RemoteSequence
 
 class Tabpage(object):
     @classmethod

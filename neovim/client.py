@@ -1,9 +1,10 @@
 import greenlet, logging, os, os.path, msgpack
 from collections import deque
-from mixins import mixins
-from util import VimError, VimExit
+from .mixins import mixins
+from .util import VimError, VimExit
 from traceback import format_exc
-import cProfile, pstats, StringIO
+import cProfile, pstats 
+from io import StringIO
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
@@ -231,7 +232,7 @@ class Client(object):
                 pr.disable()
                 report = os.path.abspath('.nvim-python-client.profile')
                 info('stopped profiler, writing report to %s', report)
-                s = StringIO.StringIO()
+                s = StringIO()
                 ps = pstats.Stats(pr, stream=s)
                 ps.strip_dirs().sort_stats('tottime').print_stats(30)
 
