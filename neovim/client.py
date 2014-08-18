@@ -3,7 +3,7 @@ from collections import deque
 from .mixins import mixins
 from .util import VimError, VimExit
 from traceback import format_exc
-import cProfile, pstats 
+import cProfile, pstats, sys
 from io import StringIO
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,10 @@ class Client(object):
         self.loop_running = False
         self.pending = deque()
         self._discover_api()
-
+        if sys.version_info.major > 2:
+            self.stream.encoding = self.vim.get_option('encoding').decode('ascii')
+        else:
+            self.stream.encoding = self.vim.get_option('encoding')
 
     def rpc_yielding_request(self, method, args):
         gr = greenlet.getcurrent()
