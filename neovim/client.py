@@ -44,6 +44,8 @@ class Client(object):
         self.loop_running = False
         self.pending = deque()
         self._discover_api()
+        # TODO: get a cleaner API for this hack
+        self.stream.stream.unpacker = msgpack.Unpacker(encoding='utf8')
 
 
     def rpc_yielding_request(self, method, args):
