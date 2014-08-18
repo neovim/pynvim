@@ -3,12 +3,19 @@ from collections import deque
 from .mixins import mixins
 from .util import VimError, VimExit
 from traceback import format_exc
-import cProfile, pstats 
+import cProfile, pstats, sys
 from io import StringIO
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
 
+if sys.version_info.major < 3:
+    def xtype(name , bases, objdict):
+        if isinstance(name, unicode):
+            name = name.encode('utf8')
+        return type(name, bases, objdict)
+else:
+    xtype = type
 
 class Remote(object):
     """
@@ -267,7 +274,7 @@ class Client(object):
         channel_id, api = self.rpc_request(0, [])
         api = msgpack.unpackb(api, encoding='utf8')
         # The 'Vim' class is the main entry point of the api
-        classes = {'vim': type('Vim', (), {})}
+        classes = {'vim': xtype('Vim', (), {})}
         setattr(classes['vim'], 'loop_start',
                 lambda s, *args, **kwargs: self.loop_start(*args, **kwargs))
         setattr(classes['vim'], 'loop_stop',
@@ -280,7 +287,7 @@ class Client(object):
         # dict using lower case names as keys, so we can easily match methods
         # in the API.
         for cls in api['classes']:
-            klass = type(cls + 'Base', (Remote,), {})
+            klass = xtype(cls + 'Base', (Remote,), {})
             # Methods of this class will pass an integer representing the
             # remote object as first argument
             classes[cls.lower()] = klass
@@ -299,7 +306,7 @@ class Client(object):
             make_vim_compatible(classes['vim'])
         # Now apply all available mixins to the generated classes
         for name, mixin in mixins.items():
-            classes[name] = type(mixin.__name__, (classes[name], mixin,), {})
+            classes[name] = xtype(mixin.__name__, (classes[name], mixin,), {})
         # Create the 'vim object', which is a singleton of the 'Vim' class
         self.vim = classes['vim']()
         # Initialize with some useful attributes
@@ -345,7 +352,10 @@ def fname(name):
     Helper for renaming generated functions
     """
     def dec(f):
-        f.__name__ = name
+        if sys.version_info.major < 3 and isinstance(name, unicode):
+            f.__name__ = name.encode('utf8')
+        else:
+            f.__name__ = name
         return f
     return dec
 
