@@ -1,4 +1,9 @@
 from .util import RemoteMap
+import sys
+
+if sys.version_info.major >= 3:
+    # For python3/2 compatibility define basestring
+    basestring = str
 
 class Buffer(object):
     @classmethod

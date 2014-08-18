@@ -12,7 +12,7 @@ def test_command():
     vim.command('normal itesting\npython\napi')
     vim.command('w')
     ok(os.path.isfile(fname))
-    eq(file(fname).read(), 'testing\npython\napi\n')
+    eq(open(fname).read(), 'testing\npython\napi\n')
     os.unlink(fname)
 
 
