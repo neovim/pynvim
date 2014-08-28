@@ -32,6 +32,7 @@ class MsgpackStream(object):
                     break
 
         self.stream.loop_start(data_cb, error_cb)
+        debug('exiting msgpack stream loop')
 
 
     def loop_stop(self):

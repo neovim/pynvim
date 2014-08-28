@@ -10,37 +10,72 @@ class UvStream(object):
     """
     Stream abstraction implemented on top of libuv
     """
-    def __init__(self, address=None, port=None):
+    def __init__(self, address=None, port=None, spawn_argv=None):
         debug('initializing UvStream instance')
         self._loop = pyuv.Loop()
+        self._error = None
         self._connected = False
         self._data_cb = None
         self._error_cb = None
         self._connection_error = None
         self._pending_writes = 0
-        # Select the type of handle
-        if port:
-            debug('TCP address was provided, connecting...')
-            # tcp
-            self._stream = pyuv.TCP(self._loop)
-            self._stream.connect((address, port), self._on_connect)
-        elif address:
-            debug('Pipe address was provided, connecting...')
-            # named pipe or unix socket
-            self._stream = pyuv.Pipe(self._loop)
-            self._stream.connect(address, self._on_connect)
-        else:
-            debug('No addresses were provided, will use stdin/stdout')
-            # stdin/stdout
-            self._read_stream = pyuv.Pipe(self._loop) 
-            self._read_stream.open(sys.stdin.fileno())
-            self._write_stream = pyuv.Pipe(self._loop) 
-            self._write_stream.open(sys.stdout.fileno())
-            self._connected = True
         self._async = pyuv.Async(self._loop, self._on_async)
         self._term = pyuv.Signal(self._loop)
         self._term.start(self._on_term, SIGTERM)
+        self._error_stream = None
+        # Select the type of handle
+        if spawn_argv:
+            self.init_spawn(spawn_argv)
+        elif port:
+            self.init_tcp(address, port)
+        elif address:
+            self.init_pipe(address)
+        else:
+            self.init_stdio()
 
+
+    def init_tcp(self, address, port):
+        # tcp/ip
+        debug('TCP address was provided, connecting...')
+        self._stream = pyuv.TCP(self._loop)
+        self._stream.connect((address, port), self._on_connect)
+
+
+    def init_pipe(self, address):
+        # named pipe or unix socket
+        debug('Pipe address was provided, connecting...')
+        self._stream = pyuv.Pipe(self._loop)
+        self._stream.connect(address, self._on_connect)
+
+
+    def init_stdio(self):
+        # stdin/stdout
+        debug('No addresses were provided, will use stdin/stdout')
+        self._read_stream = pyuv.Pipe(self._loop) 
+        self._read_stream.open(sys.stdin.fileno())
+        self._write_stream = pyuv.Pipe(self._loop) 
+        self._write_stream.open(sys.stdout.fileno())
+        self._connected = True
+
+
+    def init_spawn(self, argv):
+        # spawn a new neovim instance with argv
+        self._write_stream = pyuv.Pipe(self._loop)
+        self._read_stream = pyuv.Pipe(self._loop)
+        self._error_stream = pyuv.Pipe(self._loop)
+        stdin = pyuv.StdIO(self._write_stream,
+                           flags=pyuv.UV_CREATE_PIPE + pyuv.UV_READABLE_PIPE)
+        stdout = pyuv.StdIO(self._read_stream,
+                            flags=pyuv.UV_CREATE_PIPE + pyuv.UV_WRITABLE_PIPE)
+        stderr = pyuv.StdIO(self._error_stream,
+                            flags=pyuv.UV_CREATE_PIPE + pyuv.UV_WRITABLE_PIPE)
+        self._process = pyuv.Process(self._loop)
+        self._process.spawn(file=argv[0],
+                            exit_callback=self._on_exit,
+                            args=argv[1:],
+                            flags=pyuv.UV_PROCESS_WINDOWS_HIDE,
+                            stdio=(stdin, stdout, stderr,))
+        self._connected = True
 
     """
     Called when the libuv stream is connected
@@ -49,6 +84,7 @@ class UvStream(object):
         self.loop_stop()
         if error:
             msg = pyuv.errno.strerror(error)
+            self._error = msg
             warn('error connecting to neovim: %s', msg)
             self._connection_error = IOError(msg)
             return
@@ -58,7 +94,12 @@ class UvStream(object):
 
     def _on_term(self, handle, signum):
         self.loop_stop()
-        self._error_cb(IOError('Received SIGTERM'))
+        self._error = 'Received SIGTERM'
+        err = IOError(self._error)
+        if not self._error_cb:
+            self._loop.stop()
+            raise err
+        self._error_cb(err)
 
 
     def _on_async(self, handle):
@@ -73,6 +114,26 @@ class UvStream(object):
             self._loop.run(pyuv.UV_RUN_ONCE)
 
 
+    def _on_exit(self, handle, exit_status, term_signal):
+        self._loop.stop()
+        self._error = (
+            'The child nvim instance exited with status %s' % exit_status)
+
+
+    def _on_stderr_read(self, handle, data, error):
+        if error or not data:
+            msg = pyuv.errno.strerror(error)
+            warn('Error reading child nvim stderr: %s', msg)
+            err = IOError(msg)
+            if not self._error_cb:
+                self._loop.stop()
+                self._error = err
+                raise err
+            self._error_cb(err)
+        else:
+            warn('nvim stderr: %s', data)
+
+
     def _on_read(self, handle, data, error):
         """
         Called when data is read from the libuv stream
@@ -81,9 +142,13 @@ class UvStream(object):
             msg = pyuv.errno.strerror(error)
             warn('error reading data: %s', msg)
             self._error_cb(IOError(msg))
+            self._loop.stop()
+            self._error = msg
         elif not data:
             warn('connection was closed by neovim')
-            self._error_cb(IOError('EOF'))
+            self._loop.stop()
+            self._error = 'EOF'
+            self._error_cb(IOError(self._error))
         else:
             debug('successfully read %d bytes of data', len(data))
             self._data_cb(data)
@@ -109,7 +174,9 @@ class UvStream(object):
         def write_cb(handle, error):
             self._pending_writes -= 1
             if error:
+                self._loop.stop()
                 msg = pyuv.errno.strerror(error)
+                self._error = msg
                 warn('error writing data: %s', msg)
                 self._error_cb(IOError(msg))
             debug('successfully wrote %d bytes of data', data_len)
@@ -120,6 +187,9 @@ class UvStream(object):
 
 
     def loop_start(self, data_cb, error_cb):
+        if self._error:
+            raise IOError('An error was raised and the connection ' +
+                          'was permanently closed: %s', self._error)
         if not self._connected:
             self._connect()
             if self._connection_error:
@@ -130,9 +200,13 @@ class UvStream(object):
         self._data_cb = data_cb
         self._error_cb = error_cb
         self._read_stream.start_read(self._on_read)
+        if self._error_stream:
+            self._error_stream.start_read(self._on_stderr_read)
         debug('entering libuv event loop')
         self._loop.run(pyuv.UV_RUN_DEFAULT)
         debug('exited libuv event loop')
+        if self._error_stream:
+            self._error_stream.stop_read()
         self._read_stream.stop_read()
         self._data_cb = None
         self._error_cb = None

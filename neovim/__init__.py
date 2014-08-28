@@ -10,14 +10,27 @@ import logging, os
 __all__ = ['connect', 'start_host', 'ScriptHost', 'PluginHost']
 
 
+# Required for python 2.6
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+
 def connect(address=None, port=None, vim_compatible=False):
     client = Client(RPCStream(MsgpackStream(UvStream(address, port))),
                     vim_compatible)
     client.discover_api()
     return client.vim
 
+
+def spawn(argv):
+    client = Client(RPCStream(MsgpackStream(UvStream(spawn_argv=argv))))
+    client.discover_api()
+    return client.vim
+
+
 def start_host(address=None, port=None):
-    logging.root.addHandler(logging.NullHandler())
+    logging.root.addHandler(NullHandler())
     logger = logging.getLogger(__name__)
     info = logger.info
     if 'NEOVIM_PYTHON_LOG_FILE' in os.environ:

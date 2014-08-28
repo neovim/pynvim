@@ -62,6 +62,8 @@ class RPCStream(object):
             notification_cb(*self.posted_notifications.popleft())
             self.stream.loop_start(msg_cb, error_cb)
 
+        debug('exiting rpc stream loop')
+
 
     def loop_stop(self):
         self.stream.loop_stop()
