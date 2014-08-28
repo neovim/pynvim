@@ -30,13 +30,13 @@ class ScriptHost(object):
     def python_execute_file(self, file_path):
         execfile(file_path, self.module.__dict__)
 
-    def python_do_range(self, arg):
+    def python_do_range(self, start, stop, code):
         vim = self.vim
-        start = arg[0] - 1
-        stop = arg[1] - 1
+        start -= 1
+        stop -= 1
         fname = '_vim_pydo'
         # define the function
-        function_def = 'def %s(line, linenr):\n %s' % (fname, arg[2],)
+        function_def = 'def %s(line, linenr):\n %s' % (fname, code,)
         exec function_def in self.module.__dict__
         # get the function
         function = self.module.__dict__[fname]
@@ -58,6 +58,6 @@ class ScriptHost(object):
         # delete the function
         del self.module.__dict__[fname]
 
-    def python_eval(self, arg):
-        return eval(arg, self.module.__dict__)
+    def python_eval(self, expr):
+        return eval(expr, self.module.__dict__)
 

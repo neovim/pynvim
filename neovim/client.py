@@ -143,7 +143,7 @@ class Client(object):
             return msg
 
 
-    def post(self, name, args=None):
+    def post(self, name, args=[]):
         self.stream.post(name, args)
 
 
