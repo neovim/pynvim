@@ -15,4 +15,4 @@ install:
   - export USE_BUNDLED_DEPS=OFF
   - cd nvim && make && cd ..
 script:
-  - ./nvim/scripts/run-api-tests.exp "nosetests --verbosity=2" "./nvim/build/bin/nvim -u NONE"
+  - ./nvim/scripts/run-api-tests.exp "nosetests --nologcapture --verbosity=2" "./nvim/build/bin/nvim -u NONE"
