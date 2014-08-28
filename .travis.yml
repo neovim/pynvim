@@ -1,6 +1,7 @@
 language: python
 python:
-  - 2.7
+  - "2.6"
+  - "2.7"
 before_install:
   - sudo apt-get install expect
   - git clone --depth=1 -b master git://github.com/neovim/neovim nvim
