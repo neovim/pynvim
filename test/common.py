@@ -2,8 +2,8 @@ from nose.tools import eq_ as eq
 import neovim, os, json
 
 vim = None
-if 'NEOVIM_SPAWN_ARGV' in os.environ:
-    vim = neovim.spawn(json.loads(os.environ['NEOVIM_SPAWN_ARGV']))
+if 'NVIM_SPAWN_ARGV' in os.environ:
+    vim = neovim.spawn(json.loads(os.environ['NVIM_SPAWN_ARGV']))
 
 if not vim:
     vim = neovim.connect(os.environ['NEOVIM_LISTEN_ADDRESS'])
