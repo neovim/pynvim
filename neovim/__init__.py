@@ -33,17 +33,17 @@ def start_host(address=None, port=None):
     logging.root.addHandler(NullHandler())
     logger = logging.getLogger(__name__)
     info = logger.info
-    if 'NEOVIM_PYTHON_LOG_FILE' in os.environ:
-        logfile = os.environ['NEOVIM_PYTHON_LOG_FILE'].strip()
+    if 'NVIM_PYTHON_LOG_FILE' in os.environ:
+        logfile = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
         handler = logging.FileHandler(logfile, 'w')
         handler.formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s @ '
             '%(filename)s:%(funcName)s:%(lineno)s] %(process)s - %(message)s')
         logging.root.addHandler(handler)
         level = logging.INFO
-        if 'NEOVIM_PYTHON_LOG_LEVEL' in os.environ:
+        if 'NVIM_PYTHON_LOG_LEVEL' in os.environ:
             l = getattr(logging,
-                        os.environ['NEOVIM_PYTHON_LOG_LEVEL'].strip(),
+                        os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
                         level)
             if isinstance(l, int):
                 level = l

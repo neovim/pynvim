@@ -198,7 +198,7 @@ class Client(object):
 
 
     def loop_start(self, request_cb, notification_cb, error_cb):
-        profiling = 'NEOVIM_PYTHON_PROFILE' in os.environ
+        profiling = 'NVIM_PYTHON_PROFILE' in os.environ
 
         try:
             assert not self.loop_running
