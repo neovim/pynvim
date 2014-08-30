@@ -68,14 +68,12 @@ class Client(object):
         debug('will now perform a blocking rpc request: %s, %s', method, args)
         self.stream.send(method, args, response_cb)
         queue = []
-        msg = self.next_message()
 
-        while msg:
-            debug('message received while waiting for rpc response: %s', msg)
-            queue.append(msg)
-            if response:
-                break
+        while not response:
             msg = self.next_message()
+            if msg:
+                debug('message received while waiting for response: %s', msg)
+                queue.append(msg)
 
         self.pending.extend(queue)
 
@@ -143,7 +141,7 @@ class Client(object):
             return msg
 
 
-    def post(self, name, args=None):
+    def post(self, name, args=[]):
         self.stream.post(name, args)
 
 

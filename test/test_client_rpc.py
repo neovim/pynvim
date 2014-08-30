@@ -12,7 +12,7 @@ def test_call_and_reply():
 
     def notification_cb(name, args):
         eq(name, 'setup')
-        cmd = 'let g:result = send_call(%d, "client-call", [1,2,3])' % cid
+        cmd = 'let g:result = send_call(%d, "client-call", 1, 2, 3)' % cid
         vim.command(cmd)
         eq(vim.vars['result'], [4, 5, 6])
         vim.loop_stop()
@@ -38,7 +38,7 @@ def test_call_api_before_reply():
 
     def notification_cb(name, args):
         eq(name, 'setup2')
-        cmd = 'let g:result = send_call(%d, "client-call2", [1,2,3])' % cid
+        cmd = 'let g:result = send_call(%d, "client-call2", 1, 2, 3)' % cid
         vim.command(cmd)
         eq(vim.vars['result'], [7, 8, 9])
         vim.loop_stop()
@@ -77,7 +77,8 @@ def test_recursion():
         eq(vim.vars['result4'], 32)
         vim.loop_stop()
 
-    def request_cb(name, n):
+    def request_cb(name, args):
+        n = args[0]
         n *= 2
         if n <= 16:
             if n == 4:

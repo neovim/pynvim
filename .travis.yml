@@ -16,3 +16,4 @@ install:
   - cd nvim && make && cd ..
 script:
   - ./nvim/scripts/run-api-tests.exp "nosetests --nologcapture --verbosity=2" "./nvim/build/bin/nvim -u NONE"
+  - NVIM_SPAWN_ARGV='["./nvim/build/bin/nvim", "-u", "NONE", "--embedded-mode"]'  nosetests --nologcapture --verbosity=2

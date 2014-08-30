@@ -147,10 +147,7 @@ class PluginHost(object):
             raise Exception(msg)
 
         debug("running method handler for '%s %s'", name, args)
-        if args:
-            rv = handler(args)
-        else:
-            rv = handler()
+        rv = handler(*args)
         debug("method handler for '%s %s' returns: %s", name, args, rv)
         return rv
 
@@ -163,7 +160,7 @@ class PluginHost(object):
 
         debug('running event handlers for %s', name)
         for handler in handlers:
-            handler(args)
+            handler(*args)
 
 
     def on_error(self, err):

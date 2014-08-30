@@ -10,6 +10,8 @@ class RPCStream(object):
         self.pending_requests = {}
         self.next_request_id = 1
         self.interrupted = False
+        self.stopped = False
+        self.running = True
         self.posted_notifications = deque()
 
 
@@ -56,17 +58,26 @@ class RPCStream(object):
                 warn(error)
                 raise Exception(error)
 
-        self.stream.loop_start(msg_cb, error_cb)
-
-        while self.posted_notifications:
-            notification_cb(*self.posted_notifications.popleft())
-            self.stream.loop_start(msg_cb, error_cb)
-
+        self._run(msg_cb, notification_cb, error_cb)
         debug('exiting rpc stream loop')
 
 
+
     def loop_stop(self):
-        self.stream.loop_stop()
+        self.stopped = True
+        if self.running:
+            self.stream.loop_stop()
+
+
+    def _run(self, msg_cb, notification_cb, error_cb):
+        self.stopped = False
+        while not self.stopped:
+            if self.posted_notifications:
+                notification_cb(*self.posted_notifications.popleft())
+                continue
+            self.running = True
+            self.stream.loop_start(msg_cb, error_cb)
+            self.running = False
 
 
 def reply_fn(stream, request_id):
