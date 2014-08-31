@@ -1,5 +1,6 @@
 from util import RemoteMap
 
+
 class Buffer(object):
     @classmethod
     def initialize(self, buffer):
@@ -17,27 +18,27 @@ class Buffer(object):
         include_end = False
         start = idx.start
         end = idx.stop
-        if start == None:
+        if start is None:
             start = 0
-        if end == None:
+        if end is None:
             end = -1
             include_end = True
         return self.get_slice(start, end, True, include_end)
 
     def __setitem__(self, idx, lines):
         if not isinstance(idx, slice):
-            if lines == None:
+            if lines is None:
                 return self.del_line(idx)
             else:
                 return self.set_line(idx, lines)
-        if lines == None:
+        if lines is None:
             lines = []
         include_end = False
         start = idx.start
         end = idx.stop
-        if start == None:
+        if start is None:
             start = 0
-        if end == None:
+        if end is None:
             end = -1
             include_end = True
         return self.set_slice(start, end, True, include_end, lines)
@@ -89,9 +90,9 @@ class Range(object):
             return self._buffer[self._normalize_index(idx)]
         start = self._normalize_index(idx.start)
         end = self._normalize_index(idx.stop)
-        if start == None:
+        if start is None:
             start = self.start
-        if end == None:
+        if end is None:
             end = self.end
         return self._buffer[start:end]
 
@@ -101,9 +102,9 @@ class Range(object):
             return
         start = self._normalize_index(idx.start)
         end = self._normalize_index(idx.stop)
-        if start == None:
+        if start is None:
             start = self.start
-        if end == None:
+        if end is None:
             end = self.end
         self._buffer[start:end] = lines
 
@@ -113,12 +114,12 @@ class Range(object):
 
     def append(self, lines, i=None):
         i = self._normalize_index(i)
-        if i == None:
+        if i is None:
             i = self.end
         self._buffer.append(lines, i)
 
     def _normalize_index(self, index):
-        if index == None:
+        if index is None:
             return None
         if index < 0:
             index = self.end - 1

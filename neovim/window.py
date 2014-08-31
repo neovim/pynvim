@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 from util import RemoteMap
+
 
 class Window(object):
     @classmethod

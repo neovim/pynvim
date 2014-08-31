@@ -1,10 +1,14 @@
-from collections import deque
-from util import VimExit
+# -*- coding: utf-8 -*-
+# from collections import deque
+# from util import VimExit
 from signal import SIGTERM
-import sys, pyuv, logging
+import sys
+import pyuv
+import logging
 
 logger = logging.getLogger(__name__)
 debug, warn = (logger.debug, logger.warn,)
+
 
 class UvStream(object):
     """
@@ -33,13 +37,11 @@ class UvStream(object):
         else:
             self.init_stdio()
 
-
     def init_tcp(self, address, port):
         # tcp/ip
         debug('TCP address was provided, connecting...')
         self._stream = pyuv.TCP(self._loop)
         self._stream.connect((address, port), self._on_connect)
-
 
     def init_pipe(self, address):
         # named pipe or unix socket
@@ -47,16 +49,14 @@ class UvStream(object):
         self._stream = pyuv.Pipe(self._loop)
         self._stream.connect(address, self._on_connect)
 
-
     def init_stdio(self):
         # stdin/stdout
         debug('No addresses were provided, will use stdin/stdout')
-        self._read_stream = pyuv.Pipe(self._loop) 
+        self._read_stream = pyuv.Pipe(self._loop)
         self._read_stream.open(sys.stdin.fileno())
-        self._write_stream = pyuv.Pipe(self._loop) 
+        self._write_stream = pyuv.Pipe(self._loop)
         self._write_stream.open(sys.stdout.fileno())
         self._connected = True
-
 
     def init_spawn(self, argv):
         # spawn a new neovim instance with argv
@@ -91,7 +91,6 @@ class UvStream(object):
         self._connected = True
         self._read_stream = self._write_stream = stream
 
-
     def _on_term(self, handle, signum):
         self.loop_stop()
         self._error = 'Received SIGTERM'
@@ -101,24 +100,20 @@ class UvStream(object):
             raise err
         self._error_cb(err)
 
-
     def _on_async(self, handle):
         """
         Called when the async handle is fired
         """
         self.loop_stop()
 
-
     def _connect(self):
         while not self._connected and not self._connection_error:
             self._loop.run(pyuv.UV_RUN_ONCE)
-
 
     def _on_exit(self, handle, exit_status, term_signal):
         self._loop.stop()
         self._error = (
             'The child nvim instance exited with status %s' % exit_status)
-
 
     def _on_stderr_read(self, handle, data, error):
         if error or not data:
@@ -132,7 +127,6 @@ class UvStream(object):
             self._error_cb(err)
         else:
             warn('nvim stderr: %s', data)
-
 
     def _on_read(self, handle, data, error):
         """
@@ -153,13 +147,11 @@ class UvStream(object):
             debug('successfully read %d bytes of data', len(data))
             self._data_cb(data)
 
-
     def interrupt(self):
         """
         Stops the event loop from another thread.
         """
         self._async.send()
-
 
     def send(self, data):
         if not self._connected:
@@ -185,7 +177,6 @@ class UvStream(object):
         # queue the data for writing
         self._write_stream.write(data, write_cb)
 
-
     def loop_start(self, data_cb, error_cb):
         if self._error:
             raise IOError('An error was raised and the connection ' +
@@ -210,7 +201,6 @@ class UvStream(object):
         self._read_stream.stop_read()
         self._data_cb = None
         self._error_cb = None
-
 
     def loop_stop(self):
         """

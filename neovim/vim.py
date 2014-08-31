@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 from util import RemoteSequence, RemoteMap, Current, VimError
 
@@ -29,15 +30,15 @@ class Vim(object):
 
     def foreach_rtp(self, cb):
         """
-        Call the given callable for each path in 'runtimepath' until either 
-        callable returns something but None, the exception is raised or there 
-        are no longer paths. If stopped in case callable returned non-None, 
+        Call the given callable for each path in 'runtimepath' until either
+        callable returns something but None, the exception is raised or there
+        are no longer paths. If stopped in case callable returned non-None,
         vim.foreach_rtp function returns the value returned by callable.
         """
         for path in self.list_runtime_paths():
             try:
-                if cb(path) != None:
-                    break;
+                if cb(path) is not None:
+                    break
             except:
                 break
 
