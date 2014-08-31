@@ -1,9 +1,13 @@
-from imp import new_module, find_module, load_module
-import sys, logging, os.path
-from traceback import format_exc
+# -*- coding: utf-8 -*-
+from imp import new_module  # , find_module, load_module
+# import sys
+# import os.path
+import logging
+# from traceback import format_exc
 
 logger = logging.getLogger(__name__)
 debug, warn = (logger.debug, logger.warn,)
+
 
 class ScriptHost(object):
     """
@@ -60,4 +64,3 @@ class ScriptHost(object):
 
     def python_eval(self, expr):
         return eval(expr, self.module.__dict__)
-

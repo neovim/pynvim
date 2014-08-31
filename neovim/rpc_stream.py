@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 from collections import deque
 import logging
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
+
 
 class RPCStream(object):
     def __init__(self, stream):
@@ -14,11 +16,9 @@ class RPCStream(object):
         self.running = False
         self.posted_notifications = deque()
 
-
     def post(self, name, args):
         self.posted_notifications.append((name, args,))
         self.stream.interrupt()
-
 
     def send(self, method, args, response_cb):
         request_id = self.next_request_id
@@ -28,7 +28,6 @@ class RPCStream(object):
         self.stream.send([0, request_id, method, args])
         # set the callback
         self.pending_requests[request_id] = response_cb
-
 
     def loop_start(self, request_cb, notification_cb, error_cb):
         def msg_cb(msg):
@@ -61,13 +60,10 @@ class RPCStream(object):
         self._run(msg_cb, notification_cb, error_cb)
         debug('exiting rpc stream loop')
 
-
-
     def loop_stop(self):
         self.stopped = True
         if self.running:
             self.stream.loop_stop()
-
 
     def _run(self, msg_cb, notification_cb, error_cb):
         self.stopped = False

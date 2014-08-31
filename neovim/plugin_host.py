@@ -1,7 +1,11 @@
+# -*- coding: utf-8 -*-
 from imp import find_module, load_module
-import os, sys, inspect, logging, os.path
+import os
+import sys
+import inspect
+import logging
 from traceback import format_exc
-from util import VimExit
+# from util import VimExit
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
@@ -32,7 +36,6 @@ class PluginHost(object):
         self.installed_plugins = []
         sys.modules['vim'] = vim
 
-
     def __enter__(self):
         vim = self.vim
         info('install import hook/path')
@@ -49,7 +52,6 @@ class PluginHost(object):
         self.install_plugins()
         return self
 
-
     def __exit__(self, type, value, traceback):
         for plugin in self.installed_plugins:
             if hasattr(plugin, 'on_plugin_teardown'):
@@ -61,7 +63,6 @@ class PluginHost(object):
         info('restore sys.stdout and sys.stderr')
         sys.stdout = self.saved_stdout
         sys.stderr = self.saved_stderr
-
 
     def discover_plugins(self):
         loaded = set()
@@ -138,7 +139,6 @@ class PluginHost(object):
                             break
             self.installed_plugins.append(plugin)
 
-
     def on_request(self, name, args):
         handler = self.method_handlers.get(name, None)
         if not handler:
@@ -151,7 +151,6 @@ class PluginHost(object):
         debug("method handler for '%s %s' returns: %s", name, args, rv)
         return rv
 
-
     def on_notification(self, name, args):
         handlers = self.event_handlers.get(name, None)
         if not handlers:
@@ -162,11 +161,9 @@ class PluginHost(object):
         for handler in handlers:
             handler(*args)
 
-
     def on_error(self, err):
         warn('exiting due to error: %s', err)
         self.vim.loop_stop()
-
 
     def run(self):
         self.vim.loop_start(self.on_request,
@@ -183,7 +180,7 @@ def path_hook(vim):
         idx = oldtail.find('.')
         if idx > 0:
             name = oldtail[:idx]
-            tail = oldtail[idx+1:]
+            tail = oldtail[idx + 1:]
             fmr = find_module(name, path)
             module = load_module(fullname[:-len(oldtail)] + name, *fmr)
             return _find_module(fullname, tail, module.__path__)

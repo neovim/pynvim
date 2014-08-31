@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 class RemoteSequence(object):
     # TODO Need to add better support for this class on the server
     def __init__(self, vim, remote_klass, handle_array_fn):
@@ -21,7 +24,7 @@ class RemoteSequence(object):
         handles = self._handle_array_fn()
         for handle in handles:
             yield self._wrap_fn(handle)
-    
+
     def __contains__(self, item):
         return item._handle in self._handle_array_fn()
 
@@ -91,6 +94,7 @@ class Current(object):
 
 class VimExit(IOError):
     pass
+
 
 class VimError(Exception):
     pass

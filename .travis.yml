@@ -7,6 +7,7 @@ before_install:
   - git clone --depth=1 -b master git://github.com/neovim/neovim nvim
   - cd /opt && sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps && cd -
 install:
+  - pip install -q flake8
   - pip install .
   - prefix="/opt/neovim-deps"
   - eval $($prefix/bin/luarocks path)
@@ -15,5 +16,6 @@ install:
   - export USE_BUNDLED_DEPS=OFF
   - cd nvim && make && cd ..
 script:
+  - flake8 --max-line-length=99 --exclude=test,scripts,nvim  .
   - ./nvim/scripts/run-api-tests.exp "nosetests --nologcapture --verbosity=2" "./nvim/build/bin/nvim -u NONE"
   - NVIM_SPAWN_ARGV='["./nvim/build/bin/nvim", "-u", "NONE", "--embedded-mode"]'  nosetests --nologcapture --verbosity=2

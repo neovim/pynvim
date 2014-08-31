@@ -1,21 +1,21 @@
-import msgpack, logging
+# -*- coding: utf-8 -*-
+import msgpack
+import logging
 
 logger = logging.getLogger(__name__)
 debug, warn = (logger.debug, logger.warn,)
+
 
 class MsgpackStream(object):
     def __init__(self, stream):
         self.stream = stream
         self.unpacker = msgpack.Unpacker()
 
-
     def interrupt(self):
         self.stream.interrupt()
 
-
     def send(self, msg):
         self.stream.send(msgpack.packb(msg))
-
 
     def loop_start(self, msg_cb, error_cb):
         def data_cb(data):
@@ -33,7 +33,6 @@ class MsgpackStream(object):
 
         self.stream.loop_start(data_cb, error_cb)
         debug('exiting msgpack stream loop')
-
 
     def loop_stop(self):
         self.stream.loop_stop()

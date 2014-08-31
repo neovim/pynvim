@@ -4,8 +4,9 @@ from plugin_host import PluginHost
 from uv_stream import UvStream
 from msgpack_stream import MsgpackStream
 from rpc_stream import RPCStream
-from time import sleep
-import logging, os
+# from time import sleep
+import logging
+import os
 
 __all__ = ['connect', 'start_host', 'ScriptHost', 'PluginHost']
 
@@ -53,4 +54,3 @@ def start_host(address=None, port=None):
     info('connected to neovim')
     with PluginHost(vim, discovered_plugins=[ScriptHost]) as host:
         host.run()
-

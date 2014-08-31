@@ -1,4 +1,8 @@
-import vim, buffer, window, tabpage
+# -*- coding: utf-8 -*-
+from . import vim
+from . import buffer
+from . import window
+from . import tabpage
 
 
 __all__ = ['mixins']

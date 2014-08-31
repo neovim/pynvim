@@ -1,9 +1,15 @@
-import greenlet, logging, os, os.path, msgpack
+# -*- coding: utf-8 -*-
+import greenlet
+import logging
+import os
+import msgpack
 from collections import deque
 from mixins import mixins
-from util import VimError, VimExit
+from util import VimError  # , VimExit
 from traceback import format_exc
-import cProfile, pstats, StringIO
+import cProfile
+import pstats
+import StringIO
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
@@ -43,7 +49,6 @@ class Client(object):
         self.loop_running = False
         self.pending = deque()
 
-
     def rpc_yielding_request(self, method, args):
         gr = greenlet.getcurrent()
         parent = gr.parent
@@ -55,7 +60,6 @@ class Client(object):
         self.stream.send(method, args, response_cb)
         debug('yielding from greenlet %s to wait for response', gr)
         return parent.switch()
-
 
     def rpc_blocking_request(self, method, args):
         response = {}
@@ -79,7 +83,6 @@ class Client(object):
 
         return response.get('err', None), response.get('result', None)
 
-
     def rpc_request(self, method, args, expected_type=None):
         """
         Sends a rpc request to Neovim.
@@ -100,7 +103,6 @@ class Client(object):
 
         return result
 
-
     def next_pending_message(self):
         if self.pending:
             msg = self.pending.popleft()
@@ -110,7 +112,6 @@ class Client(object):
                 raise msg[1]
             debug('returning message: %s', msg)
             return msg
-
 
     def next_message(self):
         """
@@ -140,10 +141,8 @@ class Client(object):
         if msg:
             return msg
 
-
     def post(self, name, args=[]):
         self.stream.post(name, args)
-
 
     def on_request(self, name, args, reply_fn):
         def request_handler():
@@ -151,7 +150,7 @@ class Client(object):
                 rv = self.request_cb(name, args)
                 debug('greenlet %s completed, sending %s as response', gr, rv)
                 reply_fn(rv)
-            except Exception as e:
+            except Exception:
                 if self.loop_running:
                     err_str = format_exc(5)
                     warn("error caught while processing call '%s %s': %s",
@@ -168,13 +167,12 @@ class Client(object):
         self.greenlets.add(gr)
         gr.switch()
 
-
     def on_notification(self, name, args):
         def notification_handler():
             try:
                 self.notification_cb(name, args)
                 debug('greenlet %s completed', gr)
-            except Exception as e:
+            except Exception:
                 if self.loop_running:
                     err_str = format_exc(5)
                     warn("error caught while processing event '%s %s': %s",
@@ -189,11 +187,9 @@ class Client(object):
         self.greenlets.add(gr)
         gr.switch()
 
-
     def on_error(self, err):
         warn('caught error: %s', err)
         self.error_cb(err)
-
 
     def loop_start(self, request_cb, notification_cb, error_cb):
         profiling = 'NVIM_PYTHON_PROFILE' in os.environ
@@ -240,11 +236,9 @@ class Client(object):
             self.notification_cb = None
             self.error_cb = None
 
-
     def loop_stop(self):
         self.loop_running = False
         self.stream.loop_stop()
-
 
     def discover_api(self):
         """
@@ -306,12 +300,13 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
     """
     Generate an API call wrapper
     """
-    # Build a name->pos map for the parameters 
+    # Build a name->pos map for the parameters
     parameter_names = {}
     parameter_count = 0
     for param in parameters:
         parameter_names[param[1]] = parameter_count
         parameter_count += 1
+
     # This is the actual generated function
     @fname(name)
     def func(*args, **kwargs):
@@ -325,7 +320,7 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
                 # If the type is a remote object class, we use it's remote
                 # handle instead
                 arg = arg._handle
-            # Add to the argument vector 
+            # Add to the argument vector
             argv.append(arg)
         return client.rpc_request(fid, argv, return_type)
 
