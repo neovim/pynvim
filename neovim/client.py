@@ -152,7 +152,6 @@ class Client(object):
                 debug('greenlet %s completed, sending %s as response', gr, rv)
                 reply_fn(rv)
             except Exception as e:
-                self.error_cb(e)
                 if self.loop_running:
                     err_str = format_exc(5)
                     warn("error caught while processing call '%s %s': %s",
@@ -176,7 +175,6 @@ class Client(object):
                 self.notification_cb(name, args)
                 debug('greenlet %s completed', gr)
             except Exception as e:
-                self.error_cb(e)
                 if self.loop_running:
                     err_str = format_exc(5)
                     warn("error caught while processing event '%s %s': %s",

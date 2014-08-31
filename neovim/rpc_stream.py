@@ -11,7 +11,7 @@ class RPCStream(object):
         self.next_request_id = 1
         self.interrupted = False
         self.stopped = False
-        self.running = True
+        self.running = False
         self.posted_notifications = deque()
 
 
