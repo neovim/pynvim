@@ -14,7 +14,7 @@ class MsgpackStream(object):
 
 
     def send(self, msg):
-        self.stream.send(msgpack.packb(msg))
+        self.stream.send(msgpack.packb(msg, use_bin_type=True))
 
 
     def loop_start(self, msg_cb, error_cb):
