@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 from imp import new_module, find_module, load_module
 import sys, logging, os.path
 from traceback import format_exc

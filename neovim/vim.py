@@ -1,5 +1,6 @@
 import os
-from util import RemoteSequence, RemoteMap, Current, VimError
+
+from .util import RemoteSequence, RemoteMap, Current, VimError
 
 os_chdir = os.chdir
 os_fchdir = os.fchdir

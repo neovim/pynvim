@@ -1,7 +1,8 @@
 from imp import find_module, load_module
 import os, sys, inspect, logging, os.path
 from traceback import format_exc
-from util import VimExit
+
+from .util import VimExit
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
