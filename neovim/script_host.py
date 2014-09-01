@@ -7,6 +7,19 @@ from traceback import format_exc
 logger = logging.getLogger(__name__)
 debug, warn = (logger.debug, logger.warn,)
 
+EXEC_PYTHON2_SRC = """\
+def exec_function(source, filename, global_map):
+    exec compile(source, filename, "exec") in global_map
+"""
+if sys.hexversion > 0x03000000:
+    def exec_function(source, filename, global_map):
+        exec(compile(source, filename, "exec"), global_map)
+else:
+    eval(
+        compile(EXEC_PYTHON2_SRC, "<exec_function>", "exec")
+    )
+
+
 class ScriptHost(object):
     """
     Plugin that provides the 'python' feature, emulating an environment for
@@ -24,13 +37,14 @@ class ScriptHost(object):
         self.module = new_module('__main__')
         vim.script_context = self.module
         # it seems some plugins assume 'sys' is already imported, so do it now
-        exec 'import sys' in self.module.__dict__
+        exec_function('import sys', __file__, self.module.__dict__)
 
     def python_execute(self, script):
-        exec script in self.module.__dict__
+        exec_function(script, __file__, self.module.__dict__)
 
     def python_execute_file(self, file_path):
-        execfile(file_path, self.module.__dict__)
+        with open(file_path) as f:
+            exec_function(f.read(), file_path, self.module.__dict__)
 
     def python_do_range(self, start, stop, code):
         vim = self.vim
@@ -39,7 +53,7 @@ class ScriptHost(object):
         fname = '_vim_pydo'
         # define the function
         function_def = 'def %s(line, linenr):\n %s' % (fname, code,)
-        exec function_def in self.module.__dict__
+        exec_function(function_def, __file__, self.module.__dict__)
         # get the function
         function = self.module.__dict__[fname]
         while start <= stop:
