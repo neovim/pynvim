@@ -283,7 +283,7 @@ class Client(object):
             generate_wrapper(self,
                              classes[class_name],
                              method_name,
-                             function['id'],
+                             function['name'],
                              function['return_type'],
                              function['parameters'])
         if self.vim_compatible:
