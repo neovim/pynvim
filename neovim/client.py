@@ -256,8 +256,7 @@ class Client(object):
         if self.vim:
             # Only need to do this once
             return
-        channel_id, api = self.rpc_request(0, [])
-        api = msgpack.unpackb(api)
+        channel_id, api = self.rpc_request("get_api_metadata", [])
         # The 'Vim' class is the main entry point of the api
         classes = {'vim': type('Vim', (), {})}
         setattr(classes['vim'], 'loop_start',
