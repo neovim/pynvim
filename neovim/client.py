@@ -51,7 +51,7 @@ class Client(object):
         else:
             self.stream.encoding = self.vim.get_option('encoding')
 
-    def rpc_yielding_request(self, method, args):
+    def rpc_yielding_request(self, method, args, decode_str=None):
         gr = greenlet.getcurrent()
         parent = gr.parent
 
@@ -59,12 +59,12 @@ class Client(object):
             debug('response is available for greenlet %s, switching back', gr)
             gr.switch(err, result)
 
-        self.stream.send(method, args, response_cb)
+        self.stream.send(method, args, response_cb, decode_str=decode_str)
         debug('yielding from greenlet %s to wait for response', gr)
         return parent.switch()
 
 
-    def rpc_blocking_request(self, method, args):
+    def rpc_blocking_request(self, method, args, decode_str=None):
         response = {}
 
         def response_cb(err, result):
@@ -73,7 +73,7 @@ class Client(object):
             self.stream.loop_stop()
 
         debug('will now perform a blocking rpc request: %s, %s', method, args)
-        self.stream.send(method, args, response_cb)
+        self.stream.send(method, args, response_cb, decode_str=decode_str)
         queue = []
 
         while not response:
@@ -87,14 +87,14 @@ class Client(object):
         return response.get('err', None), response.get('result', None)
 
 
-    def rpc_request(self, method, args, expected_type=None):
+    def rpc_request(self, method, args, expected_type=None, decode_str=None):
         """
         Sends a rpc request to Neovim.
         """
         if self.loop_running:
-            err, result = self.rpc_yielding_request(method, args)
+            err, result = self.rpc_yielding_request(method, args, decode_str=decode_str)
         else:
-            err, result = self.rpc_blocking_request(method, args)
+            err, result = self.rpc_blocking_request(method, args, decode_str=decode_str)
 
         if err:
             raise VimError(err)
@@ -322,11 +322,12 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
             # functions of the vim object don't need 'self'
             args = args[1:]
         argv = []
+        decode_str = kwargs.get('decode_str', None)
         # fill with positional arguments
         for i, arg in enumerate(args):
             # Add to the argument vector 
             argv.append(arg)
-        return client.rpc_request(fid, argv, return_type)
+        return client.rpc_request(fid, argv, return_type, decode_str=decode_str)
 
     setattr(klass, name, func)
 
