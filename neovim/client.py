@@ -258,45 +258,45 @@ class Client(object):
             return
         channel_id, api = self.rpc_request("get_api_metadata", [])
         # The 'Vim' class is the main entry point of the api
-        classes = {'vim': type('Vim', (), {})}
-        setattr(classes['vim'], 'loop_start',
+        types = {'vim': type('Vim', (), {})}
+        setattr(types['vim'], 'loop_start',
                 lambda s, *args, **kwargs: self.loop_start(*args, **kwargs))
-        setattr(classes['vim'], 'loop_stop',
+        setattr(types['vim'], 'loop_stop',
                 lambda s, *args, **kwargs: self.loop_stop(*args, **kwargs))
-        setattr(classes['vim'], 'next_message',
+        setattr(types['vim'], 'next_message',
                 lambda s, *args, **kwargs: self.next_message(*args, **kwargs))
-        setattr(classes['vim'], 'post',
+        setattr(types['vim'], 'post',
                 lambda s, *args, **kwargs: self.post(*args, **kwargs))
-        # Build classes for manipulating the remote structures, assigning to a
+        # Build types for manipulating the remote structures, assigning to a
         # dict using lower case names as keys, so we can easily match methods
         # in the API.
-        for cls in api['classes']:
+        for cls in api['types']:
             klass = type(cls + 'Base', (Remote,), {})
             # Methods of this class will pass an integer representing the
             # remote object as first argument
-            classes[cls.lower()] = klass
+            types[cls.lower()] = klass
         # now build function wrappers
         for function in api['functions']:
             # Split the name on underscores, the first part is the class name,
             # the remaining is the function name
             class_name, method_name = function['name'].split('_', 1)
             generate_wrapper(self,
-                             classes[class_name],
+                             types[class_name],
                              method_name,
                              function['name'],
                              function['return_type'],
                              function['parameters'])
         if self.vim_compatible:
-            make_vim_compatible(classes['vim'])
-        # Now apply all available mixins to the generated classes
+            make_vim_compatible(types['vim'])
+        # Now apply all available mixins to the generated types
         for name, mixin in mixins.items():
-            classes[name] = type(mixin.__name__, (classes[name], mixin,), {})
+            types[name] = type(mixin.__name__, (types[name], mixin,), {})
         # Create the 'vim object', which is a singleton of the 'Vim' class
-        self.vim = classes['vim']()
+        self.vim = types['vim']()
         # Initialize with some useful attributes
-        classes['vim'].initialize(self.vim, classes, channel_id)
+        types['vim'].initialize(self.vim, types, channel_id)
         # Add attributes for each other class
-        for name, klass in classes.items():
+        for name, klass in types.items():
             if name != 'vim':
                 setattr(self.vim, klass.__name__, klass)
 
