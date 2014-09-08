@@ -9,13 +9,10 @@ class Vim(object):
     @classmethod
     def initialize(self, vim, classes, channel_id):
         vim.buffers = RemoteSequence(vim,
-                                     classes['buffer'],
                                      lambda: vim.get_buffers())
         vim.windows = RemoteSequence(vim,
-                                     classes['window'],
                                      lambda: vim.get_windows())
         vim.tabpages = RemoteSequence(vim,
-                                      classes['tabpage'],
                                       lambda: vim.get_tabpages())
         vim.current = Current(vim)
         vim.vars = RemoteMap(lambda k: vim.get_var(k),

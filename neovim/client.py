@@ -1,4 +1,4 @@
-import greenlet, logging, os, os.path, msgpack
+import greenlet, logging, os, os.path
 from collections import deque
 from mixins import mixins
 from util import VimError, VimExit
@@ -28,11 +28,13 @@ class Client(object):
     """
     Neovim client. It depends on a rpc stream, an object that implements four
     methods:
+        - configure_types(vim, types): Configure the stream's
+            serializer/deserializer with custom type information
         - loop_start(request_cb, notification_cb error_cb): Start the event
             loop to receive rpc requests and notifications
         - loop_stop(): Stop the event loop
-        - send(method, args, response_cb): Send a method call with args,
-            and invoke response_cb when the response is available
+        - send(method, args, response_cb): Send a method call with args, and
+            invoke response_cb when the response is available
         - post(name, args): Post a notification from another thread
     """
     def __init__(self, stream, vim_compatible=False):
@@ -91,12 +93,6 @@ class Client(object):
 
         if err:
             raise VimError(err)
-
-        if expected_type and hasattr(self.vim, expected_type):
-            # result should be a handle, wrap in it's specialized class
-            klass = getattr(self.vim, expected_type)
-            result = klass(self.vim, result)
-            klass.initialize(result)
 
         return result
 
@@ -299,6 +295,11 @@ class Client(object):
         for name, klass in types.items():
             if name != 'vim':
                 setattr(self.vim, klass.__name__, klass)
+        # Configure the rpc stream with type information
+        typeinfo = []
+        for name in api['types']:
+            typeinfo.append(getattr(self.vim, name, None))
+        self.stream.configure(self.vim, typeinfo)
 
 
 def generate_wrapper(client, klass, name, fid, return_type, parameters):
@@ -320,10 +321,6 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
         argv = []
         # fill with positional arguments
         for i, arg in enumerate(args):
-            if hasattr(client.vim, parameters[i][0]):
-                # If the type is a remote object class, we use it's remote
-                # handle instead
-                arg = arg._handle
             # Add to the argument vector 
             argv.append(arg)
         return client.rpc_request(fid, argv, return_type)

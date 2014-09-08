@@ -5,8 +5,27 @@ debug, warn = (logger.debug, logger.warn,)
 
 class MsgpackStream(object):
     def __init__(self, stream):
+        def default(obj):
+            return obj._handle
+
+        def ext_hook(code, data):
+            klass = self.types[code]
+            rv = klass(self.vim, msgpack.ExtType(code, data))
+            klass.initialize(rv)
+            return rv
+
+        self.types = None
+        self.vim = None
+        self.packer = msgpack.Packer(use_bin_type=True, default=default)
+        self.unpacker = msgpack.Unpacker(ext_hook=ext_hook)
         self.stream = stream
-        self.unpacker = msgpack.Unpacker()
+
+
+    def configure(self, vim, types):
+        self.vim = vim
+        self.types = {}
+        for i, klass in enumerate(types):
+            self.types[i] = klass
 
 
     def interrupt(self):
@@ -14,7 +33,7 @@ class MsgpackStream(object):
 
 
     def send(self, msg):
-        self.stream.send(msgpack.packb(msg, use_bin_type=True))
+        self.stream.send(self.packer.pack(msg))
 
 
     def loop_start(self, msg_cb, error_cb):

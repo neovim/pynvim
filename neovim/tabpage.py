@@ -4,7 +4,6 @@ class Tabpage(object):
     @classmethod
     def initialize(self, tabpage):
         tabpage.windows = RemoteSequence(tabpage._vim,
-                                         tabpage._vim.Window,
                                          lambda: tabpage.get_windows())
         tabpage.vars = RemoteMap(lambda k: tabpage.get_var(k),
                                  lambda k, v: tabpage.set_var(k, v))
