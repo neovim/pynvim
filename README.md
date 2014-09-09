@@ -22,7 +22,7 @@ $ NEOVIM_LISTEN_ADDRESS=/tmp/neovim nvim
 
 Open the python REPL with another terminal connect to Neovim:
 
-```
+```python
 >>> import neovim
 >>> vim = neovim.connect('/tmp/neovim')
 >>> buffer = vim.buffers[0] # get the first buffer
