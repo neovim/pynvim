@@ -97,6 +97,8 @@ class PluginHost(object):
     def install_plugins(self):
         self.discover_plugins()
         vim = self.vim
+        features = vim.discover_features()
+        registered = set()
         for plugin_class in self.discovered_plugins:
             cls_name = plugin_class.__name__
             debug('inspecting class %s', plugin_class.__name__)
@@ -108,12 +110,12 @@ class PluginHost(object):
                 continue
             methods = inspect.getmembers(plugin, inspect.ismethod)
             debug('registering event handlers for %s', plugin_class.__name__)
-            for name, method in methods:
+            for method_name, method in methods:
                 assert method.im_self == plugin
-                if not name.startswith('on_'):
+                if not method_name.startswith('on_'):
                     continue
                 # event handler
-                event_name = name[3:]
+                event_name = method_name[3:]
                 debug('registering %s event handler', event_name)
                 if event_name not in self.event_handlers:
                     self.event_handlers[event_name] = [method]
@@ -122,29 +124,38 @@ class PluginHost(object):
                         method.__get__(plugin, plugin_class))
 
             if hasattr(plugin, 'provides') and plugin.provides:
-                for provider_method_name in plugin.provides:
-                    for name, method in methods:
-                        debug('checking %s', name)
-                        if name == provider_method_name:
-                            self.method_handlers[name] = \
-                                method.__get__(plugin, plugin_class)
-                            try:
-                                vim.register_provider(provider_method_name)
-                                debug('registered %s as a %s provider',
-                                      plugin_class.__name__,
-                                      provider_method_name)
-                            except vim.error as e:
-                                warn('error while registering provider: %s', e)
-                            break
+                for feature_name in plugin.provides:
+                    if feature_name in registered:
+                        raise Exception('A plugin already provides %s' %
+                                        feature_name)
+                    for method_name in features[feature_name]:
+                        self.method_handlers[method_name] = getattr(plugin, method_name)
+                    debug('registered %s as a %s provider',
+                          plugin_class.__name__,
+                          feature_name)
+                    vim.register_provider(feature_name)
+                    registered.add(feature_name)
             self.installed_plugins.append(plugin)
+
+
+    def search_handler_for(self, name):
+        for plugin in self.installed_plugins:
+            methods = inspect.getmembers(plugin, inspect.ismethod)
+            for method_name, method in methods:
+                if method_name == name:
+                    return method
 
 
     def on_request(self, name, args):
         handler = self.method_handlers.get(name, None)
         if not handler:
-            msg = 'no method handlers registered for %s' % name
-            debug(msg)
-            raise Exception(msg)
+            handler = self.search_handler_for(name)
+            if handler:
+                self.method_handlers[name] = handler
+            else:
+                msg = 'no method handlers for "%s" were found' % name
+                debug(msg)
+                raise Exception(msg)
 
         debug("running method handler for '%s %s'", name, args)
         rv = handler(*args)

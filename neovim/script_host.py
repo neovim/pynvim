@@ -11,12 +11,7 @@ class ScriptHost(object):
     python code similar to the one provided by vim-python bindings.
     """
     def __init__(self, vim):
-        self.provides = [
-            'python_execute',
-            'python_execute_file',
-            'python_do_range',
-            'python_eval'
-        ]
+        self.provides = ['python']
         self.vim = vim
         # context where all code will run
         self.module = new_module('__main__')
