@@ -8,9 +8,9 @@ if 'NVIM_SPAWN_ARGV' in os.environ:
 if not vim:
     vim = neovim.connect(os.environ['NEOVIM_LISTEN_ADDRESS'])
 
+
 cleanup_func = ''':function BeforeEachTest()
   set all&
-  let &initpython = 'python -c "import neovim; neovim.start_host()"'
   redir => groups
   silent augroup
   redir END
@@ -52,7 +52,6 @@ vim.feedkeys(cleanup_func, '')
 def cleanup():
     # cleanup nvim
     vim.command('call BeforeEachTest()')
-    vim.command('python import vim')
     eq(len(vim.tabpages), 1)
     eq(len(vim.windows), 1)
     eq(len(vim.buffers), 1)
