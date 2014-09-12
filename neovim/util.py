@@ -1,29 +1,26 @@
 class RemoteSequence(object):
     # TODO Need to add better support for this class on the server
-    def __init__(self, vim, remote_klass, handle_array_fn):
-        def wrap(handle):
-            rv = remote_klass(vim, handle)
-            remote_klass.initialize(rv)
-            return rv
-
-        self._wrap_fn = wrap
-        self._handle_array_fn = handle_array_fn
+    def __init__(self, vim, fetch_fn):
+        self._fetch_fn = fetch_fn
 
     def __len__(self):
-        return len(self._handle_array_fn())
+        return len(self._fetch_fn())
 
     def __getitem__(self, idx):
         if not isinstance(idx, slice):
-            return self._wrap_fn(self._handle_array_fn()[idx])
-        return map(self._wrap_fn, self._handle_array_fn()[idx.start:idx.stop])
+            return self._fetch_fn()[idx]
+        return self._fetch_fn()[idx.start:idx.stop]
 
     def __iter__(self):
-        handles = self._handle_array_fn()
-        for handle in handles:
-            yield self._wrap_fn(handle)
+        items = self._fetch_fn()
+        for item in items:
+            yield item
     
     def __contains__(self, item):
-        return item._handle in self._handle_array_fn()
+        for i in self._fetch_fn():
+            if i._handle == item._handle:
+                return True
+        return False
 
 
 class RemoteMap(object):
