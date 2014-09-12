@@ -15,8 +15,8 @@ class RPCStream(object):
         self.posted_notifications = deque()
 
 
-    def configure(self, vim, types):
-        self.stream.configure(vim, types)
+    def configure(self, vim):
+        self.stream.configure(vim)
 
 
     def post(self, name, args):

@@ -97,7 +97,7 @@ class PluginHost(object):
     def install_plugins(self):
         self.discover_plugins()
         vim = self.vim
-        features = vim.discover_features()
+        features = vim.api_metadata['features']
         registered = set()
         for plugin_class in self.discovered_plugins:
             cls_name = plugin_class.__name__

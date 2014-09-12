@@ -7,7 +7,7 @@ os_fchdir = os.fchdir
 
 class Vim(object):
     @classmethod
-    def initialize(self, vim, classes, channel_id):
+    def initialize(self, vim, classes, channel_id, api_metadata):
         vim.buffers = RemoteSequence(vim,
                                      lambda: vim.get_buffers())
         vim.windows = RemoteSequence(vim,
@@ -23,6 +23,7 @@ class Vim(object):
                                 lambda k, v: vim.set_option(k, v))
         vim.channel_id = channel_id
         vim.error = VimError
+        vim.api_metadata = api_metadata
 
     def foreach_rtp(self, cb):
         """

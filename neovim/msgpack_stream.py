@@ -21,11 +21,11 @@ class MsgpackStream(object):
         self.stream = stream
 
 
-    def configure(self, vim, types):
+    def configure(self, vim):
         self.vim = vim
         self.types = {}
-        for i, klass in enumerate(types):
-            self.types[i] = klass
+        for name, info in vim.api_metadata['types'].items():
+            self.types[info['id']] = getattr(vim, name)
 
 
     def interrupt(self):

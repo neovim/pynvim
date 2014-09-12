@@ -252,7 +252,7 @@ class Client(object):
         if self.vim:
             # Only need to do this once
             return
-        channel_id, api = self.rpc_request("get_api_metadata", [])
+        channel_id, api = self.rpc_request("vim_get_api_info", [])
         # The 'Vim' class is the main entry point of the api
         types = {'vim': type('Vim', (), {})}
         setattr(types['vim'], 'loop_start',
@@ -290,16 +290,14 @@ class Client(object):
         # Create the 'vim object', which is a singleton of the 'Vim' class
         self.vim = types['vim']()
         # Initialize with some useful attributes
-        types['vim'].initialize(self.vim, types, channel_id)
+        types['vim'].initialize(self.vim, types, channel_id, api)
         # Add attributes for each other class
         for name, klass in types.items():
             if name != 'vim':
                 setattr(self.vim, klass.__name__, klass)
         # Configure the rpc stream with type information
-        typeinfo = []
-        for name in api['types']:
-            typeinfo.append(getattr(self.vim, name, None))
-        self.stream.configure(self.vim, typeinfo)
+        self.stream.configure(self.vim)
+        self.vim
 
 
 def generate_wrapper(client, klass, name, fid, return_type, parameters):
