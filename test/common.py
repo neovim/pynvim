@@ -6,7 +6,7 @@ if 'NVIM_SPAWN_ARGV' in os.environ:
     vim = neovim.spawn(json.loads(os.environ['NVIM_SPAWN_ARGV']))
 
 if not vim:
-    vim = neovim.connect(os.environ['NEOVIM_LISTEN_ADDRESS'])
+    vim = neovim.connect(os.environ['NVIM_LISTEN_ADDRESS'])
 
 
 cleanup_func = ''':function BeforeEachTest()

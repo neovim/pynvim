@@ -13,11 +13,11 @@ pip install neovim
 
 #### Usage
 
-Start Neovim with a known address or query the value of $NEOVIM_LISTEN_ADDRESS
+Start Neovim with a known address or query the value of $NVIM_LISTEN_ADDRESS
 after startup: 
 
 ```sh
-$ NEOVIM_LISTEN_ADDRESS=/tmp/neovim nvim
+$ NVIM_LISTEN_ADDRESS=/tmp/neovim nvim
 ```
 
 Open the python REPL with another terminal connect to Neovim:
