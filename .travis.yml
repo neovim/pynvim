@@ -3,15 +3,16 @@ python:
   - "2.6"
   - "2.7"
 before_install:
-  - sudo apt-get install expect
+  - sudo apt-get update -qq
+  - sudo apt-get install expect -q
   - git clone --depth=1 -b master git://github.com/neovim/neovim nvim
-  - cd /opt && sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps && cd -
+  - sudo git clone --depth=1 git://github.com/neovim/deps /opt/neovim-deps
 install:
   - pip install .
-  - prefix="/opt/neovim-deps"
-  - eval $($prefix/bin/luarocks path)
-  - export PATH="$prefix/bin:$PATH"
-  - export PKG_CONFIG_PATH="$prefix/lib/pkgconfig"
+  - prefix="/opt/neovim-deps/64"
+  - eval $($prefix/usr/bin/luarocks path)
+  - export PATH="$prefix/usr/bin:$PATH"
+  - export PKG_CONFIG_PATH="$prefix/usr/lib/pkgconfig"
   - export USE_BUNDLED_DEPS=OFF
   - cd nvim && make && cd ..
 script:
