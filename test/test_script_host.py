@@ -11,12 +11,12 @@ def host_setup():
     # Spawn the python host
     vim.command(
         'let pyhost_id = ' +
-        'api_spawn("python", ["-c", "import neovim; neovim.start_host()"])')
+        'rpcstart("python", ["-c", "import neovim; neovim.start_host()"])')
     ok(vim.eval('g:pyhost_id'))
-    # Use send_call to wait for the host setup(api_spawn will return a channel
+    # Use rpc_request to wait for the host setup(rpc_spawn will return a channel
     # id but only after a while the channel will register handlers for python_*
     # methods)
-    ok(vim.eval('send_call(g:pyhost_id, "python_eval", "10")') == 10)
+    ok(vim.eval('rpcrequest(g:pyhost_id, "python_eval", "10")') == 10)
     # Verify the feature
     ok(vim.eval('has("python")'))
     # Import the vim module
@@ -26,7 +26,7 @@ def host_setup():
 
 
 def host_teardown():
-    ok(vim.eval('api_close(g:pyhost_id)'))
+    ok(vim.eval('rpcstop(g:pyhost_id)'))
     # After the channel is closed, the feature should not be available
     ok(not vim.eval('has("python")'))
 

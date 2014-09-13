@@ -12,7 +12,7 @@ def test_call_and_reply():
 
     def notification_cb(name, args):
         eq(name, 'setup')
-        cmd = 'let g:result = send_call(%d, "client-call", 1, 2, 3)' % cid
+        cmd = 'let g:result = rpcrequest(%d, "client-call", 1, 2, 3)' % cid
         vim.command(cmd)
         eq(vim.vars['result'], [4, 5, 6])
         vim.loop_stop()
@@ -38,7 +38,7 @@ def test_call_api_before_reply():
 
     def notification_cb(name, args):
         eq(name, 'setup2')
-        cmd = 'let g:result = send_call(%d, "client-call2", 1, 2, 3)' % cid
+        cmd = 'let g:result = rpcrequest(%d, "client-call2", 1, 2, 3)' % cid
         vim.command(cmd)
         eq(vim.vars['result'], [7, 8, 9])
         vim.loop_stop()
@@ -69,7 +69,7 @@ def test_recursion():
         vim.vars['result2'] = 0
         vim.vars['result3'] = 0
         vim.vars['result4'] = 0
-        cmd = 'let g:result1 = send_call(%d, "call", %d)' % (cid, 2,)
+        cmd = 'let g:result1 = rpcrequest(%d, "call", %d)' % (cid, 2,)
         vim.command(cmd)
         eq(vim.vars['result1'], 4)
         eq(vim.vars['result2'], 8)
@@ -82,11 +82,11 @@ def test_recursion():
         n *= 2
         if n <= 16:
             if n == 4:
-                cmd = 'let g:result2 = send_call(%d, "call", %d)' % (cid, n,)
+                cmd = 'let g:result2 = rpcrequest(%d, "call", %d)' % (cid, n,)
             elif n == 8:
-                cmd = 'let g:result3 = send_call(%d, "call", %d)' % (cid, n,)
+                cmd = 'let g:result3 = rpcrequest(%d, "call", %d)' % (cid, n,)
             elif n == 16:
-                cmd = 'let g:result4 = send_call(%d, "call", %d)' % (cid, n,)
+                cmd = 'let g:result4 = rpcrequest(%d, "call", %d)' % (cid, n,)
             vim.command(cmd)
         return n
 
