@@ -17,7 +17,7 @@ install:
   - export USE_BUNDLED_DEPS=OFF
   - cd nvim && make && cd ..
 before_script:
-  - flake8 . --exclude=./nvim,./test,./scripts
+  - flake8 . --max-line-length=99 --exclude=./nvim,./test,./scripts
 script:
   - ./nvim/scripts/run-api-tests.exp "nosetests --nologcapture --verbosity=2" "./nvim/build/bin/nvim -u NONE"
   - NVIM_SPAWN_ARGV='["./nvim/build/bin/nvim", "-u", "NONE", "--embed"]'  nosetests --nologcapture --verbosity=2
