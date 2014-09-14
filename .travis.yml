@@ -7,7 +7,7 @@ before_install:
   - sudo apt-get install expect -q
   - git clone --depth=1 -b master git://github.com/neovim/neovim nvim
   - sudo git clone --depth=1 git://github.com/neovim/deps /opt/neovim-deps
-  - pip install -q flake8 --use-mirrors
+  - pip install -q flake8
 install:
   - pip install .
   - prefix="/opt/neovim-deps/64"
