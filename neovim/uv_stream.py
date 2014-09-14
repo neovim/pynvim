@@ -1,7 +1,8 @@
 from collections import deque
-from util import VimExit
 from signal import SIGTERM
 import sys, pyuv, logging
+
+from .util import VimExit
 
 logger = logging.getLogger(__name__)
 debug, warn = (logger.debug, logger.warn,)

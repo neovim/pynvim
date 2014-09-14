@@ -1,4 +1,4 @@
-from util import RemoteMap
+from .util import RemoteMap
 
 class Window(object):
     @classmethod
