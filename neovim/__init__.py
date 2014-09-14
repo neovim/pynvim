@@ -17,6 +17,10 @@ class NullHandler(logging.Handler):
 
 
 def connect(address=None, port=None, vim_compatible=False):
+    if address is None:
+        address = os.environ.get('NVIM_LISTEN_ADDRESS', False)
+        if not address:
+            raise Exception('No NVIM_LISTEN_ADDRESS value found!')
     client = Client(RPCStream(MsgpackStream(UvStream(address, port))),
                     vim_compatible)
     client.discover_api()

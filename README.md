@@ -35,6 +35,14 @@ Open the python REPL with another terminal connect to Neovim:
 [1, 2, 3]
 ```
 
+If you have defined NEOVIM_LISTEN_ADDRESS globally, you can use
+
+```
+>>> import neovim
+>>> vim = neovim.connect()
+>>> ...
+```
+
 See the test subdirectory for more examples
 
 This is still alpha and incomplete, use only for testing purposes
