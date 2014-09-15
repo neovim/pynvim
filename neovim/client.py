@@ -46,7 +46,7 @@ class Client(object):
         self.loop_running = False
         self.pending = deque()
         self._discover_api()
-        if sys.version_info.major > 2:
+        if sys.version_info[0] > 2:
             self.stream.encoding = self.vim.get_option('encoding').decode('ascii')
         else:
             self.stream.encoding = self.vim.get_option('encoding')
@@ -261,7 +261,7 @@ class Client(object):
         # binary strings for all content. For Python3 decode api binary strings
         # as utf8
         channel_id, api = self.rpc_request("vim_get_api_info", [])
-        if sys.version_info.major > 2:
+        if sys.version_info[0] > 2:
             api = decode_obj(api, 'utf8')
         # The 'Vim' class is the main entry point of the api
         types = {'vim': type('Vim', (), {})}

@@ -4,7 +4,7 @@ import neovim, os, json, sys
 vim = None
 # For Python3 we decode binary strings as Unicode for compatibility 
 # with Python2
-decode_str = sys.version_info.major > 2
+decode_str = sys.version_info[0] > 2
 if 'NVIM_SPAWN_ARGV' in os.environ:
     vim = neovim.spawn(json.loads(os.environ['NVIM_SPAWN_ARGV']), decode_str=decode_str)
 
