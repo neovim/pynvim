@@ -111,7 +111,7 @@ class PluginHost(object):
             methods = inspect.getmembers(plugin, inspect.ismethod)
             debug('registering event handlers for %s', plugin_class.__name__)
             for method_name, method in methods:
-                assert method.im_self == plugin
+                assert method.__self__ == plugin
                 if not method_name.startswith('on_'):
                     continue
                 # event handler
