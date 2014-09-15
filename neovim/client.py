@@ -1,7 +1,7 @@
 import greenlet, logging, os, os.path
 from collections import deque
 from .mixins import mixins
-from .util import VimError, VimExit
+from .util import VimError, VimExit, decode_obj
 from traceback import format_exc
 import cProfile, pstats, sys
 from io import StringIO
@@ -257,7 +257,12 @@ class Client(object):
         if self.vim:
             # Only need to do this once
             return
+        # When calling this method, &encoding was not defined yet so we will get
+        # binary strings for all content. For Python3 decode api binary strings
+        # as utf8
         channel_id, api = self.rpc_request("vim_get_api_info", [])
+        if sys.version_info.major > 2:
+            api = decode_obj(api, 'utf8')
         # The 'Vim' class is the main entry point of the api
         types = {'vim': type('Vim', (), {})}
         setattr(types['vim'], 'loop_start',

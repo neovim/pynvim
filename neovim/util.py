@@ -91,3 +91,25 @@ class VimExit(IOError):
 
 class VimError(Exception):
     pass
+
+def decode_obj(obj, encoding=None, encoding_errors='strict'):
+    """
+    Recursively decode instances of 'bytes' into Unicode
+    """
+    if not encoding:
+        return obj
+
+    if isinstance(obj, bytes):
+        return obj.decode(encoding, errors=encoding_errors)
+    elif isinstance(obj, list) or isinstance(obj, tuple):
+        return [decode_obj(o, encoding, encoding_errors) for o in obj]
+    elif isinstance(obj, dict):
+        d = {}
+        for k,v in obj.items():
+            k = decode_obj(k, encoding, encoding_errors)
+            v = decode_obj(v, encoding, encoding_errors)
+            d[k] = v
+        return d
+    return obj
+
+
