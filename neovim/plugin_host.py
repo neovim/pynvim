@@ -1,7 +1,7 @@
 from imp import find_module, load_module
 import os, sys, inspect, logging, os.path
 from traceback import format_exc
-from util import VimExit
+from .util import VimExit
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
@@ -67,7 +67,7 @@ class PluginHost(object):
         loaded = set()
         for directory in discover_runtime_directories(self.vim):
             for name in os.listdir(directory):
-                if not name.startswith('nvim_'):
+                if not name.startswith(b'nvim_'):
                     continue
                 name = os.path.splitext(name)[0]
                 if name in loaded:
@@ -111,7 +111,7 @@ class PluginHost(object):
             methods = inspect.getmembers(plugin, inspect.ismethod)
             debug('registering event handlers for %s', plugin_class.__name__)
             for method_name, method in methods:
-                assert method.im_self == plugin
+                assert method.__self__ == plugin
                 if not method_name.startswith('on_'):
                     continue
                 # event handler
@@ -147,6 +147,12 @@ class PluginHost(object):
 
 
     def on_request(self, name, args):
+        if sys.version_info[0] > 2 and isinstance(name, bytes):
+            # Python3 function names need to be Unicode, decode them
+            # FIXME: for now I'm using utf8 here since &encoding
+            # might not be right either
+            name = name.decode('utf8')
+
         handler = self.method_handlers.get(name, None)
         if not handler:
             handler = self.search_handler_for(name)
@@ -234,14 +240,14 @@ def path_hook(vim):
 def discover_runtime_directories(vim):
     is_py3 = sys.version_info >= (3, 0)
     rv = []
-    for path in vim.list_runtime_paths():
+    for path in vim.list_runtime_paths(decode_str=False):
         if not os.path.exists(path):
             continue
-        path1 = os.path.join(path, 'pythonx')
+        path1 = os.path.join(path, b'pythonx')
         if is_py3:
-            path2 = os.path.join(path, 'python3')
+            path2 = os.path.join(path, b'python3')
         else:
-            path2 = os.path.join(path, 'python2')
+            path2 = os.path.join(path, b'python2')
         if os.path.exists(path1):
             rv.append(path1)
         if os.path.exists(path2):

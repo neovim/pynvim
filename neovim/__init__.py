@@ -1,9 +1,9 @@
-from client import Client
-from script_host import ScriptHost
-from plugin_host import PluginHost
-from uv_stream import UvStream
-from msgpack_stream import MsgpackStream
-from rpc_stream import RPCStream
+from .client import Client
+from .script_host import ScriptHost
+from .plugin_host import PluginHost
+from .uv_stream import UvStream
+from .msgpack_stream import MsgpackStream
+from .rpc_stream import RPCStream
 from time import sleep
 import logging, os
 
@@ -16,16 +16,14 @@ class NullHandler(logging.Handler):
         pass
 
 
-def connect(address=None, port=None, vim_compatible=False):
-    client = Client(RPCStream(MsgpackStream(UvStream(address, port))),
+def connect(address=None, port=None, vim_compatible=False, decode_str=False):
+    client = Client(RPCStream(MsgpackStream(UvStream(address, port)), decode_str=decode_str),
                     vim_compatible)
-    client.discover_api()
     return client.vim
 
 
-def spawn(argv):
-    client = Client(RPCStream(MsgpackStream(UvStream(spawn_argv=argv))))
-    client.discover_api()
+def spawn(argv, decode_str=False):
+    client = Client(RPCStream(MsgpackStream(UvStream(spawn_argv=argv)), decode_str=decode_str))
     return client.vim
 
 

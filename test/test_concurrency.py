@@ -12,7 +12,7 @@ def test_custom_messages():
         sleep(0.05 * random())
 
     count = 50
-    for i in xrange(count):
+    for i in range(count):
         t = Thread(target=produce, args=(i,))
         t.daemon = True
         t.start()

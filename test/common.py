@@ -1,13 +1,15 @@
 from nose.tools import eq_ as eq
-import neovim, os, json
+import neovim, os, json, sys
 
 vim = None
+# For Python3 we decode binary strings as Unicode for compatibility 
+# with Python2
+decode_str = sys.version_info[0] > 2
 if 'NVIM_SPAWN_ARGV' in os.environ:
-    vim = neovim.spawn(json.loads(os.environ['NVIM_SPAWN_ARGV']))
+    vim = neovim.spawn(json.loads(os.environ['NVIM_SPAWN_ARGV']), decode_str=decode_str)
 
 if not vim:
-    vim = neovim.connect(os.environ['NVIM_LISTEN_ADDRESS'])
-
+    vim = neovim.connect(os.environ['NVIM_LISTEN_ADDRESS'], decode_str=decode_str)
 
 cleanup_func = ''':function BeforeEachTest()
   set all&

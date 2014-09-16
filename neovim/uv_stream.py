@@ -1,5 +1,5 @@
 from collections import deque
-from util import VimExit
+from .util import VimExit
 from signal import SIGTERM
 import sys, pyuv, logging
 

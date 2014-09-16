@@ -1,9 +1,10 @@
 import greenlet, logging, os, os.path
 from collections import deque
-from mixins import mixins
-from util import VimError, VimExit
+from .mixins import mixins
+from .util import VimError, VimExit, decode_obj
 from traceback import format_exc
-import cProfile, pstats, StringIO
+import cProfile, pstats, sys
+from io import StringIO
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
@@ -44,9 +45,13 @@ class Client(object):
         self.vim = None
         self.loop_running = False
         self.pending = deque()
+        self._discover_api()
+        if sys.version_info[0] > 2:
+            self.stream.encoding = self.vim.get_option('encoding').decode('ascii')
+        else:
+            self.stream.encoding = self.vim.get_option('encoding')
 
-
-    def rpc_yielding_request(self, method, args):
+    def rpc_yielding_request(self, method, args, decode_str=None):
         gr = greenlet.getcurrent()
         parent = gr.parent
 
@@ -54,12 +59,12 @@ class Client(object):
             debug('response is available for greenlet %s, switching back', gr)
             gr.switch(err, result)
 
-        self.stream.send(method, args, response_cb)
+        self.stream.send(method, args, response_cb, decode_str=decode_str)
         debug('yielding from greenlet %s to wait for response', gr)
         return parent.switch()
 
 
-    def rpc_blocking_request(self, method, args):
+    def rpc_blocking_request(self, method, args, decode_str=None):
         response = {}
 
         def response_cb(err, result):
@@ -68,7 +73,7 @@ class Client(object):
             self.stream.loop_stop()
 
         debug('will now perform a blocking rpc request: %s, %s', method, args)
-        self.stream.send(method, args, response_cb)
+        self.stream.send(method, args, response_cb, decode_str=decode_str)
         queue = []
 
         while not response:
@@ -82,14 +87,14 @@ class Client(object):
         return response.get('err', None), response.get('result', None)
 
 
-    def rpc_request(self, method, args, expected_type=None):
+    def rpc_request(self, method, args, expected_type=None, decode_str=None):
         """
         Sends a rpc request to Neovim.
         """
         if self.loop_running:
-            err, result = self.rpc_yielding_request(method, args)
+            err, result = self.rpc_yielding_request(method, args, decode_str=decode_str)
         else:
-            err, result = self.rpc_blocking_request(method, args)
+            err, result = self.rpc_blocking_request(method, args, decode_str=decode_str)
 
         if err:
             raise VimError(err)
@@ -223,7 +228,7 @@ class Client(object):
                 pr.disable()
                 report = os.path.abspath('.nvim-python-client.profile')
                 info('stopped profiler, writing report to %s', report)
-                s = StringIO.StringIO()
+                s = StringIO()
                 ps = pstats.Stats(pr, stream=s)
                 ps.strip_dirs().sort_stats('tottime').print_stats(30)
 
@@ -242,7 +247,7 @@ class Client(object):
         self.stream.loop_stop()
 
 
-    def discover_api(self):
+    def _discover_api(self):
         """
         Discovers the remote API using the special method '0'. After this
         the client will have a `vim` attribute containing an object
@@ -252,7 +257,12 @@ class Client(object):
         if self.vim:
             # Only need to do this once
             return
+        # When calling this method, &encoding was not defined yet so we will get
+        # binary strings for all content. For Python3 decode api binary strings
+        # as utf8
         channel_id, api = self.rpc_request("vim_get_api_info", [])
+        if sys.version_info[0] > 2:
+            api = decode_obj(api, 'utf8')
         # The 'Vim' class is the main entry point of the api
         types = {'vim': type('Vim', (), {})}
         setattr(types['vim'], 'loop_start',
@@ -317,11 +327,12 @@ def generate_wrapper(client, klass, name, fid, return_type, parameters):
             # functions of the vim object don't need 'self'
             args = args[1:]
         argv = []
+        decode_str = kwargs.get('decode_str', None)
         # fill with positional arguments
         for i, arg in enumerate(args):
             # Add to the argument vector 
             argv.append(arg)
-        return client.rpc_request(fid, argv, return_type)
+        return client.rpc_request(fid, argv, return_type, decode_str=decode_str)
 
     setattr(klass, name, func)
 

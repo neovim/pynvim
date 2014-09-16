@@ -27,7 +27,6 @@ class MsgpackStream(object):
         for name, info in vim.api_metadata['types'].items():
             self.types[info['id']] = getattr(vim, name)
 
-
     def interrupt(self):
         self.stream.interrupt()
 
@@ -43,7 +42,7 @@ class MsgpackStream(object):
             while True:
                 try:
                     debug('waiting for message...')
-                    msg = self.unpacker.next()
+                    msg = next(self.unpacker)
                     debug('received message: %s', msg)
                     msg_cb(msg)
                 except StopIteration:
