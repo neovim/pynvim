@@ -147,6 +147,12 @@ class PluginHost(object):
 
 
     def on_request(self, name, args):
+        if sys.version_info[0] > 2 and isinstance(name, bytes):
+            # Python3 function names need to be Unicode, decode them
+            # FIXME: for now I'm using utf8 here since &encoding
+            # might not be right either
+            name = name.decode('utf8')
+
         handler = self.method_handlers.get(name, None)
         if not handler:
             handler = self.search_handler_for(name)
