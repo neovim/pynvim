@@ -67,7 +67,7 @@ class PluginHost(object):
         loaded = set()
         for directory in discover_runtime_directories(self.vim):
             for name in os.listdir(directory):
-                if not name.startswith('nvim_'):
+                if not name.startswith(b'nvim_'):
                     continue
                 name = os.path.splitext(name)[0]
                 if name in loaded:
@@ -240,14 +240,14 @@ def path_hook(vim):
 def discover_runtime_directories(vim):
     is_py3 = sys.version_info >= (3, 0)
     rv = []
-    for path in vim.list_runtime_paths():
+    for path in vim.list_runtime_paths(decode_str=False):
         if not os.path.exists(path):
             continue
-        path1 = os.path.join(path, 'pythonx')
+        path1 = os.path.join(path, b'pythonx')
         if is_py3:
-            path2 = os.path.join(path, 'python3')
+            path2 = os.path.join(path, b'python3')
         else:
-            path2 = os.path.join(path, 'python2')
+            path2 = os.path.join(path, b'python2')
         if os.path.exists(path1):
             rv.append(path1)
         if os.path.exists(path2):
