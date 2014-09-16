@@ -32,6 +32,11 @@ class ScriptHost(object):
         start -= 1
         stop -= 1
         fname = '_vim_pydo'
+
+        # Python3 code (exec) must be a string, mixing bytes with
+        # function_def would use bytes.__repr__ instead
+        if sys.version_info[0] > 2 and isinstance(code, bytes):
+            code = code.decode(vim.get_option('encoding').decode('ascii'))
         # define the function
         function_def = 'def %s(line, linenr):\n %s' % (fname, code,)
         exec(function_def, self.module.__dict__)
