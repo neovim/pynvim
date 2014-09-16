@@ -105,8 +105,8 @@ class PluginHost(object):
             try:
                 plugin = plugin_class(self.vim)
             except:
-                warn('constructor for %s failed. it must accept one argument',
-                     cls_name)
+                err_str = format_exc(5)
+                warn('constructor for %s failed: %s', cls_name, err_str)
                 continue
             methods = inspect.getmembers(plugin, inspect.ismethod)
             debug('registering event handlers for %s', plugin_class.__name__)

@@ -1,7 +1,6 @@
 from collections import deque
 from .util import VimExit
-from signal import SIGTERM
-import sys, pyuv, logging
+import sys, pyuv, logging, signal
 
 logger = logging.getLogger(__name__)
 debug, warn = (logger.debug, logger.warn,)
@@ -13,7 +12,7 @@ class UvStream(object):
     def __init__(self, address=None, port=None, spawn_argv=None):
         debug('initializing UvStream instance')
         self._loop = pyuv.Loop()
-        self._error = None
+        self._fatal = None
         self._connected = False
         self._data_cb = None
         self._error_cb = None
@@ -21,7 +20,11 @@ class UvStream(object):
         self._pending_writes = 0
         self._async = pyuv.Async(self._loop, self._on_async)
         self._term = pyuv.Signal(self._loop)
-        self._term.start(self._on_term, SIGTERM)
+        self._term.start(self._on_signal, signal.SIGTERM)
+        self._int = pyuv.Signal(self._loop)
+        self._int.start(self._on_signal, signal.SIGINT)
+        self._signames = dict((k, v) for v, k in signal.__dict__.items() \
+                              if v.startswith('SIG'))
         self._error_stream = None
         # Select the type of handle
         if spawn_argv:
@@ -84,7 +87,7 @@ class UvStream(object):
         self.loop_stop()
         if error:
             msg = pyuv.errno.strerror(error)
-            self._error = msg
+            self._fatal = msg
             warn('error connecting to neovim: %s', msg)
             self._connection_error = IOError(msg)
             return
@@ -92,12 +95,10 @@ class UvStream(object):
         self._read_stream = self._write_stream = stream
 
 
-    def _on_term(self, handle, signum):
+    def _on_signal(self, handle, signum):
         self.loop_stop()
-        self._error = 'Received SIGTERM'
-        err = IOError(self._error)
+        err = Exception('Received %s' % self._signames[signum])
         if not self._error_cb:
-            self._loop.stop()
             raise err
         self._error_cb(err)
 
@@ -116,7 +117,7 @@ class UvStream(object):
 
     def _on_exit(self, handle, exit_status, term_signal):
         self._loop.stop()
-        self._error = (
+        self._fatal = (
             'The child nvim instance exited with status %s' % exit_status)
 
 
@@ -127,7 +128,7 @@ class UvStream(object):
             err = IOError(msg)
             if not self._error_cb:
                 self._loop.stop()
-                self._error = err
+                self._fatal = err
                 raise err
             self._error_cb(err)
         else:
@@ -143,12 +144,12 @@ class UvStream(object):
             warn('error reading data: %s', msg)
             self._error_cb(IOError(msg))
             self._loop.stop()
-            self._error = msg
+            self._fatal = msg
         elif not data:
             warn('connection was closed by neovim')
             self._loop.stop()
-            self._error = 'EOF'
-            self._error_cb(IOError(self._error))
+            self._fatal = 'EOF'
+            self._error_cb(IOError(self._fatal))
         else:
             debug('successfully read %d bytes of data', len(data))
             self._data_cb(data)
@@ -176,7 +177,7 @@ class UvStream(object):
             if error:
                 self._loop.stop()
                 msg = pyuv.errno.strerror(error)
-                self._error = msg
+                self._fatal = msg
                 warn('error writing data: %s', msg)
                 self._error_cb(IOError(msg))
             debug('successfully wrote %d bytes of data', data_len)
@@ -187,9 +188,9 @@ class UvStream(object):
 
 
     def loop_start(self, data_cb, error_cb):
-        if self._error:
-            raise IOError('An error was raised and the connection ' +
-                          'was permanently closed: %s', self._error)
+        if self._fatal:
+            raise IOError('A fatal error was raised and the connection ' +
+                          'was permanently closed: %s', self._fatal)
         if not self._connected:
             self._connect()
             if self._connection_error:

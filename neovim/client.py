@@ -122,6 +122,8 @@ class Client(object):
         if msg:
             return msg
 
+        error = {}
+
         def request_cb(name, args, reply_fn):
             self.pending.append(('request', name, args, reply_fn,))
             self.stream.loop_stop()
@@ -131,11 +133,16 @@ class Client(object):
             self.stream.loop_stop()
 
         def error_cb(err):
-            self.pending.append(('eof', err,))
+            error['err'] = err
+            if isinstance(err, VimExit):
+                self.pending.append(('eof', err,))
             self.stream.loop_stop()
 
         debug('will block until a message is available')
         self.stream.loop_start(request_cb, notification_cb, error_cb)
+
+        if error:
+            raise error['err']
 
         msg = self.next_pending_message()
         if msg:
