@@ -23,7 +23,9 @@ class ScriptHost(object):
         exec(script, self.module.__dict__)
 
     def python_execute_file(self, file_path):
-        execfile(file_path, self.module.__dict__)
+        with open(file_path) as f:
+            script = compile(f.read(), file_path, 'exec')
+            exec(script, self.module.__dict__)
 
     def python_do_range(self, start, stop, code):
         vim = self.vim
