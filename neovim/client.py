@@ -97,7 +97,8 @@ class Client(object):
             err, result = self.rpc_blocking_request(method, args, decode_str=decode_str)
 
         if err:
-            raise VimError(err)
+            info("'Received error of type '%d'", err[0])
+            raise VimError(err[1])
 
         return result
 
