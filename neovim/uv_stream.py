@@ -23,6 +23,7 @@ class UvStream(object):
         self._term.start(self._on_signal, signal.SIGTERM)
         self._int = pyuv.Signal(self._loop)
         self._int.start(self._on_signal, signal.SIGINT)
+        self._ignore_sigint = False
         self._signames = dict((k, v) for v, k in signal.__dict__.items() \
                               if v.startswith('SIG'))
         self._error_stream = None
@@ -59,6 +60,8 @@ class UvStream(object):
         self._write_stream = pyuv.Pipe(self._loop) 
         self._write_stream.open(sys.stdout.fileno())
         self._connected = True
+        # ignore SIGINT in this mode
+        self._ignore_sigint = True
 
 
     def init_spawn(self, argv):
@@ -96,6 +99,8 @@ class UvStream(object):
 
 
     def _on_signal(self, handle, signum):
+        if self._ignore_sigint and signum == signal.SIGINT:
+            return
         self.loop_stop()
         err = Exception('Received %s' % self._signames[signum])
         if not self._error_cb:
