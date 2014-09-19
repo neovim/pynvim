@@ -8,6 +8,7 @@ before_install:
   - sudo apt-get install expect -q
   - git clone --depth=1 -b master git://github.com/neovim/neovim nvim
   - sudo git clone --depth=1 git://github.com/neovim/deps /opt/neovim-deps
+  - pip install -q flake8
 install:
   - pip install .
   - prefix="/opt/neovim-deps/64"
@@ -16,6 +17,8 @@ install:
   - export PKG_CONFIG_PATH="$prefix/usr/lib/pkgconfig"
   - export USE_BUNDLED_DEPS=OFF
   - cd nvim && make && cd ..
+before_script:
+  - flake8 . --max-line-length=99 --exclude=./nvim,./test,./scripts
 script:
   - ./nvim/scripts/run-api-tests.exp "nosetests --nologcapture --verbosity=2" "./nvim/build/bin/nvim -u NONE"
   - NVIM_SPAWN_ARGV='["./nvim/build/bin/nvim", "-u", "NONE", "--embed"]'  nosetests --nologcapture --verbosity=2
