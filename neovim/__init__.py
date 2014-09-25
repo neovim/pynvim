@@ -1,36 +1,36 @@
-from .client import Client
-from .script_host import ScriptHost
-from .plugin_host import PluginHost
-from .uv_stream import UvStream
-from .msgpack_stream import MsgpackStream
-from .rpc_stream import RPCStream
-from time import sleep
-import logging, os
+"""Python client for Nvim.
 
-__all__ = ['connect', 'start_host', 'ScriptHost', 'PluginHost']
+Client library for talking with Nvim processes via it's msgpack-rpc API.
+"""
+import logging
+import os
 
-
-# Required for python 2.6
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
+from .api import DecodeHook, Nvim, SessionHook
+from .msgpack_rpc import (socket_session, spawn_session, stdio_session,
+                          tcp_session)
+from .plugins import PluginHost, ScriptHost
 
 
-def connect(address=None, port=None, vim_compatible=False, decode_str=False):
-    client = Client(RPCStream(MsgpackStream(UvStream(address, port)), decode_str=decode_str),
-                    vim_compatible)
-    return client.vim
+__all__ = ('tcp_session', 'socket_session', 'stdio_session', 'spawn_session',
+           'start_host', 'DecodeHook', 'Nvim', 'SessionHook')
 
 
-def spawn(argv, decode_str=False):
-    client = Client(RPCStream(MsgpackStream(UvStream(spawn_argv=argv)), decode_str=decode_str))
-    return client.vim
+def start_host(session=None):
+    """Promote the current process into python plugin host for Nvim.
 
+    Start msgpack-rpc event loop for `session`, listening for Nvim requests
+    and notifications. It registers Nvim commands for loading/unloading
+    python plugins.
 
-def start_host(address=None, port=None):
-    logging.root.addHandler(NullHandler())
+    The sys.stdout and sys.stderr streams are redirected to Nvim through
+    `session`. That means print statements probably won't work as expected
+    while this function doesn't return.
+
+    This function is normally called at program startup and could have been
+    defined as a separate executable. It is exposed as a library function for
+    testing purposes only.
+    """
     logger = logging.getLogger(__name__)
-    info = logger.info
     if 'NVIM_PYTHON_LOG_FILE' in os.environ:
         logfile = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
         handler = logging.FileHandler(logfile, 'w')
@@ -46,9 +46,18 @@ def start_host(address=None, port=None):
             if isinstance(l, int):
                 level = l
         logger.setLevel(level)
-    info('connecting to neovim')
-    vim = connect(address, port, vim_compatible=True)
-    info('connected to neovim')
-    with PluginHost(vim, discovered_plugins=[ScriptHost]) as host:
+    if not session:
+        session = stdio_session()
+    nvim = Nvim.from_session(session)
+    with PluginHost(nvim, preloaded=[ScriptHost]) as host:
         host.run()
 
+
+# Required for python 2.6
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+
+if not logging.root.handlers:
+    logging.root.addHandler(NullHandler())
