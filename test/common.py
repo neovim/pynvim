@@ -1,15 +1,27 @@
+import json
+import os
+import sys
+
+import neovim
+
 from nose.tools import eq_ as eq
-import neovim, os, json, sys
 
+
+session = None
 vim = None
-# For Python3 we decode binary strings as Unicode for compatibility 
-# with Python2
-decode_str = sys.version_info[0] > 2
 if 'NVIM_SPAWN_ARGV' in os.environ:
-    vim = neovim.spawn(json.loads(os.environ['NVIM_SPAWN_ARGV']), decode_str=decode_str)
+    argv = json.loads(os.environ['NVIM_SPAWN_ARGV'])
+    session = neovim.spawn_session(argv)
+else:
+    session = neovim.socket_session(os.environ['NVIM_LISTEN_ADDRESS'])
 
-if not vim:
-    vim = neovim.connect(os.environ['NVIM_LISTEN_ADDRESS'], decode_str=decode_str)
+vim = neovim.Nvim.from_session(session)
+
+if sys.version_info >= (3, 0):
+    # For Python3 we decode binary strings as Unicode for compatibility
+    # with Python2
+    vim = vim.with_hook(neovim.DecodeHook())
+
 
 cleanup_func = ''':function BeforeEachTest()
   set all&
@@ -49,7 +61,7 @@ cleanup_func = ''':function BeforeEachTest()
 endfunction
 '''
 
-vim.feedkeys(cleanup_func, '')
+vim.feedkeys(cleanup_func)
 
 def cleanup():
     # cleanup nvim

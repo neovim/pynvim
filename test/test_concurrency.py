@@ -1,6 +1,6 @@
 from time import sleep
 from random import random
-from nose.tools import with_setup, eq_ as eq, ok_ as ok
+from nose.tools import with_setup, eq_ as eq
 from common import vim, cleanup
 from threading import Thread
 
@@ -8,7 +8,7 @@ from threading import Thread
 @with_setup(setup=cleanup)
 def test_custom_messages():
     def produce(i):
-        vim.post('custom-message', None)
+        vim.session.post('custom-message', None)
         sleep(0.05 * random())
 
     count = 50
@@ -19,6 +19,6 @@ def test_custom_messages():
 
     custom_messages = []
     while len(custom_messages) < 50:
-        custom_messages.append(vim.next_message())
+        custom_messages.append(vim.session.next_message())
 
     eq(len(custom_messages), 50)
