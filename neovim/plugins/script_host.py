@@ -2,6 +2,9 @@ import imp
 import logging
 import sys
 
+from ..api.common import SessionHook
+
+
 logger = logging.getLogger(__name__)
 debug, warn = (logger.debug, logger.warn,)
 
@@ -19,7 +22,7 @@ class ScriptHost(object):
         nvim.script_context = self.module
         # it seems some plugins assume 'sys' is already imported, so do it now
         exec('import sys', self.module.__dict__)
-        sys.modules['vim'] = nvim
+        sys.modules['vim'] = nvim.with_hook(LegacyEvalHook())
 
     def python_execute(self, script):
         exec(script, self.module.__dict__)
@@ -64,3 +67,16 @@ class ScriptHost(object):
 
     def python_eval(self, expr):
         return eval(expr, self.module.__dict__)
+
+
+class LegacyEvalHook(SessionHook):
+
+    """Injects legacy `vim.eval` behavior to a Nvim instance."""
+
+    def __init__(self):
+        super(LegacyEvalHook, self).__init__(from_nvim=self._string_eval)
+
+    def _string_eval(self, obj, session, method, kind):
+        if method == 'vim_eval' and isinstance(obj, (int, long, float)):
+            return str(obj)
+        return obj
