@@ -1,4 +1,19 @@
+import platform
+import sys
+
 from setuptools import setup
+
+install_requires = [
+    'msgpack-python',
+]
+
+if sys.version_info < (3, 4):
+    # trollius is just a backport of 3.4 asyncio module
+    install_requires.append('trollius')
+
+if not platform.python_implementation() == 'PyPy':
+    # pypy already includes an implementation of the greenlet module
+    install_requires.append('greenlet')
 
 setup(name='neovim',
       version='0.0.17',
@@ -9,9 +24,5 @@ setup(name='neovim',
       author_email='tpadilha84@gmail.com',
       license='MIT',
       packages=['neovim'],
-      install_requires=[
-          'greenlet',
-          'msgpack-python',
-          'pyuv',
-      ],
+      install_requires=install_requires,
       zip_safe=False)

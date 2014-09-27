@@ -1,7 +1,13 @@
+import inspect
+import logging
+import os
+import os.path
+import sys
 from imp import find_module, load_module
-import os, sys, inspect, logging, os.path
 from traceback import format_exc
-from .util import VimExit
+
+from ..compat import IS_PYTHON3
+
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
@@ -20,52 +26,48 @@ class RedirectStream(object):
 
 class PluginHost(object):
     """
-    Class that transforms the python interpreter into a plugin host for Neovim.
-    It takes care of discovering plugins and routing events/calls sent by
-    Neovim to the appropriate handlers(registered by plugins)
+    Class that transforms the python interpreter into a plugin host for
+    Neovim. It takes care of discovering plugins and routing events/calls
+    sent by Neovim to the appropriate handlers(registered by plugins)
     """
-    def __init__(self, vim, discovered_plugins=[]):
-        self.vim = vim
+    def __init__(self, nvim, preloaded=[]):
+        self.nvim = nvim
         self.method_handlers = {}
         self.event_handlers = {}
-        self.discovered_plugins = discovered_plugins
+        self.discovered_plugins = list(preloaded)
         self.installed_plugins = []
-        sys.modules['vim'] = vim
-
 
     def __enter__(self):
-        vim = self.vim
+        nvim = self.nvim
         info('install import hook/path')
-        self.hook = path_hook(vim)
+        self.hook = path_hook(nvim)
         sys.path_hooks.append(self.hook)
-        vim.VIM_SPECIAL_PATH = '_vim_path_'
-        sys.path.append(vim.VIM_SPECIAL_PATH)
+        nvim.VIM_SPECIAL_PATH = '_vim_path_'
+        sys.path.append(nvim.VIM_SPECIAL_PATH)
         info('redirect sys.stdout and sys.stderr')
         self.saved_stdout = sys.stdout
         self.saved_stderr = sys.stderr
-        sys.stdout = RedirectStream(lambda data: vim.out_write(data))
-        sys.stderr = RedirectStream(lambda data: vim.err_write(data))
+        sys.stdout = RedirectStream(lambda data: nvim.out_write(data))
+        sys.stderr = RedirectStream(lambda data: nvim.err_write(data))
         debug('installing plugins')
         self.install_plugins()
         return self
 
-
     def __exit__(self, type, value, traceback):
         for plugin in self.installed_plugins:
-            if hasattr(plugin, 'on_plugin_teardown'):
-                plugin.on_plugin_teardown()
-        vim = self.vim
+            if hasattr(plugin, 'on_teardown'):
+                plugin.teardown()
+        nvim = self.nvim
         info('uninstall import hook/path')
-        sys.path.remove(vim.VIM_SPECIAL_PATH)
+        sys.path.remove(nvim.VIM_SPECIAL_PATH)
         sys.path_hooks.remove(self.hook)
         info('restore sys.stdout and sys.stderr')
         sys.stdout = self.saved_stdout
         sys.stderr = self.saved_stderr
 
-
     def discover_plugins(self):
         loaded = set()
-        for directory in discover_runtime_directories(self.vim):
+        for directory in discover_runtime_directories(self.nvim):
             for name in os.listdir(directory):
                 if not name.startswith(b'nvim_'):
                     continue
@@ -83,7 +85,8 @@ class PluginHost(object):
                 try:
                     file, pathname, description = discovered
                     module = load_module(name, file, pathname, description)
-                    for name, value in inspect.getmembers(module, inspect.isclass):
+                    for name, value in inspect.getmembers(module,
+                                                          inspect.isclass):
                         if name.startswith('Nvim'):
                             self.discovered_plugins.append(value)
                     debug('loaded %s', name)
@@ -96,14 +99,14 @@ class PluginHost(object):
 
     def install_plugins(self):
         self.discover_plugins()
-        vim = self.vim
-        features = vim.api_metadata['features']
+        nvim = self.nvim
+        features = nvim.metadata['features']
         registered = set()
         for plugin_class in self.discovered_plugins:
             cls_name = plugin_class.__name__
             debug('inspecting class %s', plugin_class.__name__)
             try:
-                plugin = plugin_class(self.vim)
+                plugin = plugin_class(self.nvim)
             except:
                 err_str = format_exc(5)
                 warn('constructor for %s failed: %s', cls_name, err_str)
@@ -111,11 +114,12 @@ class PluginHost(object):
             methods = inspect.getmembers(plugin, inspect.ismethod)
             debug('registering event handlers for %s', plugin_class.__name__)
             for method_name, method in methods:
-                assert method.__self__ == plugin
                 if not method_name.startswith('on_'):
                     continue
                 # event handler
-                event_name = method_name[3:]
+                # Store all handlers with bytestring keys, since thats how
+                # msgpack will deserialize method names
+                event_name = method_name[3:].encode('utf-8')
                 debug('registering %s event handler', event_name)
                 if event_name not in self.event_handlers:
                     self.event_handlers[event_name] = [method]
@@ -129,14 +133,18 @@ class PluginHost(object):
                         raise Exception('A plugin already provides %s' %
                                         feature_name)
                     for method_name in features[feature_name]:
-                        self.method_handlers[method_name] = getattr(plugin, method_name)
+                        # encode for the same reason as above
+                        enc_name = method_name.encode('utf-8')
+                        self.method_handlers[enc_name] = getattr(
+                            # Python 3 attributes need to be unicode instances
+                            # so use `method_name` here
+                            plugin, method_name)
                     debug('registered %s as a %s provider',
                           plugin_class.__name__,
                           feature_name)
-                    vim.register_provider(feature_name)
+                    nvim.register_provider(feature_name)
                     registered.add(feature_name)
             self.installed_plugins.append(plugin)
-
 
     def search_handler_for(self, name):
         for plugin in self.installed_plugins:
@@ -145,14 +153,7 @@ class PluginHost(object):
                 if method_name == name:
                     return method
 
-
     def on_request(self, name, args):
-        if sys.version_info[0] > 2 and isinstance(name, bytes):
-            # Python3 function names need to be Unicode, decode them
-            # FIXME: for now I'm using utf8 here since &encoding
-            # might not be right either
-            name = name.decode('utf8')
-
         handler = self.method_handlers.get(name, None)
         if not handler:
             handler = self.search_handler_for(name)
@@ -168,7 +169,6 @@ class PluginHost(object):
         debug("method handler for '%s %s' returns: %s", name, args, rv)
         return rv
 
-
     def on_notification(self, name, args):
         handlers = self.event_handlers.get(name, None)
         if not handlers:
@@ -179,22 +179,14 @@ class PluginHost(object):
         for handler in handlers:
             handler(*args)
 
-
-    def on_error(self, err):
-        warn('exiting due to error: %s', err)
-        self.vim.loop_stop()
-
-
     def run(self):
-        self.vim.loop_start(self.on_request,
-                            self.on_notification,
-                            self.on_error)
+        self.nvim.session.run(self.on_request, self.on_notification)
 
 
-# This was copied/adapted from vim-python help
-def path_hook(vim):
+# This was copied/adapted from nvim-python help
+def path_hook(nvim):
     def _get_paths():
-        return discover_runtime_directories(vim)
+        return discover_runtime_directories(nvim)
 
     def _find_module(fullname, oldtail, path):
         idx = oldtail.find('.')
@@ -229,7 +221,7 @@ def path_hook(vim):
             return _find_module(fullname, fullname, path or _get_paths())
 
     def hook(path):
-        if path == vim.VIM_SPECIAL_PATH:
+        if path == nvim.VIM_SPECIAL_PATH:
             return VimPathFinder
         else:
             raise ImportError
@@ -237,14 +229,13 @@ def path_hook(vim):
     return hook
 
 
-def discover_runtime_directories(vim):
-    is_py3 = sys.version_info >= (3, 0)
+def discover_runtime_directories(nvim):
     rv = []
-    for path in vim.list_runtime_paths(decode_str=False):
+    for path in nvim.list_runtime_paths():
         if not os.path.exists(path):
             continue
         path1 = os.path.join(path, b'pythonx')
-        if is_py3:
+        if IS_PYTHON3:
             path2 = os.path.join(path, b'python3')
         else:
             path2 = os.path.join(path, b'python2')

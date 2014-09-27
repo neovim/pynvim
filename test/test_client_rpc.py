@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
-from nose.tools import with_setup, eq_ as eq, ok_ as ok
+from nose.tools import with_setup, eq_ as eq
 from common import vim, cleanup
 
 cid = vim.channel_id
@@ -8,40 +7,30 @@ cid = vim.channel_id
 
 @with_setup(setup=cleanup)
 def test_call_and_reply():
-    errors = []
-
     def notification_cb(name, args):
         eq(name, 'setup')
         cmd = 'let g:result = rpcrequest(%d, "client-call", 1, 2, 3)' % cid
         vim.command(cmd)
         eq(vim.vars['result'], [4, 5, 6])
-        vim.loop_stop()
+        vim.session.stop()
 
     def request_cb(name, args):
         eq(name, 'client-call')
         eq(args, [1, 2, 3])
         return [4, 5, 6]
 
-    def error_cb(err):
-        errors.append(err)
-        vim.loop_stop()
-
-    vim.post('setup')
-    vim.loop_start(request_cb, notification_cb, error_cb)
-    if errors:
-        raise errors[0]
+    vim.session.post('setup')
+    vim.session.run(request_cb, notification_cb)
 
 
 @with_setup(setup=cleanup)
 def test_call_api_before_reply():
-    errors = []
-
     def notification_cb(name, args):
         eq(name, 'setup2')
         cmd = 'let g:result = rpcrequest(%d, "client-call2", 1, 2, 3)' % cid
         vim.command(cmd)
         eq(vim.vars['result'], [7, 8, 9])
-        vim.loop_stop()
+        vim.session.stop()
 
     def request_cb(name, args):
         eq(name, 'client-call2')
@@ -49,20 +38,12 @@ def test_call_api_before_reply():
         vim.command('let g:result2 = [7, 8, 9]')
         return vim.vars['result2']
 
-    def error_cb(err):
-        errors.append(err)
-        vim.loop_stop()
-
-    vim.post('setup2')
-    vim.loop_start(request_cb, notification_cb, error_cb)
-    if errors:
-        raise errors[0]
+    vim.session.post('setup2')
+    vim.session.run(request_cb, notification_cb)
 
 
 @with_setup(setup=cleanup)
 def test_recursion():
-    errors = []
-
     def notification_cb(name, args):
         eq(name, 'setup3')
         vim.vars['result1'] = 0
@@ -75,7 +56,7 @@ def test_recursion():
         eq(vim.vars['result2'], 8)
         eq(vim.vars['result3'], 16)
         eq(vim.vars['result4'], 32)
-        vim.loop_stop()
+        vim.session.stop()
 
     def request_cb(name, args):
         n = args[0]
@@ -90,12 +71,5 @@ def test_recursion():
             vim.command(cmd)
         return n
 
-    def error_cb(err):
-        errors.append(err)
-        vim.loop_stop()
-
-    vim.post('setup3')
-    vim.loop_start(request_cb, notification_cb, error_cb)
-    if errors:
-        raise errors[0]
-
+    vim.session.post('setup3')
+    vim.session.run(request_cb, notification_cb)

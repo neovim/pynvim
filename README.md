@@ -2,8 +2,7 @@
 
 [![Build Status](https://travis-ci.org/neovim/python-client.svg?branch=master)](https://travis-ci.org/neovim/python-client)
 
-Library aims to emulate the current python-vim interface through Neovim
-msgpack-rpc API
+Library for scripting Nvim processes through it's msgpack-rpc API.
 
 #### Installation
 
@@ -11,30 +10,35 @@ msgpack-rpc API
 pip install neovim
 ```
 
-#### Usage
+#### Usage through the python REPL
 
-Start Neovim with a known address or query the value of $NVIM_LISTEN_ADDRESS
-after startup: 
+A number of different transports are supported, but the simplest way to get
+started is with the python REPL. First, start Nvim with a known address(or
+query the value of $NVIM_LISTEN_ADDRESS of a running instance): 
 
 ```sh
-$ NVIM_LISTEN_ADDRESS=/tmp/neovim nvim
+$ NVIM_LISTEN_ADDRESS=/tmp/nvim nvim
 ```
 
-Open the python REPL with another terminal connect to Neovim:
+Open the python REPL with another terminal connect to Nvim(Note that the API is
+similar to the one exposed by the [python-vim
+bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim))
 
 ```python
->>> import neovim
->>> vim = neovim.connect('/tmp/neovim')
->>> buffer = vim.buffers[0] # get the first buffer
+>>> from neovim import socket_session, Nvim
+# Create a msgpack-rpc session to the unix domain socket created by Nvim:
+>>> session = socket_session('/tmp/nvim')
+# Create a Nvim instance from the session(don't call Nvim constructor!):
+>>> nvim = Nvim.from_session(session)
+# Now do some work. 
+>>> buffer = nvim.buffers[0] # Get the first buffer
 >>> buffer[0] = 'replace first line'
 >>> buffer[:] = ['replace whole buffer']
->>> vim.command('vsplit')
->>> vim.windows[1].width = 10
->>> vim.vars['global_var'] = [1, 2, 3]
->>> vim.eval('g:global_var')
+>>> nvim.command('vsplit')
+>>> nvim.windows[1].width = 10
+>>> nvim.vars['global_var'] = [1, 2, 3]
+>>> nvim.eval('g:global_var')
 [1, 2, 3]
 ```
 
-See the test subdirectory for more examples
-
-This is still alpha and incomplete, use only for testing purposes
+The tests can be consulted for more examples.
