@@ -16,10 +16,10 @@ if not platform.python_implementation() == 'PyPy':
     install_requires.append('greenlet')
 
 setup(name='neovim',
-      version='0.0.19',
+      version='0.0.20',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
-      download_url='https://github.com/neovim/python-client/archive/0.0.19.tar.gz',
+      download_url='https://github.com/neovim/python-client/archive/0.0.20.tar.gz',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='MIT',
