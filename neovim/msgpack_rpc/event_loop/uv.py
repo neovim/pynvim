@@ -12,7 +12,7 @@ class UvEventLoop(BaseEventLoop):
 
     def _init(self):
         self._loop = pyuv.Loop()
-        self._async = pyuv.Async(self._loop, lambda h: self._on_interrupt)
+        self._async = pyuv.Async(self._loop, lambda h: self.stop())
         self._connection_error = None
         self._error_stream = None
 
