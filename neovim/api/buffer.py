@@ -183,10 +183,6 @@ class Range(object):
     def _normalize_index(self, index):
         if index is None:
             return None
-        if index < 0:
-            index = self.end - 1
-        else:
-            index += self.start
-            if index >= self.end:
-                index = self.end - 1
+        if index < 0 or index + self.start >= self.end:
+            return self.end - 1
         return index
