@@ -175,6 +175,20 @@ class Nvim(object):
         """Print `msg` as an error message."""
         return self._session.request('vim_err_write', msg)
 
+    def quit(self, quit_command='qa!'):
+        """Send a quit command to Nvim.
+
+        By default, the quit command is 'qa!' which will make Nvim quit without
+        saving anything.
+        """
+        try:
+            self.command(quit_command)
+        except IOError:
+            # sending a quit command will raise an IOError because the
+            # connection is closed before a response is received. Safe to
+            # ignore it.
+            pass
+
 
 class Current(object):
 
