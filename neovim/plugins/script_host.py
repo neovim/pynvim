@@ -54,14 +54,14 @@ class ScriptHost(object):
             # which can be done very quickly in a single API call.
             sstart = start
             sstop = min(start + 5000, stop)
-            lines = nvim.current.buffer.get_slice(sstart, sstop, True, True)
+            lines = nvim.current.buffer.get_line_slice(sstart, sstop, True, True)
             for i, line in enumerate(lines):
                 linenr = i + sstart + 1
                 result = str(function(line, linenr))
                 if result:
                     lines[i] = result
             start = sstop + 1
-            nvim.current.buffer.set_slice(sstart, sstop, True, True, lines)
+            nvim.current.buffer.set_line_slice(sstart, sstop, True, True, lines)
         # delete the function
         del self.module.__dict__[fname]
 

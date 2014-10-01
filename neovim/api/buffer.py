@@ -29,7 +29,7 @@ class Buffer(Remote):
 
     def __len__(self):
         """Return the number of lines contained in a Buffer."""
-        return self._session.request('buffer_get_length', self)
+        return self._session.request('buffer_line_count', self)
 
     def __getitem__(self, idx):
         """Get a buffer line or slice by integer index.
@@ -51,7 +51,7 @@ class Buffer(Remote):
         if end is None:
             end = -1
             include_end = True
-        return self._session.request('buffer_get_slice', self, start, end,
+        return self._session.request('buffer_get_line_slice', self, start, end,
                                      True, include_end)
 
     def __setitem__(self, idx, lines):
@@ -78,7 +78,7 @@ class Buffer(Remote):
         if end is None:
             end = -1
             include_end = True
-        return self._session.request('buffer_set_slice', self, start, end,
+        return self._session.request('buffer_set_line_slice', self, start, end,
                                      True, include_end, lines)
 
     def __iter__(self):
@@ -93,15 +93,15 @@ class Buffer(Remote):
         for line in lines:
             yield line
 
-    def get_slice(self, start, stop, start_incl, end_incl):
+    def get_line_slice(self, start, stop, start_incl, end_incl):
         """More flexible wrapper for retrieving slices."""
-        return self._session.request('buffer_get_slice', self, start, stop,
-                                     start_incl, end_incl)
+        return self._session.request('buffer_get_line_slice', self, start,
+                                     stop, start_incl, end_incl)
 
-    def set_slice(self, start, stop, start_incl, end_incl, lines):
+    def set_line_slice(self, start, stop, start_incl, end_incl, lines):
         """More flexible wrapper for replacing slices."""
-        return self._session.request('buffer_set_slice', self, start, stop,
-                                     start_incl, end_incl, lines)
+        return self._session.request('buffer_set_line_slice', self, start,
+                                     stop, start_incl, end_incl, lines)
 
     def append(self, lines, index=-1):
         """Append a string or list of lines to the buffer."""
