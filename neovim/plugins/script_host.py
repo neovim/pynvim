@@ -3,11 +3,14 @@ import logging
 import sys
 
 from ..api.common import SessionHook
+from ..compat import IS_PYTHON3
 
 
 logger = logging.getLogger(__name__)
 debug, warn = (logger.debug, logger.warn,)
 
+if IS_PYTHON3:
+    basestring = str
 
 class ScriptHost(object):
     """
@@ -55,13 +58,31 @@ class ScriptHost(object):
             sstart = start
             sstop = min(start + 5000, stop)
             lines = nvim.current.buffer.get_line_slice(sstart, sstop, True, True)
+
+            exception = None
+            newlines = []
+            linenr = sstart + 1
             for i, line in enumerate(lines):
-                linenr = i + sstart + 1
-                result = str(function(line, linenr))
-                if result:
-                    lines[i] = result
+                result = function(line, linenr)
+                if result == None:
+                    # Update earlier lines, and skip to the next
+                    if newlines:
+                        nvim.current.buffer.set_line_slice(sstart, sstart + len(newlines) -1, True, True, newlines)
+                    sstart += len(newlines) + 1
+                    newlines = []
+                    pass
+                elif isinstance(result,basestring):
+                    newlines.append(result)
+                else:
+                    exception = TypeError('pydo should return a string or None, found %s instead' % result.__class__.__name__)
+                    break
+                linenr += 1
+
             start = sstop + 1
-            nvim.current.buffer.set_line_slice(sstart, sstop, True, True, lines)
+            if newlines:
+                nvim.current.buffer.set_line_slice(sstart, sstart + len(newlines)-1, True, True, newlines)
+            if exception:
+                raise exception
         # delete the function
         del self.module.__dict__[fname]
 
