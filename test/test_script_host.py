@@ -56,11 +56,17 @@ def test_pyfile():
 
 @with_setup(setup=host_setup, teardown=host_teardown)
 def test_pydo():
+
+    # :pydo 42 returns None for all lines,
+    # the buffer should not be changed
+    vim.command('normal :pydo 42\n')
+    eq(vim.current.buffer.options['mod'], False)
+
     # insert some text
     vim.command('normal iabc\ndef\nghi')
     eq(vim.current.buffer[:], ['abc', 'def', 'ghi'])
     # go to top and select and replace the first two lines
-    vim.command('normal ggvj:pydo return linenr\n')
+    vim.command('normal ggvj:pydo return str(linenr)\n')
     eq(vim.current.buffer[:], ['1', '2', 'ghi'])
 
 
