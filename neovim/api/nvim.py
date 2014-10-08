@@ -138,7 +138,7 @@ class Nvim(object):
         os_fchdir(dir_fd)
         return self._session.request('vim_change_directory', os.getcwd())
 
-    def feedkeys(self, keys, options=''):
+    def feedkeys(self, keys, options='', escape_csi=True):
         """Push `keys` to Nvim user input buffer.
 
         Options can be a string with the following character flags:
@@ -147,7 +147,7 @@ class Nvim(object):
         - 't': Handle keys as if typed; otherwise they are handled as if coming
                from a mapping. This matters for undo, opening folds, etc.
         """
-        return self._session.request('vim_feedkeys', keys, options)
+        return self._session.request('vim_feedkeys', keys, options, escape_csi)
 
     def input(self, bytes):
         """Push `bytes` to Nvim low level input buffer.
