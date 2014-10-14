@@ -58,6 +58,13 @@ class RemoteMap(object):
         except:
             return False
 
+    def get(self, key, default=None):
+        """Return value for key if present, else a default value."""
+        try:
+            return self._get(key)
+        except:
+            return default
+
 
 class RemoteSequence(object):
 
