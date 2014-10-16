@@ -126,7 +126,7 @@ class Nvim(object):
             try:
                 if cb(path) is not None:
                     break
-            except:
+            except Exception:
                 break
 
     def chdir(self, dir_path):

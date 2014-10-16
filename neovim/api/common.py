@@ -55,14 +55,14 @@ class RemoteMap(object):
         try:
             self._get(key)
             return True
-        except:
+        except Exception:
             return False
 
     def get(self, key, default=None):
         """Return value for key if present, else a default value."""
         try:
             return self._get(key)
-        except:
+        except Exception:
             return default
 
 

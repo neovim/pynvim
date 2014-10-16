@@ -77,7 +77,7 @@ class PluginHost(object):
                 loaded.add(name)
                 try:
                     discovered = find_module(name, [directory])
-                except:
+                except Exception:
                     err_str = format_exc(5)
                     warn('error while searching module %s: %s', name, err_str)
                     continue
@@ -90,7 +90,7 @@ class PluginHost(object):
                         if name.startswith('Nvim'):
                             self.discovered_plugins.append(value)
                     debug('loaded %s', name)
-                except:
+                except Exception:
                     err_str = format_exc(5)
                     warn('error while loading module %s: %s', name, err_str)
                     continue
@@ -107,7 +107,7 @@ class PluginHost(object):
             debug('inspecting class %s', plugin_class.__name__)
             try:
                 plugin = plugin_class(self.nvim)
-            except:
+            except Exception:
                 err_str = format_exc(5)
                 warn('constructor for %s failed: %s', cls_name, err_str)
                 continue
