@@ -29,10 +29,9 @@ install:
   - export PKG_CONFIG_PATH="$prefix/usr/lib/pkgconfig"
   - export USE_BUNDLED_DEPS=OFF
   - cd nvim && make && cd ..
-before_script:
-  - flake8 --exclude ./neovim/plugins neovim
 script:
   - ./nvim/scripts/run-api-tests.exp "nosetests" "./nvim/build/bin/nvim -u NONE"
   - NVIM_SPAWN_ARGV='["./nvim/build/bin/nvim", "-u", "NONE", "--embed"]' nosetests
-after_success:
+  - flake8 --exclude ./neovim/plugins neovim
+after_script:
   - ocular
