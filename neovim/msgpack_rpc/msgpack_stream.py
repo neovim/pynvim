@@ -21,10 +21,14 @@ class MsgpackStream(object):
         """Wrap `event_loop` on a msgpack-aware interface."""
         self._event_loop = event_loop
         self._posted = deque()
-        self._packer = Packer(use_bin_type=True)
+        self._packer = Packer(use_bin_type=True, encoding=None)
         self._unpacker = Unpacker()
         self._message_cb = None
         self._stopped = False
+
+    def set_packer_encoding(self, encoding):
+        """Switch encoding for Unicode strings."""
+        self._packer = Packer(use_bin_type=True, encoding=encoding)
 
     def post(self, msg):
         """Post `msg` to the read queue of the `MsgpackStream` instance.
