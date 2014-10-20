@@ -5,22 +5,21 @@ env:
     - NOSE_VERBOSE=2
     - NOSE_WITH_COVERAGE=true
     - NOSE_COVER_PACKAGE=neovim
-python:
-  # If the build matrix gets bigger, also update the number of runs
-  # at the bottom of .scrutinizer.yml.
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "pypy"
+  matrix:
+    - TOX_ENV=py26
+    - TOX_ENV=py27
+    - TOX_ENV=py32
+    - TOX_ENV=py33
+    - TOX_ENV=py34
+    - TOX_ENV=pypy
+    - TOX_ENV=flake8
+    - TOX_ENV=py3flake8
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install expect -q
   - git clone --depth=1 -b master git://github.com/neovim/neovim nvim
   - sudo git clone --depth=1 git://github.com/neovim/deps /opt/neovim-deps
-  - pip install -q flake8 flake8-import-order flake8-docstrings pep8-naming
-  - pip install -q scrutinizer-ocular
+  - pip install tox
 install:
   - pip install .
   - prefix="/opt/neovim-deps/64"
@@ -31,7 +30,6 @@ install:
   - cd nvim && make && cd ..
 script:
   - ./nvim/scripts/run-api-tests.exp "nosetests" "./nvim/build/bin/nvim -u NONE"
-  - NVIM_SPAWN_ARGV='["./nvim/build/bin/nvim", "-u", "NONE", "--embed"]' nosetests
-  - flake8 --exclude ./neovim/plugins neovim
+  - NVIM_SPAWN_ARGV='["./nvim/build/bin/nvim", "-u", "NONE", "--embed"]' tox -e $TOX_ENV
 after_script:
   - ocular
