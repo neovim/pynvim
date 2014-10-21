@@ -249,6 +249,6 @@ def walk(fn, obj, *args):
 
 def _wrap(session, method, self_obj):
     if self_obj is not None:
-        return (lambda *args: session.request(method, self_obj, *args))
+        return lambda *args: session.request(method, self_obj, *args)
     else:
-        return (lambda *args: session.request(method, *args))
+        return lambda *args: session.request(method, *args)
