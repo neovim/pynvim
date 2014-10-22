@@ -2,8 +2,9 @@
 import logging
 from collections import deque
 
-import greenlet
+from traceback import format_exc
 
+import greenlet
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
@@ -136,7 +137,7 @@ class Session(object):
                 response.send(rv)
             except Exception as err:
                 warn("error caught while processing request '%s %s': %s", name,
-                     args, err)
+                     args, format_exc())
                 response.send(repr(err), error=True)
             debug('greenlet %s is now dying...', gr)
             self._greenlets.remove(gr)
