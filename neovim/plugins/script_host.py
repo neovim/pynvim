@@ -3,7 +3,7 @@ import logging
 import sys
 
 from ..api.common import SessionHook
-from ..compat import IS_PYTHON3
+from ..compat import NUM_TYPES, IS_PYTHON3
 
 
 logger = logging.getLogger(__name__)
@@ -98,6 +98,6 @@ class LegacyEvalHook(SessionHook):
         super(LegacyEvalHook, self).__init__(from_nvim=self._string_eval)
 
     def _string_eval(self, obj, session, method, kind):
-        if method == 'vim_eval' and isinstance(obj, (int, long, float)):
+        if method == 'vim_eval' and isinstance(obj, NUM_TYPES):
             return str(obj)
         return obj
