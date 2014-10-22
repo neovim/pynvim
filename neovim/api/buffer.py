@@ -93,6 +93,16 @@ class Buffer(Remote):
         for line in lines:
             yield line
 
+    def __delitem__(self, idx):
+        """Delete line or slice of lines from the buffer.
+
+        This is the same as __setitem__(idx, [])
+        """
+        if not isinstance(idx, slice):
+            self.__setitem__(idx, None)
+        else:
+            self.__setitem__(idx, [])
+
     def get_line_slice(self, start, stop, start_incl, end_incl):
         """More flexible wrapper for retrieving slices."""
         return self._session.request('buffer_get_line_slice', self, start,

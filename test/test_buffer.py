@@ -27,6 +27,15 @@ def test_get_set_del_line():
     eq(vim.current.buffer[0], 'line2')
     vim.current.buffer[0] = None
     eq(vim.current.buffer[0], '')
+    # __delitem__
+    vim.current.buffer[:] = ['line1', 'line2', 'line3']
+    eq(vim.current.buffer[2], 'line3')
+    del vim.current.buffer[0]
+    eq(vim.current.buffer[0], 'line2')
+    eq(vim.current.buffer[1], 'line3')
+    del vim.current.buffer[-1]
+    eq(vim.current.buffer[0], 'line2')
+    eq(len(vim.current.buffer), 1)
 
 
 @with_setup(setup=cleanup)
@@ -49,6 +58,15 @@ def test_get_set_del_slice():
     eq(vim.current.buffer[:], ['a', 'b', 'c'])
     vim.current.buffer[:] = None
     eq(vim.current.buffer[:], [''])
+    # __delitem__
+    vim.current.buffer[:] = ['a', 'b', 'c']
+    del vim.current.buffer[:]
+    eq(vim.current.buffer[:], [''])
+    vim.current.buffer[:] = ['a', 'b', 'c']
+    del vim.current.buffer[:1]
+    eq(vim.current.buffer[:], ['b', 'c'])
+    del vim.current.buffer[:-1]
+    eq(vim.current.buffer[:], ['c'])
 
 
 @with_setup(setup=cleanup)
