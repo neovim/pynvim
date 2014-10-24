@@ -2,8 +2,8 @@ import imp
 import logging
 import sys
 
-from ..api.common import SessionHook
-from ..compat import IS_PYTHON3
+from ..api.common import SessionHook, DecodeHook
+from ..compat import NUM_TYPES, IS_PYTHON3
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,8 @@ class ScriptHost(object):
         # it seems some plugins assume 'sys' is already imported, so do it now
         exec('import sys', self.module.__dict__)
         sys.modules['vim'] = nvim.with_hook(LegacyEvalHook())
+        if IS_PYTHON3:
+            sys.modules['vim'] = sys.modules['vim'].with_hook(DecodeHook(encoding=nvim.options['encoding'].decode('ascii')))
 
     def python_execute(self, script):
         exec(script, self.module.__dict__)
@@ -98,6 +100,6 @@ class LegacyEvalHook(SessionHook):
         super(LegacyEvalHook, self).__init__(from_nvim=self._string_eval)
 
     def _string_eval(self, obj, session, method, kind):
-        if method == 'vim_eval' and isinstance(obj, (int, long, float)):
+        if method == 'vim_eval' and isinstance(obj, NUM_TYPES):
             return str(obj)
         return obj

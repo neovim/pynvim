@@ -3,10 +3,10 @@ import logging
 import os
 import os.path
 import sys
-from imp import find_module, load_module
+from imp import load_module
 from traceback import format_exc
 
-from ..compat import IS_PYTHON3
+from ..compat import IS_PYTHON3, find_module
 
 
 logger = logging.getLogger(__name__)
