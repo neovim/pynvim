@@ -25,17 +25,25 @@ class ScriptHost(object):
         nvim.script_context = self.module
         # it seems some plugins assume 'sys' is already imported, so do it now
         exec('import sys', self.module.__dict__)
-        sys.modules['vim'] = nvim.with_hook(LegacyEvalHook())
-        if IS_PYTHON3:
-            sys.modules['vim'] = sys.modules['vim'].with_hook(DecodeHook(encoding=nvim.options['encoding'].decode('ascii')))
 
-    def python_execute(self, script):
+        self.nvim = nvim.with_hook(LegacyEvalHook())
+        if IS_PYTHON3:
+            self.nvim = self.nvim.with_hook(DecodeHook(encoding=nvim.options['encoding'].decode('ascii')))
+
+        sys.modules['vim'] = self.nvim
+
+    def python_execute(self, script, range_start, range_end):
+        self._set_current_range(range_start, range_end)
         exec(script, self.module.__dict__)
 
-    def python_execute_file(self, file_path):
+    def python_execute_file(self, file_path, range_start, range_end):
+        self._set_current_range(range_start, range_end)
         with open(file_path) as f:
             script = compile(f.read(), file_path, 'exec')
             exec(script, self.module.__dict__)
+
+    def _set_current_range(self, range_start, range_end):
+        self.nvim.current.range = self.nvim.current.buffer.range(range_start, range_end)
 
     def python_do_range(self, start, stop, code):
         nvim = self.nvim
