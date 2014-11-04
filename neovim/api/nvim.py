@@ -6,9 +6,9 @@ from msgpack import ExtType
 from .buffer import Buffer
 from .common import (DecodeHook, Remote, RemoteMap, RemoteSequence,
                      SessionFilter, SessionHook, walk)
-from ..compat import IS_PYTHON3
 from .tabpage import Tabpage
 from .window import Window
+from ..compat import IS_PYTHON3
 
 
 __all__ = ('Nvim')
