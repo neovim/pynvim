@@ -199,6 +199,7 @@ class Current(object):
 
     def __init__(self, session):
         self._session = session
+        self.range = None
 
     @property
     def line(self):

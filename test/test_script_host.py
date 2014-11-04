@@ -45,6 +45,14 @@ def test_python_nested_commands():
 
 
 @with_setup(setup=host_setup, teardown=host_teardown)
+def test_python_command_with_range():
+    vim.feedkeys('iline1\nline2\nline3\nline4\033')
+    vim.feedkeys('ggjvj:python vim.vars["range"] = vim.current.range[:]\n')
+    vim.eval('1') # wait for the keys to be processed
+    eq(vim.vars['range'], ['line2', 'line3'])
+
+
+@with_setup(setup=host_setup, teardown=host_teardown)
 def test_pyfile():
     fname = 'pyfile.py'
     text = 'vim.command("let set_by_pyfile = 123")'
