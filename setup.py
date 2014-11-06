@@ -4,7 +4,7 @@ import sys
 from setuptools import setup
 
 install_requires = [
-    'msgpack-python',
+    'msgpack-python>=0.4.0',
 ]
 
 if sys.version_info < (3, 4):
