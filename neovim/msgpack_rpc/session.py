@@ -153,9 +153,9 @@ class Session(object):
             try:
                 self._notification_cb(name, args)
                 debug('greenlet %s finished executing', gr)
-            except Exception as e:
+            except Exception:
                 warn("error caught while processing notification '%s %s': %s",
-                     name, args, e)
+                     name, args, format_exc())
             debug('greenlet %s is now dying...', gr)
             self._greenlets.remove(gr)
 
