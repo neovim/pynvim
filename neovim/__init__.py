@@ -4,15 +4,19 @@ Client library for talking with Nvim processes via it's msgpack-rpc API.
 """
 import logging
 import os
+import sys
 
 from .api import DecodeHook, Nvim, SessionHook
 from .msgpack_rpc import (socket_session, spawn_session, stdio_session,
                           tcp_session)
-from .plugins import PluginHost, ScriptHost
+from .plugin import (Host, autocmd, command, encoding, function, plugin,
+                     rpc_export, shutdown_hook)
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'spawn_session',
-           'start_host', 'DecodeHook', 'Nvim', 'SessionHook')
+           'start_host', 'autocmd', 'command', 'encoding', 'function',
+           'plugin', 'rpc_export', 'Host', 'DecodeHook', 'Nvim',
+           'SessionHook', 'shutdown_hook')
 
 
 def start_host(session=None):
@@ -30,6 +34,15 @@ def start_host(session=None):
     defined as a separate executable. It is exposed as a library function for
     testing purposes only.
     """
+    plugins = []
+    for arg in sys.argv:
+        _, ext = os.path.splitext(arg)
+        if ext == '.py':
+            plugins.append(arg)
+
+    if not plugins:
+        sys.exit('must specify at least one plugin as argument')
+
     logger = logging.getLogger(__name__)
     if 'NVIM_PYTHON_LOG_FILE' in os.environ:
         logfile = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
@@ -48,9 +61,8 @@ def start_host(session=None):
         logger.setLevel(level)
     if not session:
         session = stdio_session()
-    nvim = Nvim.from_session(session)
-    with PluginHost(nvim, preloaded=[ScriptHost]) as host:
-        host.run()
+    host = Host(Nvim.from_session(session))
+    host.start(plugins)
 
 
 # Required for python 2.6
