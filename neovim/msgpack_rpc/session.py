@@ -22,7 +22,6 @@ class Session(object):
     def __init__(self, async_session):
         """Wrap `async_session` on a synchronous msgpack-rpc interface."""
         self._async_session = async_session
-        self._greenlets = set()
         self._request_cb = self._notification_cb = None
         self._pending_messages = deque()
         self._is_running = False
@@ -140,12 +139,10 @@ class Session(object):
                      args, format_exc())
                 response.send(repr(err), error=True)
             debug('greenlet %s is now dying...', gr)
-            self._greenlets.remove(gr)
 
         # Create a new greenlet to handle the request
         gr = greenlet.greenlet(handler)
         debug('received rpc request, greenlet %s will handle it', gr)
-        self._greenlets.add(gr)
         gr.switch()
 
     def _on_notification(self, name, args):
@@ -157,9 +154,7 @@ class Session(object):
                 warn("error caught while processing notification '%s %s': %s",
                      name, args, format_exc())
             debug('greenlet %s is now dying...', gr)
-            self._greenlets.remove(gr)
 
         gr = greenlet.greenlet(handler)
         debug('received rpc notification, greenlet %s will handle it', gr)
-        self._greenlets.add(gr)
         gr.switch()
