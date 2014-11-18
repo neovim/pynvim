@@ -94,10 +94,6 @@ class Nvim(object):
         """Unsubscribe to a Nvim event."""
         return self._session.request('vim_unsubscribe', event)
 
-    def register_provider(self, name):
-        """Register this process as a Nvim feature provider."""
-        return self._session.request('vim_register_provider', name)
-
     def command(self, string):
         """Execute a single ex command."""
         return self._session.request('vim_command', string)
