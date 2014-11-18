@@ -1,6 +1,5 @@
 """Msgpack handling in the event loop pipeline."""
 import logging
-from collections import deque
 
 from msgpack import Packer, Unpacker
 
@@ -20,24 +19,17 @@ class MsgpackStream(object):
     def __init__(self, event_loop):
         """Wrap `event_loop` on a msgpack-aware interface."""
         self._event_loop = event_loop
-        self._posted = deque()
         self._packer = Packer(use_bin_type=True, encoding=None)
         self._unpacker = Unpacker()
         self._message_cb = None
-        self._stopped = False
 
     def set_packer_encoding(self, encoding):
         """Switch encoding for Unicode strings."""
         self._packer = Packer(use_bin_type=True, encoding=encoding)
 
-    def post(self, msg):
-        """Post `msg` to the read queue of the `MsgpackStream` instance.
-
-        Use the event loop `interrupt()` method to push msgpack objects from
-        other threads.
-        """
-        self._posted.append(msg)
-        self._event_loop.interrupt()
+    def threadsafe_call(self, fn):
+        """Wrapper around `BaseEventLoop.threadsafe_call`."""
+        self._event_loop.threadsafe_call(fn)
 
     def send(self, msg):
         """Queue `msg` for sending to Nvim."""
@@ -51,21 +43,12 @@ class MsgpackStream(object):
         a message has been successfully parsed from the input stream.
         """
         self._message_cb = message_cb
-        self._run()
+        self._event_loop.run(self._on_data)
         self._message_cb = None
 
     def stop(self):
         """Stop the event loop."""
-        self._stopped = True
         self._event_loop.stop()
-
-    def _run(self):
-        self._stopped = False
-        while not self._stopped:
-            if self._posted:
-                self._message_cb(self._posted.popleft())
-                continue
-            self._event_loop.run(self._on_data)
 
     def _on_data(self, data):
         self._unpacker.feed(data)

@@ -24,6 +24,6 @@ setup(name='neovim',
       author_email='tpadilha84@gmail.com',
       license='MIT',
       packages=['neovim', 'neovim.api', 'neovim.msgpack_rpc',
-                'neovim.msgpack_rpc.event_loop', 'neovim.plugins'],
+                'neovim.msgpack_rpc.event_loop', 'neovim.plugin'],
       install_requires=install_requires,
       zip_safe=False)

@@ -28,16 +28,9 @@ class AsyncSession(object):
             2: self._on_notification
         }
 
-    def post(self, method, args):
-        """Post a notification to the queue from another thread.
-
-        A msgpack-rpc notification with method `method` and argument `args` is
-        posted to the notification queue. This can be used to send messages
-        from other threads.
-        """
-        # We encode method names to be consitent with names coming from Nvim,
-        # which always come as byte strings
-        self._msgpack_stream.post((2, method.encode('utf-8'), args,))
+    def threadsafe_call(self, fn):
+        """Wrapper around `MsgpackStream.threadsafe_call`."""
+        self._msgpack_stream.threadsafe_call(fn)
 
     def request(self, method, args, response_cb):
         """Send a msgpack-rpc request to Nvim.

@@ -107,8 +107,8 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
     def _stop(self):
         self._loop.stop()
 
-    def _interrupt(self):
-        self._loop.call_soon_threadsafe(lambda: self.stop())
+    def _threadsafe_call(self, fn):
+        self._loop.call_soon_threadsafe(fn)
 
     def _setup_signals(self, signals):
         self._signals = list(signals)

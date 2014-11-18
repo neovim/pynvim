@@ -1,5 +1,6 @@
 """Event loop implementation that uses pyuv(libuv-python bindings)."""
 import sys
+from collections import deque
 
 import pyuv
 
@@ -12,9 +13,10 @@ class UvEventLoop(BaseEventLoop):
 
     def _init(self):
         self._loop = pyuv.Loop()
-        self._async = pyuv.Async(self._loop, lambda h: self.stop())
+        self._async = pyuv.Async(self._loop, self._on_async)
         self._connection_error = None
         self._error_stream = None
+        self._callbacks = deque()
 
     def _on_connect(self, stream, error):
         self.stop()
@@ -96,8 +98,13 @@ class UvEventLoop(BaseEventLoop):
     def _stop(self):
         self._loop.stop()
 
-    def _interrupt(self):
+    def _threadsafe_call(self, fn):
+        self._callbacks.append(fn)
         self._async.send()
+
+    def _on_async(self, handle):
+        while self._callbacks:
+            self._callbacks.popleft()()
 
     def _setup_signals(self, signals):
         self._signal_handles = []

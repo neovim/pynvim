@@ -25,10 +25,18 @@ class Session(object):
         self._request_cb = self._notification_cb = None
         self._pending_messages = deque()
         self._is_running = False
+        self._setup_exception = None
 
-    def post(self, name, *args):
-        """Simple wrapper around `AsyncSession.post`."""
-        self._async_session.post(name, args)
+    def threadsafe_call(self, fn, *args, **kwargs):
+        """Wrapper around `AsyncSession.threadsafe_call`."""
+        def handler():
+            fn(*args, **kwargs)
+
+        def greenlet_wrapper():
+            gr = greenlet.greenlet(handler)
+            gr.switch()
+
+        self._async_session.threadsafe_call(greenlet_wrapper)
 
     def next_message(self):
         """Block until a message(request or notification) is available.
@@ -42,7 +50,8 @@ class Session(object):
             return self._pending_messages.popleft()
         self._async_session.run(self._enqueue_request_and_stop,
                                 self._enqueue_notification_and_stop)
-        return self._pending_messages.popleft()
+        if self._pending_messages:
+            return self._pending_messages.popleft()
 
     def request(self, method, *args):
         """Send a msgpack-rpc request and block until as response is received.
@@ -67,7 +76,7 @@ class Session(object):
             raise self.error_wrapper(err)
         return rv
 
-    def run(self, request_cb, notification_cb):
+    def run(self, request_cb, notification_cb, setup_cb=None):
         """Run the event loop to receive requests and notifications from Nvim.
 
         Like `AsyncSession.run()`, but `request_cb` and `notification_cb` are
@@ -76,6 +85,23 @@ class Session(object):
         self._request_cb = request_cb
         self._notification_cb = notification_cb
         self._is_running = True
+        self._setup_exception = None
+
+        def on_setup():
+            try:
+                setup_cb()
+            except Exception as e:
+                self._setup_exception = e
+                self.stop()
+
+        if setup_cb:
+            # Create a new greenlet to handle the setup function
+            gr = greenlet.greenlet(on_setup)
+            gr.switch()
+
+        if self._setup_exception:
+            raise self._setup_exception
+
         # Process all pending requests and notifications
         while self._pending_messages:
             msg = self._pending_messages.popleft()
@@ -84,6 +110,9 @@ class Session(object):
         self._is_running = False
         self._request_cb = None
         self._notification_cb = None
+
+        if self._setup_exception:
+            raise self._setup_exception
 
     def stop(self):
         """Stop the event loop."""

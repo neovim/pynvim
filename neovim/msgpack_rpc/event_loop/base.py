@@ -1,7 +1,6 @@
 """Common code for event loop implementations."""
 import logging
 import signal
-import threading
 
 
 logger = logging.getLogger(__name__)
@@ -112,11 +111,13 @@ class BaseEventLoop(object):
         debug("Sending '%s'", data)
         self._send(data)
 
-    def interrupt(self):
-        """Stop the event loop from another thread."""
-        debug('Interrupted event loop from thread %s',
-              threading.current_thread())
-        self._interrupt()
+    def threadsafe_call(self, fn):
+        """Call a function in the event loop thread.
+
+        This is the only safe way to interact with a session from other
+        threads.
+        """
+        self._threadsafe_call(fn)
 
     def run(self, data_cb):
         """Run the event loop."""

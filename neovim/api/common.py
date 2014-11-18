@@ -204,14 +204,15 @@ class SessionFilter(object):
         self._in = self._hook.from_nvim
         self._out = self._hook.to_nvim
 
-    def post(self, name, *args):
-        """Wrapper for Session.post."""
-        self._session.post(name, *args)
+    def threadsafe_call(self, fn, *args, **kwargs):
+        """Wrapper for Session.threadsafe_call."""
+        self._session.threadsafe_call(fn, *args, **kwargs)
 
     def next_message(self):
         """Wrapper for Session.next_message."""
         msg = self._session.next_message()
-        return walk(self._in, msg, self, msg[1], msg[0])
+        if msg:
+            return walk(self._in, msg, self, msg[1], msg[0])
 
     def request(self, name, *args):
         """Wrapper for Session.request."""
@@ -219,7 +220,7 @@ class SessionFilter(object):
         return walk(self._in, self._session.request(name, *args), self, name,
                     'out-request')
 
-    def run(self, request_cb, notification_cb):
+    def run(self, request_cb, notification_cb, setup_cb=None):
         """Wrapper for Session.run."""
         def filter_request_cb(name, args):
             result = request_cb(self._in(name, self, name, 'request'),
@@ -230,7 +231,7 @@ class SessionFilter(object):
             notification_cb(self._in(name, self, name, 'notification'),
                             walk(self._in, args, self, name, 'notification'))
 
-        self._session.run(filter_request_cb, filter_notification_cb)
+        self._session.run(filter_request_cb, filter_notification_cb, setup_cb)
 
     def stop(self):
         """Wrapper for Session.stop."""
