@@ -16,7 +16,7 @@ from .plugin import (Host, autocmd, command, encoding, function, plugin,
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'spawn_session',
            'start_host', 'autocmd', 'command', 'encoding', 'function',
            'plugin', 'rpc_export', 'Host', 'DecodeHook', 'Nvim',
-           'SessionHook', 'shutdown_hook')
+           'SessionHook', 'shutdown_hook', 'attach')
 
 
 def start_host(session=None):
@@ -63,6 +63,35 @@ def start_host(session=None):
         session = stdio_session()
     host = Host(Nvim.from_session(session))
     host.start(plugins)
+
+
+def attach(session_type, address=None, port=None, path=None, argv=None):
+    """Provide a nicer interface to create python api sessions.
+
+    Previous machinery to create python api sessions is still there. This only
+    creates a facade function to make things easier for the most usual cases.
+    Thus, instead of:
+        from neovim import socket_session, Nvim
+        session = tcp_session(address=<address>, port=<port>)
+        nvim = Nvim.from_session(session)
+    You can now do:
+        from neovim import attach
+        nvim = attach('tcp', address=<address>, port=<port>)
+    And also:
+        nvim = attach('socket', path=<path>)
+        nvim = attach('child', argv=<argv>)
+        nvim = attach('stdio')
+    """
+    session = (tcp_session(address, port) if session_type == 'tcp' else
+               socket_session(path) if session_type == 'socket' else
+               stdio_session() if session_type == 'stdio' else
+               spawn_session(argv) if session_type == 'child'else
+               None)
+
+    if not session:
+        raise Exception('Unknown session type "%s"' % session_type)
+
+    return Nvim.from_session(session)
 
 
 # Required for python 2.6
