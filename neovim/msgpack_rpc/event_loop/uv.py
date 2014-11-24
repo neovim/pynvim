@@ -108,7 +108,10 @@ class UvEventLoop(BaseEventLoop):
 
     def _setup_signals(self, signals):
         self._signal_handles = []
-        handler = lambda h, signum: self._on_signal(signum)
+
+        def handler(h, signum):
+            self._on_signal(signum)
+
         for signum in signals:
             handle = pyuv.Signal(self._loop)
             handle.start(handler, signum)

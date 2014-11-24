@@ -63,6 +63,7 @@ endfunction
 
 vim.input(cleanup_func)
 
+
 def cleanup():
     # cleanup nvim
     vim.command('call BeforeEachTest()')
