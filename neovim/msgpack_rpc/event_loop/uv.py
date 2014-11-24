@@ -63,7 +63,7 @@ class UvEventLoop(BaseEventLoop):
         self._write_stream = pyuv.Pipe(self._loop)
         self._write_stream.open(sys.stdout.fileno())
 
-    def _connect_spawn(self, argv):
+    def _connect_child(self, argv):
         self._write_stream = pyuv.Pipe(self._loop)
         self._read_stream = pyuv.Pipe(self._loop)
         self._error_stream = pyuv.Pipe(self._loop)

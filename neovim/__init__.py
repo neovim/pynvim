@@ -7,13 +7,13 @@ import os
 import sys
 
 from .api import DecodeHook, Nvim, SessionHook
-from .msgpack_rpc import (socket_session, spawn_session, stdio_session,
+from .msgpack_rpc import (child_session, socket_session, stdio_session,
                           tcp_session)
 from .plugin import (Host, autocmd, command, encoding, function, plugin,
                      rpc_export, shutdown_hook)
 
 
-__all__ = ('tcp_session', 'socket_session', 'stdio_session', 'spawn_session',
+__all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'start_host', 'autocmd', 'command', 'encoding', 'function',
            'plugin', 'rpc_export', 'Host', 'DecodeHook', 'Nvim',
            'SessionHook', 'shutdown_hook', 'attach')
@@ -85,7 +85,7 @@ def attach(session_type, address=None, port=None, path=None, argv=None):
     session = (tcp_session(address, port) if session_type == 'tcp' else
                socket_session(path) if session_type == 'socket' else
                stdio_session() if session_type == 'stdio' else
-               spawn_session(argv) if session_type == 'child'else
+               child_session(argv) if session_type == 'child'else
                None)
 
     if not session:

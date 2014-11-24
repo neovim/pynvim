@@ -36,7 +36,7 @@ install:
 script:
   - if [ $CI_TARGET = tests ]; then
       ./scripts/run-api-tests.exp "nosetests" "nvim -u NONE";
-      NVIM_SPAWN_ARGV='["nvim", "-u", "NONE", "--embed"]' nosetests;
+      NVIM_CHILD_ARGV='["nvim", "-u", "NONE", "--embed"]' nosetests;
     else
       flake8 neovim;
     fi

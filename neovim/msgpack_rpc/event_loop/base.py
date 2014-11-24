@@ -30,7 +30,7 @@ class BaseEventLoop(object):
     - `_connect_socket(path)`: Same as tcp, but use a UNIX domain socket or
       or named pipe.
     - `_connect_stdio()`: Use stdin/stdout as the connection to Nvim
-    - `_connect_spawn(argv)`: Use the argument vector `argv` to spawn an
+    - `_connect_child(argv)`: Use the argument vector `argv` to spawn an
       embedded Nvim that has it's stdin/stdout connected to the event loop.
     - `_start_reading()`: Called after any of _connect_* methods. Can be used
       to perform any post-connection setup or validation.
@@ -68,7 +68,7 @@ class BaseEventLoop(object):
         Traceback (most recent call last):
             ...
         AttributeError: 'BaseEventLoop' object has no attribute '_init'
-        >>> BaseEventLoop('spawn', ['nvim', '--embed', '-u', 'NONE'])
+        >>> BaseEventLoop('child', ['nvim', '--embed', '-u', 'NONE'])
         Traceback (most recent call last):
             ...
         AttributeError: 'BaseEventLoop' object has no attribute '_init'
@@ -101,10 +101,10 @@ class BaseEventLoop(object):
         info('Preparing stdin/stdout for streaming data')
         self._connect_stdio()
 
-    def connect_spawn(self, argv):
-        """Connect a new Nvim instance. Delegated to `_connect_spawn`."""
+    def connect_child(self, argv):
+        """Connect a new Nvim instance. Delegated to `_connect_child`."""
         info('Spawning a new nvim instance')
-        self._connect_spawn(argv)
+        self._connect_child(argv)
 
     def send(self, data):
         """Queue `data` for sending to Nvim."""

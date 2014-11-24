@@ -9,9 +9,9 @@ from nose.tools import eq_ as eq
 
 session = None
 vim = None
-if 'NVIM_SPAWN_ARGV' in os.environ:
-    argv = json.loads(os.environ['NVIM_SPAWN_ARGV'])
-    session = neovim.spawn_session(argv)
+if 'NVIM_CHILD_ARGV' in os.environ:
+    argv = json.loads(os.environ['NVIM_CHILD_ARGV'])
+    session = neovim.child_session(argv)
 else:
     session = neovim.socket_session(os.environ['NVIM_LISTEN_ADDRESS'])
 
