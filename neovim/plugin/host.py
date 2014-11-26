@@ -13,7 +13,8 @@ from ..compat import IS_PYTHON3, find_module
 __all__ = ('Host')
 
 logger = logging.getLogger(__name__)
-debug, info, warn = (logger.debug, logger.info, logger.warn,)
+error, debug, info, warn = (logger.error, logger.debug, logger.info,
+                            logger.warn,)
 
 
 class Host(object):
@@ -77,7 +78,13 @@ class Host(object):
                 raise Exception('{0} is already loaded'.format(path))
             directory, name = os.path.split(os.path.splitext(path)[0])
             file, pathname, description = find_module(name, [directory])
-            module = imp.load_module(name, file, pathname, description)
+            try:
+                module = imp.load_module(name, file, pathname, description)
+            except ImportError:
+                error('Encountered import error loading plugin at %s' % path)
+            except Exception as e:
+                error('Error loading plugin at %s %s: %s' % (
+                    path, type(e).__name__, e))
             handlers = []
             self._discover_classes(module, handlers, path)
             self._discover_functions(module, handlers, path)
