@@ -149,6 +149,16 @@ class Nvim(object):
         """
         return self._session.request('vim_feedkeys', keys, options)
 
+    def input(self, bytes):
+        """Push `bytes` to Nvim low level input buffer.
+
+        Unlike `feedkeys()`, this uses the lowest level input buffer and the
+        call is not deferred. It returns the number of bytes actually
+        written(which can be less than what was requested if the buffer is
+        full).
+        """
+        return self._session.request('vim_input', bytes)
+
     def replace_termcodes(self, string, from_part=False, do_lt=True,
                           special=True):
         r"""Replace any terminal code strings by byte sequences.

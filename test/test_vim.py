@@ -9,6 +9,8 @@ def test_command():
     fname = tempfile.mkstemp()[1]
     vim.command('new')
     vim.command('edit %s' % fname)
+    # skip the "press return" state, which does not handle deferred calls
+    vim.input('\r')
     vim.command('normal itesting\npython\napi')
     vim.command('w')
     ok(os.path.isfile(fname))

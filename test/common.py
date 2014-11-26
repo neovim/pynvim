@@ -61,7 +61,7 @@ cleanup_func = ''':function BeforeEachTest()
 endfunction
 '''
 
-vim.feedkeys(cleanup_func)
+vim.input(cleanup_func)
 
 def cleanup():
     # cleanup nvim
