@@ -89,7 +89,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         coroutine = self._loop.connect_write_pipe(self._fact, sys.stdout)
         self._loop.run_until_complete(coroutine)
 
-    def _connect_spawn(self, argv):
+    def _connect_child(self, argv):
         coroutine = self._loop.subprocess_exec(self._fact, *argv)
         self._loop.run_until_complete(coroutine)
 

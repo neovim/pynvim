@@ -27,11 +27,9 @@ similar to the one exposed by the [python-vim
 bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim))
 
 ```python
->>> from neovim import socket_session, Nvim
-# Create a msgpack-rpc session to the unix domain socket created by Nvim:
->>> session = socket_session('/tmp/nvim')
-# Create a Nvim instance from the session(don't call Nvim constructor!):
->>> nvim = Nvim.from_session(session)
+>>> from neovim import attach
+# Create a python API session attached to unix domain socket created above:
+>>> nvim = attach('socket', path='/tmp/nvim')
 # Now do some work. 
 >>> buffer = nvim.buffers[0] # Get the first buffer
 >>> buffer[0] = 'replace first line'

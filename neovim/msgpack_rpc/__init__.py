@@ -10,7 +10,7 @@ from .msgpack_stream import MsgpackStream
 from .session import Session
 
 
-__all__ = ('tcp_session', 'socket_session', 'stdio_session', 'spawn_session')
+__all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session')
 
 
 def session(transport_type='stdio', *args, **kwargs):
@@ -36,6 +36,6 @@ def stdio_session():
     return session('stdio')
 
 
-def spawn_session(argv):
+def child_session(argv):
     """Create a msgpack-rpc session from a new Nvim instance."""
-    return session('spawn', argv)
+    return session('child', argv)

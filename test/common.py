@@ -7,15 +7,10 @@ import neovim
 from nose.tools import eq_ as eq
 
 
-session = None
-vim = None
-if 'NVIM_SPAWN_ARGV' in os.environ:
-    argv = json.loads(os.environ['NVIM_SPAWN_ARGV'])
-    session = neovim.spawn_session(argv)
+if 'NVIM_CHILD_ARGV' in os.environ:
+    vim = neovim.attach('child', argv=json.loads(os.environ['NVIM_CHILD_ARGV']))
 else:
-    session = neovim.socket_session(os.environ['NVIM_LISTEN_ADDRESS'])
-
-vim = neovim.Nvim.from_session(session)
+    vim = neovim.attach('socket', path=os.environ['NVIM_LISTEN_ADDRESS'])
 
 if sys.version_info >= (3, 0):
     # For Python3 we decode binary strings as Unicode for compatibility
@@ -62,6 +57,7 @@ endfunction
 '''
 
 vim.input(cleanup_func)
+
 
 def cleanup():
     # cleanup nvim

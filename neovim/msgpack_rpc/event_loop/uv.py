@@ -63,7 +63,7 @@ class UvEventLoop(BaseEventLoop):
         self._write_stream = pyuv.Pipe(self._loop)
         self._write_stream.open(sys.stdout.fileno())
 
-    def _connect_spawn(self, argv):
+    def _connect_child(self, argv):
         self._write_stream = pyuv.Pipe(self._loop)
         self._read_stream = pyuv.Pipe(self._loop)
         self._error_stream = pyuv.Pipe(self._loop)
@@ -108,7 +108,10 @@ class UvEventLoop(BaseEventLoop):
 
     def _setup_signals(self, signals):
         self._signal_handles = []
-        handler = lambda h, signum: self._on_signal(signum)
+
+        def handler(h, signum):
+            self._on_signal(signum)
+
         for signum in signals:
             handle = pyuv.Signal(self._loop)
             handle.start(handler, signum)
