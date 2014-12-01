@@ -7,7 +7,8 @@ from traceback import format_exc
 import greenlet
 
 logger = logging.getLogger(__name__)
-debug, info, warn = (logger.debug, logger.info, logger.warn,)
+error, debug, info, warn = (logger.error, logger.debug, logger.info,
+                            logger.warn,)
 
 
 class Session(object):
@@ -100,6 +101,7 @@ class Session(object):
             gr.switch()
 
         if self._setup_exception:
+            error('Setup error: {0}'.format(self._setup_exception))
             raise self._setup_exception
 
         # Process all pending requests and notifications
