@@ -78,7 +78,7 @@ def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
     return dec
 
 
-def autocmd(name, pattern=None, sync=False, eval=None):
+def autocmd(name, pattern='*', sync=False, eval=None):
     """Tag a function or plugin method as a Nvim autocommand handler."""
     def dec(f):
         f._nvim_rpc_method_name = 'autocmd:{0}:{1}'.format(name, pattern)
@@ -87,7 +87,7 @@ def autocmd(name, pattern=None, sync=False, eval=None):
         f._nvim_prefix_plugin_path = True
 
         opts = {
-            'pattern': pattern or '*'
+            'pattern': pattern
         }
 
         if eval:
