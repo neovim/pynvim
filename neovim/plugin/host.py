@@ -81,9 +81,10 @@ class Host(object):
             try:
                 module = imp.load_module(name, file, pathname, description)
             except ImportError:
-                error('Encountered import error loading plugin at %s' % path)
+                error('Encountered import error loading plugin at {0}'.format(
+                    path))
             except Exception as e:
-                error('Error loading plugin at %s %s: %s' % (
+                error('Error loading plugin at {0} {1}: {2}'.format(
                     path, type(e).__name__, e))
             handlers = []
             self._discover_classes(module, handlers, path)
@@ -132,13 +133,13 @@ class Host(object):
                 method = '{0}:{1}'.format(plugin_path, method)
             if fn._nvim_rpc_sync:
                 if method in self._request_handlers:
-                    raise Exception('Request handler for "{0}" is ' +
-                                    'already registered'.format(method))
+                    raise Exception(('Request handler for "{0}" is ' +
+                                    'already registered').format(method))
                 self._request_handlers[method] = fn
             else:
                 if method in self._notification_handlers:
-                    raise Exception('Notification handler for "{0}" is ' +
-                                    'already registered'.format(method))
+                    raise Exception(('Notification handler for "{0}" is ' +
+                                    'already registered').format(method))
                 self._notification_handlers[method] = fn
             if hasattr(fn, 'nvim_rpc_spec'):
                 specs.append(fn.nvim_rpc_spec)
