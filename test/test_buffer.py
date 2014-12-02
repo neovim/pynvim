@@ -101,10 +101,10 @@ def test_number():
 def test_name():
     vim.command('new')
     eq(vim.current.buffer.name, '')
-    new_name = vim.eval('tempname()')
+    new_name = vim.eval('resolve(tempname())')
     vim.current.buffer.name = new_name
     eq(vim.current.buffer.name, new_name)
-    vim.command('w!')
+    vim.command('silent w!')
     ok(os.path.isfile(new_name))
     os.unlink(new_name)
 
