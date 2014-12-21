@@ -28,8 +28,10 @@ class Session(object):
         self._is_running = False
         self._setup_exception = None
 
-    def threadsafe_call(self, fn, *args, **kwargs):
-        """Wrapper around `AsyncSession.threadsafe_call`."""
+    def _wrap_greenlet(self, fn, *args, **kwargs):
+        if fn is None:
+            return None
+
         def handler():
             try:
                 fn(*args, **kwargs)
@@ -41,7 +43,22 @@ class Session(object):
             gr = greenlet.greenlet(handler)
             gr.switch()
 
+        return greenlet_wrapper
+
+    def threadsafe_call(self, fn, *args, **kwargs):
+        """Wrapper around `AsyncSession.threadsafe_call`."""
+
+        greenlet_wrapper = self._wrap_greenlet(fn, *args, **kwargs)
         self._async_session.threadsafe_call(greenlet_wrapper)
+
+    def poll_fd(self, fd, on_readable, on_writable, greenlet=True):
+        """Wrapper around `AsyncSession.threadsafe_call`."""
+        if greenlet:
+            on_readable = self._wrap_greenlet(on_readable)
+            on_writable = self._wrap_greenlet(on_writable)
+
+        return self._async_session.poll_fd(fd, on_readable, on_writable)
+
 
     def next_message(self):
         """Block until a message(request or notification) is available.

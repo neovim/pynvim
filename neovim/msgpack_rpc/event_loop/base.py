@@ -121,6 +121,24 @@ class BaseEventLoop(object):
         """
         self._threadsafe_call(fn)
 
+    def poll_fd(self, fd, on_readable=None, on_writable=None):
+        """
+        Invoke callbacks when the fd is ready for reading and/or writing. if
+        `on_readable` is not None, it should be callback, which will be invoked
+        (with no arguments) when the fd is ready for writing. Similarily if
+        `on_writable` is not None it will be invoked when the fd is ready for
+        writing.
+
+        Only one callback (of each kind) can be registered on the same fd at a
+        time. If both readability and writability should be monitored, both
+        callbacks must be registered by the same `poll_fd` call.
+
+        Returns a function that deactivates the callback(s).
+        """
+        if on_readable is None and on_writable is None:
+            raise ValueError("poll_fd: At least one of `on_readable` and `on_writable` must be present")
+        return self._poll_fd(fd, on_readable, on_writable)
+
     def run(self, data_cb):
         """Run the event loop."""
         if self._error:

@@ -113,6 +113,18 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
     def _threadsafe_call(self, fn):
         self._loop.call_soon_threadsafe(fn)
 
+    def _poll_fd(self, fd, on_readable, on_writable):
+        if on_readable is not None:
+            self._loop.add_reader(fd, on_readable)
+        if on_writable is not None:
+            self._loop.add_writer(fd, on_writable)
+        def cancel():
+            if on_readable is not None:
+                self._loop.remove_reader(fd)
+            if on_writable is not None:
+                self._loop.remove_writer(fd)
+        return cancel
+
     def _setup_signals(self, signals):
         if os.name == 'nt':
             # add_signal_handler is not supported in win32

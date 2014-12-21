@@ -32,6 +32,10 @@ class AsyncSession(object):
         """Wrapper around `MsgpackStream.threadsafe_call`."""
         self._msgpack_stream.threadsafe_call(fn)
 
+    def poll_fd(self, fd, on_readable, on_writable):
+        """Wrapper around `BaseEventLoop.poll_fd`."""
+        return self._msgpack_stream.poll_fd(fd, on_readable, on_writable)
+
     def request(self, method, args, response_cb):
         """Send a msgpack-rpc request to Nvim.
 
