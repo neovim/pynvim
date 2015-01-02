@@ -85,7 +85,7 @@ def attach(session_type, address=None, port=None, path=None, argv=None):
     session = (tcp_session(address, port) if session_type == 'tcp' else
                socket_session(path) if session_type == 'socket' else
                stdio_session() if session_type == 'stdio' else
-               child_session(argv) if session_type == 'child'else
+               child_session(argv) if session_type == 'child' else
                None)
 
     if not session:
