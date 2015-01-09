@@ -25,7 +25,11 @@ setup(name='neovim',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='MIT',
-      packages=['neovim', 'neovim.api', 'neovim.msgpack_rpc',
+      packages=['neovim', 'neovim.api', 'neovim.msgpack_rpc', 'neovim.ui',
                 'neovim.msgpack_rpc.event_loop', 'neovim.plugin'],
       install_requires=install_requires,
+      entry_points='''
+      [console_scripts]
+      pynvim=neovim.ui.cli:main
+      ''',
       zip_safe=False)
