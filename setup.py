@@ -4,6 +4,8 @@ import sys
 from setuptools import setup
 
 install_requires = [
+    'cffi',
+    'click>=3.0',
     'msgpack-python>=0.4.0',
 ]
 
