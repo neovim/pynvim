@@ -1,2 +1,4 @@
 *.egg-info/
 __pycache__
+neovim/ui/screen.c
+neovim/ui/screen.so
