@@ -45,7 +45,8 @@ def start_host(session=None):
 
     logger = logging.getLogger(__name__)
     if 'NVIM_PYTHON_LOG_FILE' in os.environ:
-        logfile = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
+        logfile = (os.environ['NVIM_PYTHON_LOG_FILE'].strip() +
+                   '_' + str(os.getpid()))
         handler = logging.FileHandler(logfile, 'w')
         handler.formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s @ '
