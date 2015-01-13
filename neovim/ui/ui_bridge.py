@@ -1,4 +1,5 @@
 """Bridge for connecting a UI instance to nvim."""
+import sys
 from threading import Semaphore, Thread
 from traceback import format_exc
 
@@ -7,12 +8,13 @@ class UIBridge(object):
 
     """UIBridge class. Connects a Nvim instance to a UI class."""
 
-    def connect(self, nvim, ui, profile=None):
+    def connect(self, nvim, ui, profile=None, notify=False):
         """Connect nvim and the ui.
 
         This will start loops for handling the UI and nvim events while
         also synchronizing both.
         """
+        self._notify = notify
         self._error = None
         self._nvim = nvim
         self._ui = ui
@@ -76,6 +78,10 @@ class UIBridge(object):
 
         def on_notification(method, updates):
             def apply_updates():
+                if self._notify:
+                    sys.stdout.write('attached\n')
+                    sys.stdout.flush()
+                    self._notify = False
                 try:
                     for update in updates:
                         # import sys

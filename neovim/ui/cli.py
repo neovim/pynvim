@@ -9,6 +9,7 @@ from .. import attach
 
 @click.command(context_settings=dict(allow_extra_args=True))
 @click.option('--prog')
+@click.option('--notify', '-n', default=False, is_flag=True)
 @click.option('--gui', '-g', default=False, is_flag=True)
 @click.option('--listen', '-l')
 @click.option('--connect', '-c')
@@ -17,7 +18,7 @@ from .. import attach
               type=click.Choice(['ncalls', 'tottime', 'percall', 'cumtime',
                                  'name', 'disable']))
 @click.pass_context
-def main(ctx, prog, gui, listen, connect, profile):
+def main(ctx, prog, notify, gui, listen, connect, profile):
     """Entry point."""
     address = connect or listen
 
@@ -65,7 +66,7 @@ def main(ctx, prog, gui, listen, connect, profile):
         from .tickit_ui import TickitUI
         ui = TickitUI()
     bridge = UIBridge()
-    bridge.connect(nvim, ui, profile if profile != 'disable' else None)
+    bridge.connect(nvim, ui, profile if profile != 'disable' else None, notify)
 
 
 if __name__ == '__main__':
