@@ -86,6 +86,25 @@ class Nvim(object):
         """Return the Session or SessionFilter for a Nvim instance."""
         return self._session
 
+    def ui_attach(self, width, height, rgb):
+        """Register as a remote UI.
+
+        After this method is called, the client will receive redraw
+        notifications.
+        """
+        return self._session.request('ui_attach', width, height, rgb)
+
+    def ui_detach(self):
+        """Unregister as a remote UI."""
+        return self._session.request('ui_detach')
+
+    def ui_try_resize(self, width, height):
+        """Notify nvim that the client window has resized.
+
+        If possible, nvim will send a redraw request to resize.
+        """
+        return self._session.request('ui_try_resize', width, height)
+
     def subscribe(self, event):
         """Subscribe to a Nvim event."""
         return self._session.request('vim_subscribe', event)

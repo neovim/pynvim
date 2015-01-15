@@ -1,6 +1,7 @@
 """Common code for event loop implementations."""
 import logging
 import signal
+import threading
 
 
 logger = logging.getLogger(__name__)
@@ -11,6 +12,7 @@ debug, info, warn = (logger.debug, logger.info, logger.warn,)
 # which exits the program. To be able to restore the python interpreter to it's
 # default state, we keep a reference to the default handler
 default_int_handler = signal.getsignal(signal.SIGINT)
+main_thread = threading.current_thread()
 
 
 class BaseEventLoop(object):
@@ -131,12 +133,14 @@ class BaseEventLoop(object):
                 self._error = None
             raise err
         self._on_data = data_cb
-        self._setup_signals([signal.SIGINT, signal.SIGTERM])
+        if threading.current_thread() == main_thread:
+            self._setup_signals([signal.SIGINT, signal.SIGTERM])
         debug('Entering event loop')
         self._run()
         debug('Exited event loop')
-        self._teardown_signals()
-        signal.signal(signal.SIGINT, default_int_handler)
+        if threading.current_thread() == main_thread:
+            self._teardown_signals()
+            signal.signal(signal.SIGINT, default_int_handler)
         self._on_data = None
 
     def stop(self):
