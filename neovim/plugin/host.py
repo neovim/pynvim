@@ -37,6 +37,8 @@ class Host(object):
             'shutdown': self.shutdown
         }
         self._nvim_encoding = nvim.options['encoding']
+        if IS_PYTHON3 and isinstance(self._nvim_encoding, bytes):
+            self._nvim_encoding = self._nvim_encoding.decode('ascii')
 
     def start(self, plugins):
         """Start listening for msgpack-rpc requests and notifications."""
@@ -51,6 +53,8 @@ class Host(object):
 
     def _on_request(self, name, args):
         """Handle a msgpack-rpc request."""
+        if IS_PYTHON3 and isinstance(name, bytes):
+            name = name.decode(self._nvim_encoding)
         handler = self._request_handlers.get(name, None)
         if not handler:
             msg = 'no request handler registered for "%s"' % name
@@ -64,6 +68,8 @@ class Host(object):
 
     def _on_notification(self, name, args):
         """Handle a msgpack-rpc notification."""
+        if IS_PYTHON3 and isinstance(name, bytes):
+            name = name.decode(self._nvim_encoding)
         handler = self._notification_handlers.get(name, None)
         if not handler:
             warn('no notification handler registered for "%s"', name)
