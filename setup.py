@@ -4,7 +4,6 @@ import sys
 from setuptools import setup
 
 install_requires = [
-    'cffi',
     'click>=3.0',
     'msgpack-python>=0.4.0',
 ]
@@ -27,10 +26,10 @@ if not platform.python_implementation() == 'PyPy':
         pass
 
 setup(name='neovim',
-      version='0.0.26',
+      version='0.0.27',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
-      download_url='https://github.com/neovim/python-client/archive/0.0.26.tar.gz',
+      download_url='https://github.com/neovim/python-client/archive/0.0.27.tar.gz',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='MIT',
