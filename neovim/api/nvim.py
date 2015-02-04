@@ -15,7 +15,6 @@ __all__ = ('Nvim')
 
 
 os_chdir = os.chdir
-os_fchdir = os.fchdir
 
 
 class Nvim(object):
@@ -151,11 +150,6 @@ class Nvim(object):
         """Run os.chdir, then all appropriate vim stuff."""
         os_chdir(dir_path)
         return self._session.request('vim_change_directory', dir_path)
-
-    def fchdir(self, dir_fd):
-        """Run os.chdir, then all appropriate vim stuff."""
-        os_fchdir(dir_fd)
-        return self._session.request('vim_change_directory', os.getcwd())
 
     def feedkeys(self, keys, options='', escape_csi=True):
         """Push `keys` to Nvim user input buffer.
