@@ -377,7 +377,8 @@ class TickitUI(object):
             bridge.input('<C-c>')
 
         def input_check():
-            check_timeout = lambda: lib.tickit_term_input_check_timeout(tt)
+            def check_timeout():
+                return lib.tickit_term_input_check_timeout(tt)
             lib.tickit_term_input_readable(tt)
             sleep = check_timeout()
             if sleep != -1:

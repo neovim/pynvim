@@ -115,6 +115,10 @@ class RemoteSequence(object):
         return False
 
 
+def _identity(obj, session, method, kind):
+    return obj
+
+
 class SessionHook(object):
 
     """Pair of functions to filter objects coming/going from/to Nvim.
@@ -134,9 +138,7 @@ class SessionHook(object):
     This class also provides a `compose` method for composing hooks.
     """
 
-    identity = lambda obj, session, method, kind: obj
-
-    def __init__(self, from_nvim=identity, to_nvim=identity):
+    def __init__(self, from_nvim=_identity, to_nvim=_identity):
         """Initialize a SessionHook with from/to filters."""
         self.from_nvim = from_nvim
         self.to_nvim = to_nvim
@@ -148,9 +150,9 @@ class SessionHook(object):
         a new SessionHook instance with the composed filters.
         """
         def comp(f1, f2):
-            if f1 is SessionHook.identity:
+            if f1 is _identity:
                 return f2
-            if f2 is SessionHook.identity:
+            if f2 is _identity:
                 return f1
             return lambda o, s, m, k: f1(f2(o, s, m, k), s, m, k)
 

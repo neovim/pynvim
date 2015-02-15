@@ -116,7 +116,8 @@ class Host(object):
                 self._discover_functions(plugin, handlers, plugin_path)
 
     def _discover_functions(self, obj, handlers, plugin_path):
-        predicate = lambda o: hasattr(o, '_nvim_rpc_method_name')
+        def predicate(o):
+            return hasattr(o, '_nvim_rpc_method_name')
         specs = []
         for _, fn in inspect.getmembers(obj, predicate):
             if fn._nvim_bind:
