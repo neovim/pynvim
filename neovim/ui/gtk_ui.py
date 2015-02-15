@@ -468,12 +468,14 @@ class GtkUI(object):
                 'background': _split_color(bg),
             }
             if attrs:
+                # make sure that foreground and background are assigned first
+                for k in ['foreground', 'background']:
+                    if k in attrs:
+                        n[k] = _split_color(attrs[k])
                 for k, v in attrs.items():
-                    if k in ['foreground', 'background']:
-                        n[k] = _split_color(v)
-                    elif k == 'reverse':
-                        n['foreground'] = _invert_color(*n['foreground'])
-                        n['background'] = _invert_color(*n['background'])
+                    if k == 'reverse':
+                        n['foreground'], n['background'] = \
+                            n['background'], n['foreground']
                     elif k == 'italic':
                         n['font_style'] = 'italic'
                     elif k == 'bold':
