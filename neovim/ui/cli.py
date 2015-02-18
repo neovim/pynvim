@@ -10,7 +10,6 @@ from .. import attach
 @click.command(context_settings=dict(allow_extra_args=True))
 @click.option('--prog')
 @click.option('--notify', '-n', default=False, is_flag=True)
-@click.option('--gui', '-g', default=False, is_flag=True)
 @click.option('--listen', '-l')
 @click.option('--connect', '-c')
 @click.option('--profile',
@@ -18,7 +17,7 @@ from .. import attach
               type=click.Choice(['ncalls', 'tottime', 'percall', 'cumtime',
                                  'name', 'disable']))
 @click.pass_context
-def main(ctx, prog, notify, gui, listen, connect, profile):
+def main(ctx, prog, notify, listen, connect, profile):
     """Entry point."""
     address = connect or listen
 
@@ -42,7 +41,7 @@ def main(ctx, prog, notify, gui, listen, connect, profile):
         import time
         from subprocess import Popen
         os.environ['NVIM_LISTEN_ADDRESS'] = address
-        nvim_argv = shlex.split(prog or 'nvim -T abstract_ui') + ctx.args
+        nvim_argv = shlex.split(prog or 'nvim --headless') + ctx.args
         # spawn the nvim with stdio redirected to /dev/null.
         dnull = open(os.devnull)
         p = Popen(nvim_argv, stdin=dnull, stdout=dnull, stderr=dnull)
@@ -59,12 +58,8 @@ def main(ctx, prog, notify, gui, listen, connect, profile):
         nvim_argv = shlex.split(prog or 'nvim --embed') + ctx.args
         nvim = attach('child', argv=nvim_argv)
 
-    if gui:
-        from .gtk_ui import GtkUI
-        ui = GtkUI()
-    else:
-        from .tickit_ui import TickitUI
-        ui = TickitUI()
+    from .gtk_ui import GtkUI
+    ui = GtkUI()
     bridge = UIBridge()
     bridge.connect(nvim, ui, profile if profile != 'disable' else None, notify)
 
