@@ -69,9 +69,13 @@ class Session(object):
         - Put requests/notifications received while waiting into a queue
         """
         if self._is_running:
-            err, rv = self._yielding_request(method, args)
+            v = self._yielding_request(method, args)
         else:
-            err, rv = self._blocking_request(method, args)
+            v = self._blocking_request(method, args)
+        if not v:
+            # EOF
+            raise IOError('EOF')
+        err, rv = v
         if err:
             info("'Received error: %s", err)
             raise self.error_wrapper(err)
