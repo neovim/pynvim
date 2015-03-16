@@ -47,7 +47,7 @@ class GtkUI(object):
         self._font_name = 'Monospace'
         self._screen = None
         self._attrs = None
-        self._cursor_enabled = False
+        self._busy = True
         self._mouse_enabled = False
         self._insert_cursor = False
         self._blink = False
@@ -143,11 +143,11 @@ class GtkUI(object):
     def _nvim_cursor_goto(self, row, col):
         self._screen.cursor_goto(row, col)
 
-    def _nvim_cursor_on(self):
-        self._cursor_enabled = True
+    def _nvim_busy_start(self):
+        self._busy = True
 
-    def _nvim_cursor_off(self):
-        self._cursor_enabled = False
+    def _nvim_busy_stop(self):
+        self._busy = False
 
     def _nvim_mouse_on(self):
         self._mouse_enabled = True
@@ -268,7 +268,7 @@ class GtkUI(object):
         cr.set_source_surface(self._cairo_surface, 0, 0)
         cr.paint()
         cr.restore()
-        if self._cursor_enabled and self._blink:
+        if not self._busy and self._blink:
             # Cursor is drawn separately in the window. This approach is
             # simpler because it doesn't taint the internal cairo surface,
             # which is used for scrolling
