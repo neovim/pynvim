@@ -47,7 +47,7 @@ class GtkUI(object):
         self._font_name = 'Monospace'
         self._screen = None
         self._attrs = None
-        self._busy = True
+        self._busy = False
         self._mouse_enabled = False
         self._insert_cursor = False
         self._blink = False
