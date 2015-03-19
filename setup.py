@@ -26,10 +26,10 @@ if not platform.python_implementation() == 'PyPy':
         pass
 
 setup(name='neovim',
-      version='0.0.29',
+      version='0.0.30',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
-      download_url='https://github.com/neovim/python-client/archive/0.0.29.tar.gz',
+      download_url='https://github.com/neovim/python-client/archive/0.0.30.tar.gz',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='MIT',
