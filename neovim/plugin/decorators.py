@@ -1,8 +1,10 @@
 """Decorators used by python host plugin system."""
+
 import inspect
-
-
 import logging
+
+from ..compat import IS_PYTHON3
+
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
 __all__ = ('plugin', 'rpc_export', 'command', 'autocmd', 'function',
@@ -20,8 +22,11 @@ def plugin(cls):
     # decorated functions have a bound Nvim instance as first argument.
     # For methods in a plugin-decorated class this is not required, because
     # the class initializer will already receive the nvim object.
-    for _, fn in inspect.getmembers(cls, inspect.ismethod):
-        if hasattr(fn, '_nvim_bind'):
+    predicate = lambda fn: hasattr(fn, '_nvim_bind')
+    for _, fn in inspect.getmembers(cls, predicate):
+        if IS_PYTHON3:
+            fn._nvim_bind = False
+        else:
             fn.im_func._nvim_bind = False
     return cls
 
