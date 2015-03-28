@@ -145,3 +145,7 @@ def test_get_exceptions():
         ok(False)
     except vim.error:
         pass
+
+@with_setup(setup=cleanup)
+def test_contains():
+    ok(vim.current.buffer in vim.buffers)
