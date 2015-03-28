@@ -109,10 +109,7 @@ class RemoteSequence(object):
 
     def __contains__(self, item):
         """Check if an item is present in the sequence."""
-        for i in self._fetch():
-            if i._handle == item._handle:
-                return True
-        return False
+        return item in self._fetch()
 
 
 def _identity(obj, session, method, kind):
