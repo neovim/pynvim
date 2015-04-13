@@ -6,6 +6,7 @@ from setuptools import setup
 install_requires = [
     'click>=3.0',
     'msgpack-python>=0.4.0',
+    'pyuv',
 ]
 
 if sys.version_info < (3, 4):
