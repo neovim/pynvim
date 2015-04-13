@@ -4,7 +4,7 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/neovim/python-client/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/neovim/python-client/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/neovim/python-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/neovim/python-client/?branch=master)
 
-Library for scripting Nvim processes through it's msgpack-rpc API.
+Library for scripting Nvim processes through its msgpack-rpc API.
 
 #### Installation
 
@@ -15,16 +15,16 @@ pip install neovim
 #### Usage through the python REPL
 
 A number of different transports are supported, but the simplest way to get
-started is with the python REPL. First, start Nvim with a known address(or
-query the value of $NVIM_LISTEN_ADDRESS of a running instance): 
+started is with the python REPL. First, start Nvim with a known address (or
+use the `$NVIM_LISTEN_ADDRESS` of a running instance): 
 
 ```sh
 $ NVIM_LISTEN_ADDRESS=/tmp/nvim nvim
 ```
 
-Open the python REPL with another terminal connect to Nvim(Note that the API is
+In another terminal, connect a python REPL to Nvim (note that the API is
 similar to the one exposed by the [python-vim
-bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim))
+bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim)):
 
 ```python
 >>> from neovim import attach
