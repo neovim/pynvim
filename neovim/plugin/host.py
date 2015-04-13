@@ -33,7 +33,7 @@ class Host(object):
         self._notification_handlers = {}
         self._request_handlers = {
             'poll': lambda: 'ok',
-            'specs': lambda path: self._specs[path],
+            'specs': lambda path: self._specs.get(path, []),
             'shutdown': self.shutdown
         }
         self._nvim_encoding = nvim.options['encoding']
@@ -81,23 +81,25 @@ class Host(object):
     def _load(self, plugins):
         for path in plugins:
             if path in self._loaded:
-                raise Exception('{0} is already loaded'.format(path))
+                error('{0} is already loaded'.format(path))
+                continue
             directory, name = os.path.split(os.path.splitext(path)[0])
             file, pathname, description = find_module(name, [directory])
+            handlers = []
             try:
                 module = imp.load_module(name, file, pathname, description)
-            except ImportError:
-                error('Encountered import error loading plugin at {0}'.format(
-                    path))
+                self._discover_classes(module, handlers, path)
+                self._discover_functions(module, handlers, path)
+                if not handlers:
+                    error('{0} exports no handlers'.format(path))
+                    continue
+                self._loaded[path] = {'handlers': handlers, 'module': module}
+            except (ImportError, SyntaxError) as e:
+                error(('Encountered import error loading '
+                       'plugin at {0}: {1}').format(path, e))
             except Exception as e:
                 error('Error loading plugin at {0} {1}: {2}'.format(
                     path, type(e).__name__, e))
-            handlers = []
-            self._discover_classes(module, handlers, path)
-            self._discover_functions(module, handlers, path)
-            if not handlers:
-                raise Exception('{0} exports no handlers'.format(path))
-            self._loaded[path] = {'handlers': handlers, 'module': module}
 
     def _unload(self):
         for path, plugin in self._loaded.items():
