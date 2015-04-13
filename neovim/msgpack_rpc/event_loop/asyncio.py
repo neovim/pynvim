@@ -17,7 +17,7 @@ from collections import deque
 try:
     # For python 3.4+, use the standard library module
     import asyncio
-except ImportError:
+except ImportError, SyntaxError:
     # Fallback to trollius
     import trollius as asyncio
 
