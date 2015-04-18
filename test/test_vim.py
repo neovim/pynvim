@@ -124,3 +124,17 @@ def test_tabpages():
     vim.current.tabpage = vim.tabpages[1]
     eq(vim.tabpages[1], vim.current.tabpage)
     eq(vim.windows[1], vim.current.window)
+
+
+@with_setup(setup=cleanup)
+def test_hash():
+    d = {}
+    d[vim.current.buffer] = "alpha"
+    eq(d[vim.current.buffer], "alpha")
+    vim.command('new')
+    d[vim.current.buffer] = "beta"
+    eq(d[vim.current.buffer], "beta")
+    vim.command('winc w')
+    eq(d[vim.current.buffer], "alpha")
+    vim.command('winc w')
+    eq(d[vim.current.buffer], "beta")
