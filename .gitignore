@@ -2,3 +2,6 @@
 __pycache__
 neovim/ui/screen.c
 neovim/ui/screen.so
+build/
+dist/
+*.pyc
