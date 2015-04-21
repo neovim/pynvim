@@ -172,7 +172,7 @@ class Session(object):
             except Exception as err:
                 warn("error caught while processing request '%s %s': %s", name,
                      args, format_exc())
-                response.send(repr(err), error=True)
+                response.send(repr(err) + "\n" + format_exc(5), error=True)
             debug('greenlet %s is now dying...', gr)
 
         # Create a new greenlet to handle the request
