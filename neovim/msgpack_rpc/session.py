@@ -54,7 +54,7 @@ class Session(object):
         if self._pending_messages:
             return self._pending_messages.popleft()
 
-    def request(self, method, *args):
+    def request(self, method, *args, **kwargs):
         """Send a msgpack-rpc request and block until as response is received.
 
         If the event loop is running, this method must have been called by a
@@ -67,7 +67,16 @@ class Session(object):
         - Send the request
         - Run the loop until the response is available
         - Put requests/notifications received while waiting into a queue
+
+        If the `async` flag is present and True, a asynchronous notification is
+        sent instead. This will never block, and the return value or error is
+        ignored.
         """
+        async = kwargs.get('async', False)
+        if async:
+            self._async_session.notify(method, args)
+            return
+
         if self._is_running:
             v = self._yielding_request(method, args)
         else:

@@ -16,6 +16,20 @@ def test_receiving_events():
     eq(event[1], 'py!')
     eq(event[2], [vim.current.buffer.number])
 
+@with_setup(setup=cleanup)
+def test_sending_notify():
+    # notify after notify
+    vim.session.request('vim_command', "let g:test = 3", async=True)
+    cmd = 'call rpcnotify(%d, "test-event", g:test)' % vim.channel_id
+    vim.session.request('vim_command', cmd, async=True)
+    event = vim.session.next_message()
+    eq(event[1], 'test-event')
+    eq(event[2], [3])
+
+    # request after notify
+    vim.session.request('vim_command', "let g:data = 'xyz'", async=True)
+    eq(vim.eval('g:data'), 'xyz')
+
 
 @with_setup(setup=cleanup)
 def test_broadcast():

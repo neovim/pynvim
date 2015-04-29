@@ -224,11 +224,11 @@ class SessionFilter(object):
         if msg:
             return walk(self._in, msg, self, msg[1], msg[0])
 
-    def request(self, name, *args):
+    def request(self, name, *args, **kwargs):
         """Wrapper for Session.request."""
         args = walk(self._out, args, self, name, 'out-request')
-        return walk(self._in, self._session.request(name, *args), self, name,
-                    'out-request')
+        return walk(self._in, self._session.request(name, *args, **kwargs),
+                    self, name, 'out-request')
 
     def run(self, request_cb, notification_cb, setup_cb=None):
         """Wrapper for Session.run."""

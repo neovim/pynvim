@@ -44,6 +44,15 @@ class AsyncSession(object):
         self._msgpack_stream.send([0, request_id, method, args])
         self._pending_requests[request_id] = response_cb
 
+    def notify(self, method, args):
+        """Send a msgpack-rpc notification to Nvim.
+
+        A msgpack-rpc with method `method` and argument `args` is sent to
+        Nvim. This will have the same effect as a request, but no response
+        will be recieved
+        """
+        self._msgpack_stream.send([2, method, args])
+
     def run(self, request_cb, notification_cb):
         """Run the event loop to receive requests and notifications from Nvim.
 

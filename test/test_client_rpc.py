@@ -35,6 +35,19 @@ def test_call_api_before_reply():
 
     vim.session.run(request_cb, None, setup_cb)
 
+@with_setup(setup=cleanup)
+def test_async_call():
+
+    def request_cb(name, args):
+        vim.vars['result'] = 17
+        vim.session.stop()
+
+    cmd = 'call rpcrequest(%d, "test-event")' % vim.channel_id
+    # this would have dead-locked if not async
+    vim.session.request('vim_command', cmd, async=True)
+    vim.session.run(request_cb, None, None)
+    eq(vim.vars['result'], 17)
+
 
 @with_setup(setup=cleanup)
 def test_recursion():
