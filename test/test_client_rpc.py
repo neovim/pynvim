@@ -42,9 +42,8 @@ def test_async_call():
         vim.vars['result'] = 17
         vim.session.stop()
 
-    cmd = 'call rpcrequest(%d, "test-event")' % vim.channel_id
     # this would have dead-locked if not async
-    vim.session.request('vim_command', cmd, async=True)
+    vim.eval('rpcrequest(%d, "test-event")' % vim.channel_id, async=True)
     vim.session.run(request_cb, None, None)
     eq(vim.vars['result'], 17)
 

@@ -112,17 +112,17 @@ class Nvim(object):
         """Unsubscribe to a Nvim event."""
         return self._session.request('vim_unsubscribe', event)
 
-    def command(self, string):
+    def command(self, string, async=False):
         """Execute a single ex command."""
-        return self._session.request('vim_command', string)
+        return self._session.request('vim_command', string, async=async)
 
     def command_output(self, string):
         """Execute a single ex command and return the output."""
         return self._session.request('vim_command_output', string)
 
-    def eval(self, string):
+    def eval(self, string, async=False):
         """Evaluate a vimscript expression."""
-        return self._session.request('vim_eval', string)
+        return self._session.request('vim_eval', string, async=async)
 
     def strwidth(self, string):
         """Return the number of display cells `string` occupies.
