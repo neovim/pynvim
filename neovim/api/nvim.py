@@ -116,6 +116,10 @@ class Nvim(object):
         """Execute a single ex command."""
         return self._session.request('vim_command', string)
 
+    def command_output(self, string):
+        """Execute a single ex command and return the output."""
+        return self._session.request('vim_command_output', string)
+
     def eval(self, string):
         """Evaluate a vimscript expression."""
         return self._session.request('vim_eval', string)
