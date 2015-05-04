@@ -4,7 +4,6 @@ import sys
 from setuptools import setup
 
 install_requires = [
-    'click>=3.0',
     'msgpack-python>=0.4.0',
 ]
 
@@ -37,8 +36,10 @@ setup(name='neovim',
                 'neovim.msgpack_rpc.event_loop', 'neovim.plugin'],
       install_requires=install_requires,
       ext_modules=cythonize('neovim/ui/screen.py') if has_cython else None,
-      entry_points='''
-      [console_scripts]
-      pynvim=neovim.ui.cli:main
-      ''',
+      extras_require={
+          'GUI': ['click>=3.0', 'cairo', 'gobject']
+      },
+      entry_points={
+          'console_scripts': ['pynvim=neovim.ui.cli:main [GUI]'],
+      },
       zip_safe=False)
