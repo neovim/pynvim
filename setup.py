@@ -6,6 +6,8 @@ from setuptools import setup
 install_requires = [
     'msgpack-python>=0.4.0',
 ]
+extras_require = {}
+entry_points = {}
 
 if sys.version_info < (3, 4):
     # trollius is just a backport of 3.4 asyncio module
@@ -24,6 +26,11 @@ if not platform.python_implementation() == 'PyPy':
     except ImportError:
         pass
 
+if sys.version_info < (3, 0):
+    # Experimental GUI only supported for Python 2.
+    extras_require['GUI'] = ['click>=3.0', 'cairo', 'gobject']
+    entry_points['console_scripts'] = ['pynvim=neovim.ui.cli:main [GUI]']
+
 setup(name='neovim',
       version='0.0.35',
       description='Python client to neovim',
@@ -36,10 +43,6 @@ setup(name='neovim',
                 'neovim.msgpack_rpc.event_loop', 'neovim.plugin'],
       install_requires=install_requires,
       ext_modules=cythonize('neovim/ui/screen.py') if has_cython else None,
-      extras_require={
-          'GUI': ['click>=3.0', 'cairo', 'gobject']
-      },
-      entry_points={
-          'console_scripts': ['pynvim=neovim.ui.cli:main [GUI]'],
-      },
+      extras_require=extras_require,
+      entry_points=entry_points,
       zip_safe=False)
