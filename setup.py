@@ -8,23 +8,26 @@ install_requires = [
 ]
 extras_require = {}
 entry_points = {}
+ext_modules = None
 
 if sys.version_info < (3, 4):
     # trollius is just a backport of 3.4 asyncio module
     install_requires.append('trollius')
 
-has_cython = False
-if not platform.python_implementation() == 'PyPy':
+if platform.python_implementation() != 'PyPy':
     # pypy already includes an implementation of the greenlet module
     install_requires.append('greenlet')
-    try:
+
+    # Experimental GUI only supported for Python 2.
+    if sys.version_info < (3, 0):
         # Cythonizing screen.py to improve scrolling/clearing speed. Maybe the
         # performance can be improved even further by writing a screen.pxd with
         # static type information
-        from Cython.Build import cythonize
-        has_cython = True
-    except ImportError:
-        pass
+        try:
+            from Cython.Build import cythonize
+            ext_modules = cythonize('neovim/ui/screen.py')
+        except ImportError:
+            pass
 
 if sys.version_info < (3, 0):
     # Experimental GUI only supported for Python 2.
@@ -42,7 +45,7 @@ setup(name='neovim',
       packages=['neovim', 'neovim.api', 'neovim.msgpack_rpc', 'neovim.ui',
                 'neovim.msgpack_rpc.event_loop', 'neovim.plugin'],
       install_requires=install_requires,
-      ext_modules=cythonize('neovim/ui/screen.py') if has_cython else None,
+      ext_modules=ext_modules,
       extras_require=extras_require,
       entry_points=entry_points,
       zip_safe=False)
