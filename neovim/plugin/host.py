@@ -33,7 +33,7 @@ class Host(object):
         self._notification_handlers = {}
         self._request_handlers = {
             'poll': lambda: 'ok',
-            'specs': lambda path: self._specs.get(path, []),
+            'specs': self._on_specs_request,
             'shutdown': self.shutdown
         }
         self._nvim_encoding = nvim.options['encoding']
@@ -155,6 +155,11 @@ class Host(object):
             handlers.append(fn)
         if specs:
             self._specs[plugin_path] = specs
+
+    def _on_specs_request(self, path):
+        if IS_PYTHON3 and isinstance(path, bytes):
+            path = path.decode(self._nvim_encoding)
+        return self._specs.get(path, [])
 
     def _configure_nvim_for(self, obj):
         # Configure a nvim instance for obj(checks encoding configuration)
