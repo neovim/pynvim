@@ -31,7 +31,7 @@ if platform.python_implementation() != 'PyPy':
 
 if sys.version_info < (3, 0):
     # Experimental GUI only supported for Python 2.
-    extras_require['GUI'] = ['click>=3.0', 'cairo', 'gobject']
+    extras_require['GUI'] = ['click>=3.0', 'pygobject']
     entry_points['console_scripts'] = ['pynvim=neovim.ui.cli:main [GUI]']
 
 setup(name='neovim',
