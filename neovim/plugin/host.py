@@ -127,15 +127,22 @@ class Host(object):
         def predicate(o):
             return hasattr(o, '_nvim_rpc_method_name')
         specs = []
+        objenc = getattr(obj, '_nvim_encoding', None)
         for _, fn in inspect.getmembers(obj, predicate):
+            enc = getattr(fn, '_nvim_encoding', objenc)
             if fn._nvim_bind:
                 # bind a nvim instance to the handler
                 fn2 = functools.partial(fn, self._configure_nvim_for(fn))
                 # copy _nvim_* attributes from the original function
-                for attr in dir(fn):
-                    if attr.startswith('_nvim_'):
-                        setattr(fn2, attr, getattr(fn, attr))
+                self._copy_attributes(fn, fn2)
                 fn = fn2
+            decodehook = self._decodehook_for(enc)
+            if decodehook is not None:
+                decoder = lambda fn, hook, *args: fn(*hook.walk(args))
+                fn2 = functools.partial(decoder, fn, decodehook)
+                self._copy_attributes(fn, fn2)
+                fn = fn2
+
             # register in the rpc handler dict
             method = fn._nvim_rpc_method_name
             if fn._nvim_prefix_plugin_path:
@@ -150,25 +157,36 @@ class Host(object):
                     raise Exception(('Notification handler for "{0}" is ' +
                                     'already registered').format(method))
                 self._notification_handlers[method] = fn
-            if hasattr(fn, 'nvim_rpc_spec'):
-                specs.append(fn.nvim_rpc_spec)
+            if hasattr(fn, '_nvim_rpc_spec'):
+                specs.append(fn._nvim_rpc_spec)
             handlers.append(fn)
         if specs:
             self._specs[plugin_path] = specs
+
+    def _copy_attributes(self, fn, fn2):
+        # Copy _nvim_* attributes from the original function
+        for attr in dir(fn):
+            if attr.startswith('_nvim_'):
+                setattr(fn2, attr, getattr(fn, attr))
 
     def _on_specs_request(self, path):
         if IS_PYTHON3 and isinstance(path, bytes):
             path = path.decode(self._nvim_encoding)
         return self._specs.get(path, [])
 
-    def _configure_nvim_for(self, obj):
-        # Configure a nvim instance for obj(checks encoding configuration)
-        nvim = self.nvim
-        encoding = getattr(obj, '_nvim_encoding', None)
+    def _decodehook_for(self, encoding):
         if IS_PYTHON3 and encoding is None:
             encoding = True
         if encoding is True:
             encoding = self._nvim_encoding
         if encoding:
-            nvim = nvim.with_hook(DecodeHook(encoding))
+            return DecodeHook(encoding)
+
+    def _configure_nvim_for(self, obj):
+        # Configure a nvim instance for obj (checks encoding configuration)
+        nvim = self.nvim
+        encoding = getattr(obj, '_nvim_encoding', None)
+        hook = self._decodehook_for(encoding)
+        if hook is not None:
+            nvim = nvim.with_hook(hook)
         return nvim

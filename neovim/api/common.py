@@ -180,6 +180,13 @@ class DecodeHook(SessionHook):
             return obj.decode(self.encoding, errors=self.encoding_errors)
         return obj
 
+    def walk(self, obj):
+        """Decode bytes found in obj (any msgpack object).
+
+        Uses encoding and policy specified in constructor.
+        """
+        return walk(self._decode_if_bytes, obj, None, None, None)
+
 
 class SessionFilter(object):
 

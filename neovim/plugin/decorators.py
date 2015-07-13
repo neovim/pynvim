@@ -73,7 +73,7 @@ def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
         if eval:
             opts['eval'] = eval
 
-        f.nvim_rpc_spec = {
+        f._nvim_rpc_spec = {
             'type': 'command',
             'name': name,
             'sync': sync,
@@ -98,7 +98,7 @@ def autocmd(name, pattern='*', sync=False, eval=None):
         if eval:
             opts['eval'] = eval
 
-        f.nvim_rpc_spec = {
+        f._nvim_rpc_spec = {
             'type': 'autocmd',
             'name': name,
             'sync': sync,
@@ -124,7 +124,7 @@ def function(name, range=False, sync=False, eval=None):
         if eval:
             opts['eval'] = eval
 
-        f.nvim_rpc_spec = {
+        f._nvim_rpc_spec = {
             'type': 'function',
             'name': name,
             'sync': sync,
