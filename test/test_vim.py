@@ -3,6 +3,13 @@ import os, tempfile
 from nose.tools import with_setup, eq_ as eq, ok_ as ok
 from common import vim, cleanup
 
+def source(code):
+    fd, fname = tempfile.mkstemp()
+    with os.fdopen(fd,'w') as f:
+        f.write(code)
+    vim.command('source '+fname)
+    os.unlink(fname)
+
 
 @with_setup(setup=cleanup)
 def test_command():
@@ -28,6 +35,16 @@ def test_eval():
     vim.command('let g:v1 = "a"')
     vim.command('let g:v2 = [1, 2, {"v3": 3}]')
     eq(vim.eval('g:'), {'v1': 'a', 'v2': [1, 2, {'v3': 3}]})
+
+@with_setup(setup=cleanup)
+def test_call():
+    eq(vim.funcs.join(['first', 'last'], ', '), 'first, last')
+    source("""
+        function! Testfun(a,b)
+            return string(a:a).":".a:b
+        endfunction
+    """)
+    eq(vim.funcs.Testfun(3, 'alpha'), '3:alpha')
 
 
 @with_setup(setup=cleanup)

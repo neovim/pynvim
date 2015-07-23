@@ -1,4 +1,5 @@
 """Main Nvim interface."""
+import functools
 import os
 
 from msgpack import ExtType
@@ -73,6 +74,7 @@ class Nvim(object):
         self.windows = RemoteSequence(session, 'vim_get_windows')
         self.tabpages = RemoteSequence(session, 'vim_get_tabpages')
         self.current = Current(session)
+        self.funcs = Funcs(self)
         self.error = NvimError
 
     def with_hook(self, hook):
@@ -123,6 +125,10 @@ class Nvim(object):
     def eval(self, string, async=False):
         """Evaluate a vimscript expression."""
         return self._session.request('vim_eval', string, async=async)
+
+    def call(self, name, *args):
+        """Call a vimscript function."""
+        return self._session.request('vim_call_function', name, args)
 
     def strwidth(self, string):
         """Return the number of display cells `string` occupies.
@@ -255,6 +261,17 @@ class Current(object):
     @tabpage.setter
     def tabpage(self, tabpage):
         return self._session.request('vim_set_current_tabpage', tabpage)
+
+
+class Funcs(object):
+
+    """Helper class for functional vimscript interface."""
+
+    def __init__(self, nvim):
+        self._nvim = nvim
+
+    def __getattr__(self, name):
+        return functools.partial(self._nvim.call, name)
 
 
 class ExtHook(SessionHook):
