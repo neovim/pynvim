@@ -126,9 +126,13 @@ class Nvim(object):
         """Evaluate a vimscript expression."""
         return self._session.request('vim_eval', string, async=async)
 
-    def call(self, name, *args):
+    def call(self, name, *args, **kwargs):
         """Call a vimscript function."""
-        return self._session.request('vim_call_function', name, args)
+        for k in kwargs:
+            if k != "async":
+                raise TypeError(
+                    "call() got an unexpected keyword argument '{}'".format(k))
+        return self._session.request('vim_call_function', name, args, **kwargs)
 
     def strwidth(self, string):
         """Return the number of display cells `string` occupies.

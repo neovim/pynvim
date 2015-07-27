@@ -39,11 +39,12 @@ def test_call_api_before_reply():
 def test_async_call():
 
     def request_cb(name, args):
-        vim.vars['result'] = 17
+        if name == "test-event":
+            vim.vars['result'] = 17
         vim.session.stop()
 
     # this would have dead-locked if not async
-    vim.eval('rpcrequest(%d, "test-event")' % vim.channel_id, async=True)
+    vim.funcs.rpcrequest(vim.channel_id, "test-event", async=True)
     vim.session.run(request_cb, None, None)
     eq(vim.vars['result'], 17)
 
