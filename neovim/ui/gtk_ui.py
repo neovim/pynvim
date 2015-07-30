@@ -179,11 +179,8 @@ class GtkUI(object):
     def _nvim_mouse_off(self):
         self._mouse_enabled = False
 
-    def _nvim_insert_mode(self):
-        self._insert_cursor = True
-
-    def _nvim_normal_mode(self):
-        self._insert_cursor = False
+    def _nvim_mode_change(self, mode):
+        self._insert_cursor = mode != 'normal'
 
     def _nvim_set_scroll_region(self, top, bot, left, right):
         self._screen.set_scroll_region(top, bot, left, right)
