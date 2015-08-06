@@ -35,10 +35,10 @@ if sys.version_info < (3, 0):
     entry_points['console_scripts'] = ['pynvim=neovim.ui.cli:main [GUI]']
 
 setup(name='neovim',
-      version='0.0.37',
+      version='0.0.38',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
-      download_url='https://github.com/neovim/python-client/archive/0.0.37.tar.gz',
+      download_url='https://github.com/neovim/python-client/archive/0.0.38.tar.gz',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='Apache',
