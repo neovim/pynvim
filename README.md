@@ -45,7 +45,7 @@ You can embed neovim into your python application instead of binding to a runnin
 
 ```python
 >>> from neovim import attach
->>> nvim = neovim.attach('child', argv=["/bin/env", "nvim", "--embed"])
+>>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed"])
 ```
 
 The tests can be consulted for more examples.
