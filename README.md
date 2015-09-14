@@ -41,4 +41,11 @@ bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim)):
 [1, 2, 3]
 ```
 
+You can embed neovim into your python application instead of binding to a running neovim instance.
+
+```python
+>>> from neovim import attach
+>>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed"])
+```
+
 The tests can be consulted for more examples.
