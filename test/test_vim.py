@@ -100,7 +100,7 @@ def test_vars():
 
 @with_setup(setup=cleanup)
 def test_options():
-    eq(vim.options['listchars'], 'eol:$')
+    eq(vim.options['listchars'], 'tab:> ,trail:-,nbsp:+')
     vim.options['listchars'] = 'tab:xy'
     eq(vim.options['listchars'], 'tab:xy')
 
