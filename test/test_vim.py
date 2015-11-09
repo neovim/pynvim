@@ -54,27 +54,6 @@ def test_strwidth():
     # 19 * 2 (each japanese character occupies two cells)
     eq(vim.strwidth('neovimのデザインかなりまともなのになってる。'), 44)
 
-
-@with_setup(setup=cleanup)
-def test_list_runtime_paths():
-    # Is this the default runtime path list?
-    homedir = os.path.join(os.environ['HOME'], '.nvim')
-    vimdir = vim.eval('$VIM')
-    dflt_rtp = [
-        homedir,
-        os.path.join(vimdir, 'vimfiles'),
-        vimdir,
-        os.path.join(vimdir, 'vimfiles', 'after')
-    ]
-    # If the runtime is installed the default path
-    # is nvim/runtime
-    dflt_rtp2 = list(dflt_rtp)
-    dflt_rtp2[2] = os.path.join(dflt_rtp2[2], 'runtime')
-
-    rtp = vim.list_runtime_paths()
-    ok(rtp == dflt_rtp or rtp == dflt_rtp2)
-
-
 @with_setup(setup=cleanup)
 def test_chdir():
     pwd = vim.eval('getcwd()')
