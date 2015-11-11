@@ -123,11 +123,11 @@ def test_append():
     vim.current.buffer.append('a')
     eq(vim.current.buffer[:], ['', 'a'])
     vim.current.buffer.append('b', 0)
-    eq(vim.current.buffer[:], ['', 'b', 'a'])
+    eq(vim.current.buffer[:], ['b', '', 'a'])
     vim.current.buffer.append(['c', 'd'])
-    eq(vim.current.buffer[:], ['', 'b', 'a', 'c', 'd'])
+    eq(vim.current.buffer[:], ['b', '', 'a', 'c', 'd'])
     vim.current.buffer.append(['c', 'd'], 2)
-    eq(vim.current.buffer[:], ['', 'b', 'a', 'c', 'd', 'c', 'd'])
+    eq(vim.current.buffer[:], ['b', '', 'c', 'd', 'a', 'c', 'd'])
 
 
 @with_setup(setup=cleanup)
