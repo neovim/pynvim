@@ -46,9 +46,6 @@ class Nvim(object):
         session.error_wrapper = lambda e: NvimError(e[1])
         channel_id, metadata = session.request(b'vim_get_api_info')
 
-        encoding = session.request(b'vim_get_option', b'encoding')
-        session._async_session._msgpack_stream.set_packer_encoding(encoding)
-
         if IS_PYTHON3:
             hook = DecodeHook()
             # decode all metadata strings for python3

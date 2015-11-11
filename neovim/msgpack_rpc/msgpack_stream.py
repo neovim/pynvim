@@ -19,13 +19,9 @@ class MsgpackStream(object):
     def __init__(self, event_loop):
         """Wrap `event_loop` on a msgpack-aware interface."""
         self._event_loop = event_loop
-        self._packer = Packer(use_bin_type=True, encoding=None)
+        self._packer = Packer(use_bin_type=True)
         self._unpacker = Unpacker()
         self._message_cb = None
-
-    def set_packer_encoding(self, encoding):
-        """Switch encoding for Unicode strings."""
-        self._packer = Packer(use_bin_type=True, encoding=encoding)
 
     def threadsafe_call(self, fn):
         """Wrapper around `BaseEventLoop.threadsafe_call`."""
