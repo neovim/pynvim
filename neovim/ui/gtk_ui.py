@@ -86,21 +86,22 @@ class GtkUI(object):
         """Start the UI event loop."""
         bridge.attach(80, 24, True)
         drawing_area = Gtk.DrawingArea()
+        drawing_area.set_events(drawing_area.get_events() |
+                                Gdk.EventMask.BUTTON_PRESS_MASK |
+                                Gdk.EventMask.BUTTON_RELEASE_MASK |
+                                Gdk.EventMask.POINTER_MOTION_MASK |
+                                Gdk.EventMask.SCROLL_MASK)
         drawing_area.connect('draw', self._gtk_draw)
+        drawing_area.connect('configure-event', self._gtk_configure)
+        drawing_area.connect('key-press-event', self._gtk_key)
+        drawing_area.connect('button-press-event', self._gtk_button_press)
+        drawing_area.connect('button-release-event', self._gtk_button_release)
+        drawing_area.connect('motion-notify-event', self._gtk_motion_notify)
+        drawing_area.connect('scroll-event', self._gtk_scroll)
+        drawing_area.set_can_focus(True)
         window = Gtk.Window()
         window.add(drawing_area)
-        window.set_events(window.get_events() |
-                          Gdk.EventMask.BUTTON_PRESS_MASK |
-                          Gdk.EventMask.BUTTON_RELEASE_MASK |
-                          Gdk.EventMask.POINTER_MOTION_MASK |
-                          Gdk.EventMask.SCROLL_MASK)
-        window.connect('configure-event', self._gtk_configure)
         window.connect('delete-event', self._gtk_quit)
-        window.connect('key-press-event', self._gtk_key)
-        window.connect('button-press-event', self._gtk_button_press)
-        window.connect('button-release-event', self._gtk_button_release)
-        window.connect('motion-notify-event', self._gtk_motion_notify)
-        window.connect('scroll-event', self._gtk_scroll)
         window.show_all()
         im_context = Gtk.IMContextSimple()
         im_context.connect('commit', self._gtk_input)
@@ -128,7 +129,6 @@ class GtkUI(object):
         self._drawing_area.queue_draw()
 
     def _nvim_resize(self, columns, rows):
-        da = self._drawing_area
         # create FontDescription object for the selected font/size
         font_str = '{0} {1}'.format(self._font_name, self._font_size)
         self._font, pixels, normal_width, bold_width = _parse_font(font_str)
@@ -139,7 +139,7 @@ class GtkUI(object):
         # calculate the total pixel width/height of the drawing area
         pixel_width = cell_pixel_width * columns
         pixel_height = cell_pixel_height * rows
-        gdkwin = da.get_window()
+        gdkwin = self._drawing_area.get_window()
         content = cairo.CONTENT_COLOR
         self._cairo_surface = gdkwin.create_similar_surface(content,
                                                             pixel_width,
@@ -152,7 +152,11 @@ class GtkUI(object):
         self._cell_pixel_width = cell_pixel_width
         self._cell_pixel_height = cell_pixel_height
         self._screen = Screen(columns, rows)
-        self._window.resize(pixel_width, pixel_height)
+        prev_rect = self._drawing_area.get_allocation()
+        prev_width, prev_height = prev_rect.width, prev_rect.height
+        wind_width, wind_height = self._window.get_size()
+        self._window.resize(wind_width + pixel_width - prev_width,
+                            wind_height + pixel_height - prev_height)
 
     def _nvim_clear(self):
         self._clear_region(self._screen.top, self._screen.bot + 1,
@@ -300,7 +304,8 @@ class GtkUI(object):
     def _gtk_configure(self, widget, event):
         def resize(*args):
             self._resize_timer_id = None
-            width, height = self._window.get_size()
+            rect = self._drawing_area.get_allocation()
+            width, height = rect.width, rect.height
             columns = width / self._cell_pixel_width
             rows = height / self._cell_pixel_height
             if self._screen.columns == columns and self._screen.rows == rows:
@@ -342,6 +347,7 @@ class GtkUI(object):
         self._bridge.input(input_str)
 
     def _gtk_button_press(self, widget, event, *args):
+        self._drawing_area.grab_focus()
         if not self._mouse_enabled or event.type != Gdk.EventType.BUTTON_PRESS:
             return
         button = 'Left'
