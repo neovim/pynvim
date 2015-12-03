@@ -8,6 +8,7 @@ from .. import attach
 from ..api import DecodeHook
 from ..compat import IS_PYTHON3
 
+
 @click.command(context_settings=dict(allow_extra_args=True))
 @click.option('--prog')
 @click.option('--notify', '-n', default=False, is_flag=True)
