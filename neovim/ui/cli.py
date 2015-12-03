@@ -5,7 +5,8 @@ import click
 
 from .ui_bridge import UIBridge
 from .. import attach
-
+from ..api import DecodeHook
+from ..compat import IS_PYTHON3
 
 @click.command(context_settings=dict(allow_extra_args=True))
 @click.option('--prog')
@@ -57,6 +58,11 @@ def main(ctx, prog, notify, listen, connect, profile):
         # spawn embedded instance
         nvim_argv = shlex.split(prog or 'nvim --embed') + ctx.args
         nvim = attach('child', argv=nvim_argv)
+
+    if IS_PYTHON3:
+        # For Python3 we decode binary strings as Unicode for compatibility
+        # with Python2
+        nvim = nvim.with_hook(DecodeHook())
 
     from .gtk_ui import GtkUI
     ui = GtkUI()
