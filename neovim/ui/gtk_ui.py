@@ -125,6 +125,7 @@ class GtkUI(object):
         GObject.idle_add(wrapper)
 
     def _nvim_update_menu( self, *args ):
+        # TODO: Implement this method
         print "Ignoring update_menu event.\nTODO: implement update_menu event handler in GtkUI."
 
 
