@@ -14,7 +14,7 @@ __all__ = ('Host')
 
 logger = logging.getLogger(__name__)
 error, debug, info, warn = (logger.error, logger.debug, logger.info,
-                            logger.warn,)
+                            logger.warning,)
 
 
 class Host(object):
