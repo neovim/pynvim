@@ -349,6 +349,8 @@ class GtkUI(object):
             button = 'Middle'
         elif event.button == 3:
             button = 'Right'
+        if button == self._pressed:
+            return
         col = int(math.floor(event.x / self._cell_pixel_width))
         row = int(math.floor(event.y / self._cell_pixel_height))
         input_str = _stringify_key(button + 'Mouse', event.state)
