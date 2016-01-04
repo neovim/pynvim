@@ -5,7 +5,7 @@ import threading
 
 
 logger = logging.getLogger(__name__)
-debug, info, warn = (logger.debug, logger.info, logger.warn,)
+debug, info, warn = (logger.debug, logger.info, logger.warning,)
 
 
 # When signals are restored, the event loop library may reset SIGINT to SIG_DFL

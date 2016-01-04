@@ -6,7 +6,7 @@ import logging
 from ..compat import IS_PYTHON3
 
 logger = logging.getLogger(__name__)
-debug, info, warn = (logger.debug, logger.info, logger.warn,)
+debug, info, warn = (logger.debug, logger.info, logger.warning,)
 __all__ = ('plugin', 'rpc_export', 'command', 'autocmd', 'function',
            'encoding', 'shutdown_hook')
 
