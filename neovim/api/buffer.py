@@ -127,6 +127,20 @@ class Buffer(Remote):
         """Return a `Range` object, which represents part of the Buffer."""
         return Range(self, start, end)
 
+    def add_highlight(self, hl_group, line, col_start=0,
+                      col_end=-1, src_id=-1, async=None):
+        """Add a highlight to the buffer."""
+        if async is None:
+            async = (src_id != 0)
+        return self._session.request('buffer_add_highlight', self, src_id,
+                                     hl_group, line, col_start,
+                                     col_end, async=async)
+
+    def clear_highlight(self, src_id, line_start=0, line_end=-1, async=True):
+        """clear highlights from the buffer."""
+        self._session.request('buffer_clear_highlight', self, src_id,
+                              line_start, line_end, async=async)
+
     @property
     def name(self):
         """Get the buffer name."""

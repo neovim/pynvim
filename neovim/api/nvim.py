@@ -222,6 +222,10 @@ class Nvim(object):
             # ignore it.
             pass
 
+    def new_highlight_source(self):
+        """Return new src_id for use with Buffer.add_highlight."""
+        return self.current.buffer.add_highlight("", 0, src_id=0)
+
 
 class Current(object):
 
