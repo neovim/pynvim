@@ -80,7 +80,10 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         self._loop.run_until_complete(coroutine)
 
     def _connect_socket(self, path):
-        coroutine = self._loop.create_unix_connection(self._fact, path)
+        if os.name == 'nt':
+            coroutine = self._loop.create_pipe_connection(self._fact, path)
+        else:
+            coroutine = self._loop.create_unix_connection(self._fact, path)
         self._loop.run_until_complete(coroutine)
 
     def _connect_stdio(self):
@@ -111,6 +114,11 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         self._loop.call_soon_threadsafe(fn)
 
     def _setup_signals(self, signals):
+        if os.name == 'nt':
+            # add_signal_handler is not supported in win32
+            self._signals = []
+            return
+
         self._signals = list(signals)
         for signum in self._signals:
             self._loop.add_signal_handler(signum, self._on_signal, signum)
