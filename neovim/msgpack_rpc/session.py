@@ -31,7 +31,11 @@ class Session(object):
     def threadsafe_call(self, fn, *args, **kwargs):
         """Wrapper around `AsyncSession.threadsafe_call`."""
         def handler():
-            fn(*args, **kwargs)
+            try:
+                fn(*args, **kwargs)
+            except Exception:
+                warn("error caught while excecuting async callback\n%s\n",
+                     format_exc())
 
         def greenlet_wrapper():
             gr = greenlet.greenlet(handler)
@@ -197,6 +201,7 @@ class Session(object):
             except Exception:
                 warn("error caught while processing notification '%s %s': %s",
                      name, args, format_exc())
+
             debug('greenlet %s is now dying...', gr)
 
         gr = greenlet.greenlet(handler)

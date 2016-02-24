@@ -6,9 +6,10 @@ import logging
 import os
 import os.path
 
+from traceback import format_exc
+
 from ..api import DecodeHook
 from ..compat import IS_PYTHON3, find_module
-
 
 __all__ = ('Host')
 
@@ -76,7 +77,13 @@ class Host(object):
             return
 
         debug('calling notification handler for "%s", args: "%s"', name, args)
-        handler(*args)
+        try:
+            handler(*args)
+        except Exception as err:
+            msg = ("error caught in async handler '{} {}':\n{!r}\n{}"
+                   .format(name, args, err, format_exc(5)))
+            self.nvim.err_write(msg, async=True)
+            raise
 
     def _load(self, plugins):
         for path in plugins:

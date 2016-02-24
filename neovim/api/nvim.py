@@ -2,6 +2,8 @@
 import functools
 import os
 
+from traceback import format_exc, format_stack
+
 from msgpack import ExtType
 
 from .buffer import Buffer
@@ -204,9 +206,9 @@ class Nvim(object):
         """Print `msg` as a normal message."""
         return self._session.request('vim_out_write', msg)
 
-    def err_write(self, msg):
+    def err_write(self, msg, async=False):
         """Print `msg` as an error message."""
-        return self._session.request('vim_err_write', msg)
+        return self._session.request('vim_err_write', msg, async=async)
 
     def quit(self, quit_command='qa!'):
         """Send a quit command to Nvim.
@@ -225,6 +227,29 @@ class Nvim(object):
     def new_highlight_source(self):
         """Return new src_id for use with Buffer.add_highlight."""
         return self.current.buffer.add_highlight("", 0, src_id=0)
+
+    def async_call(self, fn, *args, **kwargs):
+        """Schedule `fn` to be called by the event loop soon.
+
+        This function is thread-safe, and is the only way code not
+        on the main thread could interact with nvim api objects.
+
+        This function can also be called in a synchronous
+        event handler, just before it returns, to defer execution
+        that shouldn't block neovim.
+        """
+        call_point = ''.join(format_stack(None, 5)[:-1])
+
+        def handler():
+            try:
+                fn(*args, **kwargs)
+            except Exception as err:
+                msg = ("error caught while executing async callback:\n"
+                       "{!r}\n{}\n \nthe call was requested at\n{}"
+                       .format(err, format_exc(5), call_point))
+                self.err_write(msg, async=True)
+                raise
+        self._session.threadsafe_call(handler)
 
 
 class Current(object):
