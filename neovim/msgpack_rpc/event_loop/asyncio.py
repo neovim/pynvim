@@ -44,7 +44,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
 
     def connection_lost(self, exc):
         """Used to signal `asyncio.Protocol` of a lost connection."""
-        self._on_error(exc.message if exc else 'EOF')
+        self._on_error(exc.args[0] if exc else 'EOF')
 
     def data_received(self, data):
         """Used to signal `asyncio.Protocol` of incoming data."""
@@ -55,7 +55,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
 
     def pipe_connection_lost(self, fd, exc):
         """Used to signal `asyncio.SubprocessProtocol` of a lost connection."""
-        self._on_error(exc.message if exc else 'EOF')
+        self._on_error(exc.args[0] if exc else 'EOF')
 
     def pipe_data_received(self, fd, data):
         """Used to signal `asyncio.SubprocessProtocol` of incoming data."""
