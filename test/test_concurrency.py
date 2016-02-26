@@ -1,5 +1,5 @@
 from nose.tools import with_setup, eq_ as eq
-from common import vim, cleanup
+from test_common import vim, cleanup
 from threading import Timer
 
 
