@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os, tempfile
 from nose.tools import with_setup, eq_ as eq, ok_ as ok
-from common import vim, cleanup
+from test_common import vim, cleanup
 
 def source(code):
     fd, fname = tempfile.mkstemp()

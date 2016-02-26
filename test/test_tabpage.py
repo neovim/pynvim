@@ -1,6 +1,6 @@
 import os
 from nose.tools import with_setup, eq_ as eq, ok_ as ok
-from common import vim, cleanup
+from test_common import vim, cleanup
 
 
 @with_setup(setup=cleanup)
