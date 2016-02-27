@@ -1,1 +1,0 @@
-"""Neovim remote UI prototypes."""
