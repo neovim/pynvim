@@ -124,6 +124,11 @@ class GtkUI(object):
             self._screen_invalid()
         GObject.idle_add(wrapper)
 
+    def _nvim_update_menu( self, *args ):
+        # TODO: Implement this method
+        print "Ignoring update_menu event.\nTODO: implement update_menu event handler in GtkUI."
+
+
     def _screen_invalid(self):
         self._drawing_area.queue_draw()
 
