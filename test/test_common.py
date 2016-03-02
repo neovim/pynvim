@@ -6,6 +6,7 @@ import neovim
 
 from nose.tools import eq_ as eq
 
+neovim.setup_logging()
 
 if 'NVIM_CHILD_ARGV' in os.environ:
     vim = neovim.attach('child', argv=json.loads(os.environ['NVIM_CHILD_ARGV']))
@@ -16,7 +17,6 @@ if sys.version_info >= (3, 0):
     # For Python3 we decode binary strings as Unicode for compatibility
     # with Python2
     vim = vim.with_hook(neovim.DecodeHook())
-
 
 cleanup_func = ''':function BeforeEachTest()
   set all&

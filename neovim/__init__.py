@@ -16,7 +16,7 @@ from .plugin import (Host, autocmd, command, encoding, function, plugin,
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'start_host', 'autocmd', 'command', 'encoding', 'function',
            'plugin', 'rpc_export', 'Host', 'DecodeHook', 'Nvim',
-           'SessionHook', 'shutdown_hook', 'attach')
+           'SessionHook', 'shutdown_hook', 'attach', 'setup_logging')
 
 
 def start_host(session=None):
@@ -43,23 +43,8 @@ def start_host(session=None):
     if not plugins:
         sys.exit('must specify at least one plugin as argument')
 
-    logger = logging.getLogger(__name__)
-    if 'NVIM_PYTHON_LOG_FILE' in os.environ:
-        logfile = (os.environ['NVIM_PYTHON_LOG_FILE'].strip() +
-                   '_' + str(os.getpid()))
-        handler = logging.FileHandler(logfile, 'w')
-        handler.formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s @ '
-            '%(filename)s:%(funcName)s:%(lineno)s] %(process)s - %(message)s')
-        logging.root.addHandler(handler)
-        level = logging.INFO
-        if 'NVIM_PYTHON_LOG_LEVEL' in os.environ:
-            l = getattr(logging,
-                        os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
-                        level)
-            if isinstance(l, int):
-                level = l
-        logger.setLevel(level)
+    setup_logging()
+
     if not session:
         session = stdio_session()
     host = Host(Nvim.from_session(session))
@@ -93,6 +78,27 @@ def attach(session_type, address=None, port=None, path=None, argv=None):
         raise Exception('Unknown session type "%s"' % session_type)
 
     return Nvim.from_session(session)
+
+
+def setup_logging():
+    """Setup logging according to environment variables."""
+    logger = logging.getLogger(__name__)
+    if 'NVIM_PYTHON_LOG_FILE' in os.environ:
+        logfile = (os.environ['NVIM_PYTHON_LOG_FILE'].strip() +
+                   '_' + str(os.getpid()))
+        handler = logging.FileHandler(logfile, 'w')
+        handler.formatter = logging.Formatter(
+            '%(asctime)s [%(levelname)s @ '
+            '%(filename)s:%(funcName)s:%(lineno)s] %(process)s - %(message)s')
+        logging.root.addHandler(handler)
+        level = logging.INFO
+        if 'NVIM_PYTHON_LOG_LEVEL' in os.environ:
+            l = getattr(logging,
+                        os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
+                        level)
+            if isinstance(l, int):
+                level = l
+        logger.setLevel(level)
 
 
 # Required for python 2.6
