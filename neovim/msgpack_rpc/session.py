@@ -182,6 +182,10 @@ class Session(object):
                 debug('greenlet %s finished executing, ' +
                       'sending %s as response', gr, rv)
                 response.send(rv)
+            except ErrorResponse as err:
+                warn("error response from request '%s %s': %s", name,
+                     args, format_exc())
+                response.send(err.args[0], error=True)
             except Exception as err:
                 warn("error caught while processing request '%s %s': %s", name,
                      args, format_exc())
@@ -207,3 +211,15 @@ class Session(object):
         gr = greenlet.greenlet(handler)
         debug('received rpc notification, greenlet %s will handle it', gr)
         gr.switch()
+
+
+class ErrorResponse(BaseException):
+
+    """Raise this in a request handler to respond with a given error message.
+
+    Unlike when other exceptions are caught, this gives full control off the
+    error response sent. When "ErrorResponse(msg)" is caught "msg" will be
+    sent verbatim as the error response.No traceback will be appended.
+    """
+
+    pass
