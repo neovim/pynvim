@@ -1,4 +1,5 @@
 """Code shared between the API classes."""
+import functools
 
 
 class Remote(object):
@@ -10,6 +11,20 @@ class Remote(object):
     object handle into consideration.
     """
 
+    def __init__(self, session, code_data):
+        """Initialize from session and code_data immutable object.
+
+        The `code_data` contains serialization information required for
+        msgpack-rpc calls. It must be immutable for Buffer equality to work.
+        """
+        self._session = session
+        self.code_data = code_data
+        self.api = RemoteApi(self, self._api_prefix)
+        self.vars = RemoteMap(self, self._api_prefix + 'get_var',
+                              self._api_prefix + 'set_var')
+        self.options = RemoteMap(self, self._api_prefix + 'get_option',
+                                 self._api_prefix + 'set_option')
+
     def __eq__(self, other):
         """Return True if `self` and `other` are the same object."""
         return (hasattr(other, 'code_data') and
@@ -18,6 +33,24 @@ class Remote(object):
     def __hash__(self):
         """Return hash based on remote object id."""
         return self.code_data.__hash__()
+
+    def request(self, name, *args, **kwargs):
+        """Wrapper for nvim.request."""
+        return self._session.request(name, self, *args, **kwargs)
+
+
+class RemoteApi(object):
+
+    """Wrapper to allow api methods to be called like python methods."""
+
+    def __init__(self, obj, api_prefix):
+        """Initialize a RemoteApi with object and api prefix."""
+        self._obj = obj
+        self._api_prefix = api_prefix
+
+    def __getattr__(self, name):
+        """Return wrapper to named api method."""
+        return functools.partial(self._obj.request, self._api_prefix + name)
 
 
 class RemoteMap(object):
@@ -31,12 +64,12 @@ class RemoteMap(object):
     It is used to provide a dict-like API to vim variables and options.
     """
 
-    def __init__(self, session, get_method, set_method, self_obj=None):
+    def __init__(self, obj, get_method, set_method=None, self_obj=None):
         """Initialize a RemoteMap with session, getter/setter and self_obj."""
-        self._get = _wrap(session, get_method, self_obj)
+        self._get = functools.partial(obj.request, get_method)
         self._set = None
         if set_method:
-            self._set = _wrap(session, set_method, self_obj)
+            self._set = functools.partial(obj.request, set_method)
 
     def __getitem__(self, key):
         """Return a map value by key."""
@@ -91,9 +124,9 @@ class RemoteSequence(object):
     locally(iteration, indexing, counting, etc).
     """
 
-    def __init__(self, session, method, self_obj=None):
+    def __init__(self, session, method):
         """Initialize a RemoteSequence with session, method and self_obj."""
-        self._fetch = _wrap(session, method, self_obj)
+        self._fetch = functools.partial(session.request, method)
 
     def __len__(self):
         """Return the length of the remote sequence."""
@@ -155,10 +188,3 @@ def walk(fn, obj, *args):
         return dict((walk(fn, k, *args), walk(fn, v, *args)) for k, v in
                     obj.items())
     return fn(obj, *args)
-
-
-def _wrap(session, method, self_obj):
-    if self_obj is not None:
-        return lambda *args: session.request(method, self_obj, *args)
-    else:
-        return lambda *args: session.request(method, *args)

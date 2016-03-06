@@ -1,32 +1,30 @@
 """API for working with Nvim tabpages."""
-from .common import Remote, RemoteMap, RemoteSequence
+from .common import Remote, RemoteSequence
 
 
 __all__ = ('Tabpage')
 
 
 class Tabpage(Remote):
-
     """A remote Nvim tabpage."""
 
-    def __init__(self, session, code_data):
+    _api_prefix = "tabpage_"
+
+    def __init__(self, *args):
         """Initialize from session and code_data immutable object.
 
         The `code_data` contains serialization information required for
-        msgpack-rpc calls. It must be immutable for Tabpage equality to work.
+        msgpack-rpc calls. It must be immutable for Buffer equality to work.
         """
-        self._session = session
-        self.code_data = code_data
-        self.windows = RemoteSequence(session, 'tabpage_get_windows', self)
-        self.vars = RemoteMap(session, 'tabpage_get_var', 'tabpage_set_var',
-                              self)
+        super(Tabpage, self).__init__(*args)
+        self.windows = RemoteSequence(self, 'tabpage_get_windows')
 
     @property
     def window(self):
         """Get the `Window` currently focused on the tabpage."""
-        return self._session.request('tabpage_get_window', self)
+        return self.request('tabpage_get_window')
 
     @property
     def valid(self):
         """Return True if the tabpage still exists."""
-        return self._session.request('tabpage_is_valid', self)
+        return self.request('tabpage_is_valid')

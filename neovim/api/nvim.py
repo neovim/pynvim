@@ -7,7 +7,8 @@ from traceback import format_exc, format_stack
 from msgpack import ExtType
 
 from .buffer import Buffer
-from .common import (DecodeHook, Remote, RemoteMap, RemoteSequence, walk)
+from .common import (DecodeHook, Remote, RemoteApi,
+                     RemoteMap, RemoteSequence, walk)
 from .tabpage import Tabpage
 from .window import Window
 from ..compat import IS_PYTHON3
@@ -65,6 +66,7 @@ class Nvim(object):
         self.channel_id = channel_id
         self.metadata = metadata
         self.types = types
+        self.api = RemoteApi(self, 'vim_')
         self.vars = RemoteMap(self, 'vim_get_var', 'vim_set_var')
         self.vvars = RemoteMap(self, 'vim_get_vvar', None)
         self.options = RemoteMap(self, 'vim_get_option', 'vim_set_option')
@@ -90,15 +92,24 @@ class Nvim(object):
         return obj
 
     def request(self, name, *args, **kwargs):
-        """Send an API request or notification to nvim.
+        r"""Send an API request or notification to nvim.
 
-        It is rarely needed for a plugin to call this function directly, as high
-        As most API functions have python wrapper functions.
+        It is rarely needed to call this function directly, as most API
+        functions have python wrapper functions. The `api` object can
+        be also be used to call API functions as methods:
 
-        Normally a blocking request will be sent.
-        If the `async` flag is present and True, a asynchronous notification is
-        sent instead. This will never block, and the return value or error is
-        ignored.
+            vim.api.err_write('ERROR\n', async=True)
+            vim.current.buffer.api.get_mark('.')
+
+        is equivalent to
+
+            vim.request('vim_err_write', 'ERROR\n', async=True)
+            vim.request('buffer_get_mark', vim.current.buffer, '.')
+
+
+        Normally a blocking request will be sent.  If the `async` flag is
+        present and True, a asynchronous notification is sent instead. This
+        will never block, and the return value or error is ignored.
         """
         args = walk(self._to_nvim, args)
         res = self._session.request(name, *args, **kwargs)
