@@ -47,14 +47,14 @@ class Host(object):
 
     def start(self, plugins):
         """Start listening for msgpack-rpc requests and notifications."""
-        self.nvim.session.run(self._on_request,
-                              self._on_notification,
-                              lambda: self._load(plugins))
+        self.nvim.run_loop(self._on_request,
+                           self._on_notification,
+                           lambda: self._load(plugins))
 
     def shutdown(self):
         """Shutdown the host."""
         self._unload()
-        self.nvim.session.stop()
+        self.nvim.stop_loop()
 
     def _on_request(self, name, args):
         """Handle a msgpack-rpc request."""
@@ -215,5 +215,5 @@ class Host(object):
         encoding = getattr(obj, '_nvim_encoding', None)
         hook = self._decodehook_for(encoding)
         if hook is not None:
-            nvim = nvim.with_hook(hook)
+            nvim = nvim.with_decodehook(hook)
         return nvim

@@ -120,48 +120,7 @@ def _identity(obj, session, method, kind):
     return obj
 
 
-class SessionHook(object):
-
-    """Pair of functions to filter objects coming/going from/to Nvim.
-
-    Filter functions receive the following arguments:
-
-    - obj: The object to process
-    - session: The current session object
-    - method: The method name
-    - kind: Kind of filter, can be one of:
-        - 'request' for requests coming from Nvim
-        - 'notification' for notifications coming from Nvim
-        - 'out-request' for requests going to Nvim
-
-    Whatever is returned from the function is used as a replacement for `obj`.
-
-    This class also provides a `compose` method for composing hooks.
-    """
-
-    def __init__(self, from_nvim=_identity, to_nvim=_identity):
-        """Initialize a SessionHook with from/to filters."""
-        self.from_nvim = from_nvim
-        self.to_nvim = to_nvim
-
-    def compose(self, other):
-        """Compose two SessionHook instances.
-
-        This works by composing the individual from/to filters and creating
-        a new SessionHook instance with the composed filters.
-        """
-        def comp(f1, f2):
-            if f1 is _identity:
-                return f2
-            if f2 is _identity:
-                return f1
-            return lambda o, s, m, k: f1(f2(o, s, m, k), s, m, k)
-
-        return SessionHook(comp(other.from_nvim, self.from_nvim),
-                           comp(other.to_nvim, self.to_nvim))
-
-
-class DecodeHook(SessionHook):
+class DecodeHook(object):
 
     """SessionHook subclass that decodes utf-8 strings coming from Nvim.
 
@@ -173,9 +132,9 @@ class DecodeHook(SessionHook):
         """Initialize with encoding and encoding errors policy."""
         self.encoding = encoding
         self.encoding_errors = encoding_errors
-        super(DecodeHook, self).__init__(from_nvim=self._decode_if_bytes)
 
-    def _decode_if_bytes(self, obj, session, method, kind):
+    def decode_if_bytes(self, obj):
+        """Decode obj if it is bytes."""
         if isinstance(obj, bytes):
             return obj.decode(self.encoding, errors=self.encoding_errors)
         return obj
@@ -185,67 +144,7 @@ class DecodeHook(SessionHook):
 
         Uses encoding and policy specified in constructor.
         """
-        return walk(self._decode_if_bytes, obj, None, None, None)
-
-
-class SessionFilter(object):
-
-    """Wraps a session-like object with a SessionHook instance.
-
-    This class can be used as a drop-in replacement for a sessions, the
-    difference is that a hook is applied to all data passing through a
-    SessionFilter instance.
-    """
-
-    def __init__(self, session, hook):
-        """Initialize with a Session(or SessionFilter) and a hook.
-
-        If `session` is already a SessionFilter, it's hook will be extracted
-        and composed with `hook`.
-        """
-        if isinstance(session, SessionFilter):
-            self._hook = session._hook.compose(hook)
-            self._session = session._session
-        else:
-            self._hook = hook
-            self._session = session
-        # Both filters are applied to `walk` so objects are transformed
-        # recursively
-        self._in = self._hook.from_nvim
-        self._out = self._hook.to_nvim
-
-    def threadsafe_call(self, fn, *args, **kwargs):
-        """Wrapper for Session.threadsafe_call."""
-        self._session.threadsafe_call(fn, *args, **kwargs)
-
-    def next_message(self):
-        """Wrapper for Session.next_message."""
-        msg = self._session.next_message()
-        if msg:
-            return walk(self._in, msg, self, msg[1], msg[0])
-
-    def request(self, name, *args, **kwargs):
-        """Wrapper for Session.request."""
-        args = walk(self._out, args, self, name, 'out-request')
-        return walk(self._in, self._session.request(name, *args, **kwargs),
-                    self, name, 'out-request')
-
-    def run(self, request_cb, notification_cb, setup_cb=None):
-        """Wrapper for Session.run."""
-        def filter_request_cb(name, args):
-            result = request_cb(self._in(name, self, name, 'request'),
-                                walk(self._in, args, self, name, 'request'))
-            return walk(self._out, result, self, name, 'request')
-
-        def filter_notification_cb(name, args):
-            notification_cb(self._in(name, self, name, 'notification'),
-                            walk(self._in, args, self, name, 'notification'))
-
-        self._session.run(filter_request_cb, filter_notification_cb, setup_cb)
-
-    def stop(self):
-        """Wrapper for Session.stop."""
-        self._session.stop()
+        return walk(self.decode_if_bytes, obj)
 
 
 def walk(fn, obj, *args):
