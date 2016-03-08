@@ -90,7 +90,11 @@ class Host(object):
             if path in self._loaded:
                 error('{0} is already loaded'.format(path))
                 continue
-            directory, name = os.path.split(os.path.splitext(path)[0])
+            if path == "script_host.py":
+                directory = os.path.dirname(__file__)
+                name = "script_host"
+            else:
+                directory, name = os.path.split(os.path.splitext(path)[0])
             file, pathname, description = find_module(name, [directory])
             handlers = []
             try:
