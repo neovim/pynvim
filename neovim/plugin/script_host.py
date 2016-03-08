@@ -209,7 +209,7 @@ def path_hook(nvim):
     class VimPathFinder(object):
         @staticmethod
         def find_module(fullname, path=None):
-            "Method for Python 2.7 and 3.3."
+            """Method for Python 2.7 and 3.3."""
             try:
                 return VimModuleLoader(
                     _find_module(fullname, fullname, path or _get_paths()))
@@ -218,7 +218,7 @@ def path_hook(nvim):
 
         @staticmethod
         def find_spec(fullname, path=None, target=None):
-            "Method for Python 3.4+."
+            """Method for Python 3.4+."""
             return PathFinder.find_spec(fullname, path or _get_paths(), target)
 
     def hook(path):
