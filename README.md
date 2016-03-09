@@ -4,7 +4,8 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/neovim/python-client/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/neovim/python-client/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/neovim/python-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/neovim/python-client/?branch=master)
 
-Library for scripting Nvim processes through its msgpack-rpc API.
+Implements support for python plugins in Nvim.
+Also works as a library for connecting to and scripting Nvim processes through its msgpack-rpc API.
 
 #### Installation
 
@@ -48,8 +49,8 @@ class TestPlugin(object):
 
     @neovim.command("TestCommand", range='', nargs='*')
     def testcommand(self, args, range):
-            self.nvim.current.line = ('Command with args: {}, range: {}'
-                                      .format(args, range))
+        self.nvim.current.line = ('Command with args: {}, range: {}'
+                                  .format(args, range))
 
     @neovim.autocmd('BufEnter', pattern='*.py', eval='expand("<afile>")', sync=True)
     def on_bufenter(self, filename):
