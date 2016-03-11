@@ -39,6 +39,18 @@ def start_host(session=None):
         _, ext = os.path.splitext(arg)
         if ext == '.py':
             plugins.append(arg)
+        elif os.path.isdir(arg):
+            init = os.path.join(arg, '__init__.py')
+            if os.path.isfile(init):
+                plugins.append(arg)
+
+    # This is a special case to support the old workaround of
+    # adding an empty .py file to make a package directory
+    # visible, and it should be removed soon.
+    for path in list(plugins):
+        dup = path + ".py"
+        if os.path.isdir(path) and dup in plugins:
+            plugins.remove(dup)
 
     if not plugins:
         sys.exit('must specify at least one plugin as argument')
