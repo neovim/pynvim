@@ -183,7 +183,7 @@ class Host(object):
     def _on_specs_request(self, path):
         if IS_PYTHON3 and isinstance(path, bytes):
             path = path.decode(self._nvim_encoding)
-        return self._specs.get(path, [])
+        return self._specs.get(path, 0)
 
     def _decodehook_for(self, encoding):
         if IS_PYTHON3 and encoding is None:
