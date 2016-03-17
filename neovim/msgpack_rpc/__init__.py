@@ -7,10 +7,11 @@ code here should work with other msgpack-rpc servers.
 from .async_session import AsyncSession
 from .event_loop import EventLoop
 from .msgpack_stream import MsgpackStream
-from .session import Session
+from .session import ErrorResponse, Session
 
 
-__all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session')
+__all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
+           'ErrorResponse')
 
 
 def session(transport_type='stdio', *args, **kwargs):

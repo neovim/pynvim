@@ -5,11 +5,13 @@ import inspect
 import logging
 import os
 import os.path
+import re
 
 from traceback import format_exc
 
 from ..api import DecodeHook
 from ..compat import IS_PYTHON3, find_module
+from ..msgpack_rpc import ErrorResponse
 
 __all__ = ('Host')
 
@@ -31,6 +33,7 @@ class Host(object):
         self.nvim = nvim
         self._specs = {}
         self._loaded = {}
+        self._load_errors = {}
         self._notification_handlers = {}
         self._request_handlers = {
             'poll': lambda: 'ok',
@@ -58,9 +61,9 @@ class Host(object):
             name = name.decode(self._nvim_encoding)
         handler = self._request_handlers.get(name, None)
         if not handler:
-            msg = 'no request handler registered for "%s"' % name
-            warn(msg)
-            raise Exception(msg)
+            msg = self._missing_handler_error(name, 'request')
+            error(msg)
+            raise ErrorResponse(msg)
 
         debug('calling request handler for "%s", args: "%s"', name, args)
         rv = handler(*args)
@@ -73,7 +76,9 @@ class Host(object):
             name = name.decode(self._nvim_encoding)
         handler = self._notification_handlers.get(name, None)
         if not handler:
-            warn('no notification handler registered for "%s"', name)
+            msg = self._missing_handler_error(name, 'notification')
+            error(msg)
+            self.nvim.err_write(msg + "\n")
             return
 
         debug('calling notification handler for "%s", args: "%s"', name, args)
@@ -85,8 +90,18 @@ class Host(object):
             self.nvim.err_write(msg, async=True)
             raise
 
+    def _missing_handler_error(self, name, kind):
+        msg = 'no {} handler registered for "{}"'.format(kind, name)
+        pathmatch = re.match(r'(.+):[^:]+:[^:]+', name)
+        if pathmatch:
+            loader_error = self._load_errors.get(pathmatch.group(1))
+            if loader_error is not None:
+                msg = msg + "\n" + loader_error
+        return msg
+
     def _load(self, plugins):
         for path in plugins:
+            err = None
             if path in self._loaded:
                 error('{0} is already loaded'.format(path))
                 continue
@@ -105,12 +120,11 @@ class Host(object):
                     error('{0} exports no handlers'.format(path))
                     continue
                 self._loaded[path] = {'handlers': handlers, 'module': module}
-            except (ImportError, SyntaxError) as e:
-                error(('Encountered import error loading '
-                       'plugin at {0}: {1}').format(path, e))
             except Exception as e:
-                error('Error loading plugin at {0} {1}: {2}'.format(
-                    path, type(e).__name__, e))
+                err = ('Encountered {} loading plugin at {}: {}\n{}'
+                       .format(type(e).__name__, path, e, format_exc(5)))
+                error(err)
+                self._load_errors[path] = err
 
     def _unload(self):
         for path, plugin in self._loaded.items():
@@ -183,6 +197,8 @@ class Host(object):
     def _on_specs_request(self, path):
         if IS_PYTHON3 and isinstance(path, bytes):
             path = path.decode(self._nvim_encoding)
+        if path in self._load_errors:
+            self.nvim.out_write(self._load_errors[path] + '\n')
         return self._specs.get(path, 0)
 
     def _decodehook_for(self, encoding):

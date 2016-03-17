@@ -7,8 +7,8 @@ import os
 import sys
 
 from .api import DecodeHook, Nvim, SessionHook
-from .msgpack_rpc import (child_session, socket_session, stdio_session,
-                          tcp_session)
+from .msgpack_rpc import (ErrorResponse, child_session, socket_session,
+                          stdio_session, tcp_session)
 from .plugin import (Host, autocmd, command, encoding, function, plugin,
                      rpc_export, shutdown_hook)
 
@@ -16,7 +16,8 @@ from .plugin import (Host, autocmd, command, encoding, function, plugin,
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'start_host', 'autocmd', 'command', 'encoding', 'function',
            'plugin', 'rpc_export', 'Host', 'DecodeHook', 'Nvim',
-           'SessionHook', 'shutdown_hook', 'attach', 'setup_logging')
+           'SessionHook', 'shutdown_hook', 'attach', 'setup_logging',
+           'ErrorResponse')
 
 
 def start_host(session=None):
