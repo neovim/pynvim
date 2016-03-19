@@ -166,10 +166,10 @@ class Range(object):
     def __init__(self, buffer, start, end):
         self._buffer = buffer
         self.start = start - 1
-        self.end = end
+        self.end = end - 1
 
     def __len__(self):
-        return self.end - self.start
+        return self.end - self.start + 1
 
     def __getitem__(self, idx):
         if not isinstance(idx, slice):
@@ -179,7 +179,7 @@ class Range(object):
         if start is None:
             start = self.start
         if end is None:
-            end = self.end
+            end = self.end + 1
         return self._buffer[start:end]
 
     def __setitem__(self, idx, lines):
@@ -191,26 +191,26 @@ class Range(object):
         if start is None:
             start = self.start
         if end is None:
-            end = self.end
+            end = self.end + 1
         self._buffer[start:end] = lines
 
     def __iter__(self):
-        for i in range(self.start, self.end):
+        for i in range(self.start, self.end + 1):
             yield self._buffer[i]
 
     def append(self, lines, i=None):
         i = self._normalize_index(i)
         if i is None:
-            i = self.end
+            i = self.end + 1
         self._buffer.append(lines, i)
 
     def _normalize_index(self, index):
         if index is None:
             return None
         if index < 0:
-            index = self.end - 1
+            index = self.end
         else:
             index += self.start
-            if index >= self.end:
-                index = self.end - 1
+            if index > self.end:
+                index = self.end
         return index
