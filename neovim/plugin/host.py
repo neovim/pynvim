@@ -9,6 +9,7 @@ import re
 
 from traceback import format_exc
 
+from . import script_host
 from ..api import DecodeHook
 from ..compat import IS_PYTHON3, find_module
 from ..msgpack_rpc import ErrorResponse
@@ -105,15 +106,14 @@ class Host(object):
             if path in self._loaded:
                 error('{0} is already loaded'.format(path))
                 continue
-            if path == "script_host.py":
-                directory = os.path.dirname(__file__)
-                name = "script_host"
-            else:
-                directory, name = os.path.split(os.path.splitext(path)[0])
-            file, pathname, description = find_module(name, [directory])
-            handlers = []
             try:
-                module = imp.load_module(name, file, pathname, description)
+                if path == "script_host.py":
+                    module = script_host
+                else:
+                    directory, name = os.path.split(os.path.splitext(path)[0])
+                    file, pathname, descr = find_module(name, [directory])
+                    module = imp.load_module(name, file, pathname, descr)
+                handlers = []
                 self._discover_classes(module, handlers, path)
                 self._discover_functions(module, handlers, path)
                 if not handlers:

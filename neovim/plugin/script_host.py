@@ -5,7 +5,8 @@ import logging
 import os
 import sys
 
-import neovim
+from .decorators import plugin, rpc_export
+from ..api import SessionHook
 
 __all__ = ('ScriptHost',)
 
@@ -22,7 +23,7 @@ if IS_PYTHON3:
         from importlib.machinery import PathFinder
 
 
-@neovim.plugin
+@plugin
 class ScriptHost(object):
 
     """Provides an environment for running python plugins created for Vim."""
@@ -59,9 +60,6 @@ class ScriptHost(object):
 
     def teardown(self):
         """Restore state modified from the `setup` call."""
-        for plugin in self.installed_plugins:
-            if hasattr(plugin, 'on_teardown'):
-                plugin.teardown()
         nvim = self.nvim
         info('uninstall import hook/path')
         sys.path.remove(nvim.VIM_SPECIAL_PATH)
@@ -70,13 +68,13 @@ class ScriptHost(object):
         sys.stdout = self.saved_stdout
         sys.stderr = self.saved_stderr
 
-    @neovim.rpc_export('python_execute', sync=True)
+    @rpc_export('python_execute', sync=True)
     def python_execute(self, script, range_start, range_stop):
         """Handle the `python` ex command."""
         self._set_current_range(range_start, range_stop)
         exec(script, self.module.__dict__)
 
-    @neovim.rpc_export('python_execute_file', sync=True)
+    @rpc_export('python_execute_file', sync=True)
     def python_execute_file(self, file_path, range_start, range_stop):
         """Handle the `pyfile` ex command."""
         self._set_current_range(range_start, range_stop)
@@ -84,7 +82,7 @@ class ScriptHost(object):
             script = compile(f.read(), file_path, 'exec')
             exec(script, self.module.__dict__)
 
-    @neovim.rpc_export('python_do_range', sync=True)
+    @rpc_export('python_do_range', sync=True)
     def python_do_range(self, start, stop, code):
         """Handle the `pydo` ex command."""
         self._set_current_range(start, stop)
@@ -142,7 +140,7 @@ class ScriptHost(object):
         # delete the function
         del self.module.__dict__[fname]
 
-    @neovim.rpc_export('python_eval', sync=True)
+    @rpc_export('python_eval', sync=True)
     def python_eval(self, expr):
         """Handle the `pyeval` vim function."""
         return eval(expr, self.module.__dict__)
@@ -163,7 +161,7 @@ class RedirectStream(io.IOBase):
         self.redirect_handler('\n'.join(seq))
 
 
-class LegacyEvalHook(neovim.SessionHook):
+class LegacyEvalHook(SessionHook):
 
     """Injects legacy `vim.eval` behavior to a Nvim instance."""
 
