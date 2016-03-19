@@ -10,12 +10,27 @@ connecting to and scripting Nvim processes through its msgpack-rpc API.
 #### Installation
 
 ```sh
-pip install neovim
+pip2 install neovim
+pip3 install neovim
 ```
 
-You can install the package without being root by adding the `--user` flag. You
-can use `pip2` and `pip3` to explicitly install for python2 and python3,
-respectively.
+If you only use one of python2 or python3, it is enough to install that
+version. You can install the package without being root by adding the `--user`
+flag.
+
+If you follow Neovim master, make sure to upgrade the python-client when you
+upgrade neovim:
+```sh
+pip2 install --upgrade neovim
+pip3 install --upgrade neovim
+```
+
+Alternatively, the master version could be installed by executing the following
+in the root of this repository:
+```sh
+pip2 install .
+pip3 install .
+```
 
 #### Python Plugin API
 
@@ -84,12 +99,18 @@ to have effect. For details see `:help remote-plugin` in nvim.
 
 #### Development
 
-Install the master version by cloning this repository and in the root directory
-execute
-
+If you change the code, you need to run
 ```sh
-pip install .
+pip2 install .
+pip3 install .
 ```
+for the changes to have effect. Alternatively you could execute neovim
+with the `$PYTHONPATH` environment variable
+```
+PYTHONPATH=/path/to/python-client nvim
+```
+But note this is not completely reliable as installed packages can appear before
+`$PYTHONPATH` in the python search path.
 
 You need to rerun this command if you have changed the code, in order for nvim
 to use it for the plugin host.
@@ -110,6 +131,18 @@ nosetests
 
 But note you need to restart nvim every time you run the tests! Substitute your
 favorite terminal emulator for `xterm`.
+
+#### Troubleshooting
+
+You can run the plugin host in nvim with logging enabled to debug errors:
+```
+NVIM_PYTHON_LOG_FILE=logfile NVIM_PYTHON_LOG_LEVEL=DEBUG nvim
+```
+As more than one python host process might be started, the log filenames take
+the pattern `logfile_PID` where `PID` is the process id.
+
+If the host cannot start at all, the error could be found in `~/.nvimlog` if
+`nvim` was compiled with logging.
 
 #### Usage through the python REPL
 
