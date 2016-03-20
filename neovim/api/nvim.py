@@ -1,6 +1,7 @@
 """Main Nvim interface."""
 import functools
 import os
+import sys
 
 from traceback import format_exc, format_stack
 
@@ -65,9 +66,10 @@ class Nvim(object):
     def from_nvim(cls, nvim):
         """Create a new Nvim instance from an existing instance."""
         return cls(nvim._session, nvim.channel_id, nvim.metadata,
-                   nvim.types, nvim._decodehook)
+                   nvim.types, nvim._decodehook, nvim._err_cb)
 
-    def __init__(self, session, channel_id, metadata, types, decodehook=None):
+    def __init__(self, session, channel_id, metadata, types,
+                 decodehook=None, err_cb=None):
         """Initialize a new Nvim instance. This method is module-private."""
         self._session = session
         self.channel_id = channel_id
@@ -84,6 +86,7 @@ class Nvim(object):
         self.funcs = Funcs(self)
         self.error = NvimError
         self._decodehook = decodehook
+        self._err_cb = err_cb
 
     def _from_nvim(self, obj):
         if type(obj) is ExtType:
@@ -132,7 +135,8 @@ class Nvim(object):
         if msg:
             return walk(self._from_nvim, msg)
 
-    def run_loop(self, request_cb, notification_cb, setup_cb=None):
+    def run_loop(self, request_cb, notification_cb,
+                 setup_cb=None, err_cb=None):
         """Run the event loop to receive requests and notifications from Nvim.
 
         This should not be called from a plugin running in the host, which
@@ -146,6 +150,10 @@ class Nvim(object):
         def filter_notification_cb(name, args):
             notification_cb(self._from_nvim(name), walk(self._from_nvim, args))
 
+        if err_cb is None:
+            err_cb = sys.stderr.write
+        self._err_cb = err_cb
+
         self._session.run(filter_request_cb, filter_notification_cb, setup_cb)
 
     def stop_loop(self):
@@ -155,7 +163,7 @@ class Nvim(object):
     def with_decodehook(self, hook):
         """Initialize a new Nvim instance."""
         return Nvim(self._session, self.channel_id,
-                    self.metadata, self.types, hook)
+                    self.metadata, self.types, hook, self._err_cb)
 
     def ui_attach(self, width, height, rgb):
         """Register as a remote UI.
@@ -316,9 +324,9 @@ class Nvim(object):
                 fn(*args, **kwargs)
             except Exception as err:
                 msg = ("error caught while executing async callback:\n"
-                       "{!r}\n{}\n \nthe call was requested at\n{}"
+                       "{0!r}\n{1}\n \nthe call was requested at\n{2}"
                        .format(err, format_exc(5), call_point))
-                self.err_write(msg, async=True)
+                self._err_cb(msg)
                 raise
         self._session.threadsafe_call(handler)
 

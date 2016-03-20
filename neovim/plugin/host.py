@@ -45,11 +45,15 @@ class Host(object):
         if IS_PYTHON3 and isinstance(self._nvim_encoding, bytes):
             self._nvim_encoding = self._nvim_encoding.decode('ascii')
 
+    def _on_async_err(self, msg):
+        self.nvim.err_write(msg, async=True)
+
     def start(self, plugins):
         """Start listening for msgpack-rpc requests and notifications."""
         self.nvim.run_loop(self._on_request,
                            self._on_notification,
-                           lambda: self._load(plugins))
+                           lambda: self._load(plugins),
+                           err_cb=self._on_async_err)
 
     def shutdown(self):
         """Shutdown the host."""
@@ -79,16 +83,16 @@ class Host(object):
         if not handler:
             msg = self._missing_handler_error(name, 'notification')
             error(msg)
-            self.nvim.err_write(msg + "\n")
+            self._on_async_err(msg + "\n")
             return
 
         debug('calling notification handler for "%s", args: "%s"', name, args)
         try:
             handler(*args)
         except Exception as err:
-            msg = ("error caught in async handler '{} {}':\n{!r}\n{}"
+            msg = ("error caught in async handler '{} {}':\n{!r}\n{}\n"
                    .format(name, args, err, format_exc(5)))
-            self.nvim.err_write(msg, async=True)
+            self._on_async_err(msg + "\n")
             raise
 
     def _missing_handler_error(self, name, kind):
