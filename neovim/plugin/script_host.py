@@ -6,7 +6,7 @@ import os
 import sys
 
 from .decorators import plugin, rpc_export
-from ..api import SessionHook
+from ..api import Nvim
 
 __all__ = ('ScriptHost',)
 
@@ -36,7 +36,7 @@ class ScriptHost(object):
         nvim.script_context = self.module
         # it seems some plugins assume 'sys' is already imported, so do it now
         exec('import sys', self.module.__dict__)
-        self.legacy_vim = nvim.with_hook(LegacyEvalHook())
+        self.legacy_vim = LegacyVim.from_nvim(nvim)
         sys.modules['vim'] = self.legacy_vim
 
     def setup(self, nvim):
@@ -161,20 +161,14 @@ class RedirectStream(io.IOBase):
         self.redirect_handler('\n'.join(seq))
 
 
-class LegacyEvalHook(SessionHook):
-
-    """Injects legacy `vim.eval` behavior to a Nvim instance."""
-
-    def __init__(self):
-        super(LegacyEvalHook, self).__init__(from_nvim=self._string_eval)
-
-    def _string_eval(self, obj, session, method, kind):
-        if method == 'vim_eval':
-            if IS_PYTHON3:
-                if isinstance(obj, (int, float)):
-                    return str(obj)
-            elif isinstance(obj, (int, long, float)):
+class LegacyVim(Nvim):
+    def eval(self, expr):
+        obj = self.request("vim_eval", expr)
+        if IS_PYTHON3:
+            if isinstance(obj, (int, float)):
                 return str(obj)
+        elif isinstance(obj, (int, long, float)):
+            return str(obj)
         return obj
 
 

@@ -32,9 +32,10 @@ class Nvim(object):
     from a raw `Session` instance.
 
     Subsequent instances for the same session can be created by calling the
-    `with_hook` instance method and passing a SessionHook instance. This can
-    be useful to have multiple `Nvim` objects that behave differently without
-    one affecting the other.
+    `with_decodehook` instance method to change the decoding behavior or
+    `SubClass.from_nvim(nvim)` where `SubClass` is a subclass of `Nvim`, which
+    is useful for having multiple `Nvim` objects that behave differently
+    without one affecting the other.
     """
 
     @classmethod
@@ -59,6 +60,12 @@ class Nvim(object):
         }
 
         return cls(session, channel_id, metadata, types)
+
+    @classmethod
+    def from_nvim(cls, nvim):
+        """Create a new Nvim instance from an existing instance."""
+        return cls(nvim._session, nvim.channel_id, nvim.metadata,
+                   nvim.types, nvim._decodehook)
 
     def __init__(self, session, channel_id, metadata, types, decodehook=None):
         """Initialize a new Nvim instance. This method is module-private."""
