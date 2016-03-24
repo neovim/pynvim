@@ -1,5 +1,5 @@
 """API for working with Nvim windows."""
-from .common import Remote, RemoteMap
+from .common import Remote
 
 
 __all__ = ('Window')
@@ -9,70 +9,59 @@ class Window(Remote):
 
     """A remote Nvim window."""
 
-    def __init__(self, session, code_data):
-        """Initialize from session and code_data immutable object.
-
-        The `code_data` contains serialization information required for
-        msgpack-rpc calls. It must be immutable for Window equality to work.
-        """
-        self._session = session
-        self.code_data = code_data
-        self.vars = RemoteMap(session, 'window_get_var', 'window_set_var',
-                              self)
-        self.options = RemoteMap(session, 'window_get_option',
-                                 'window_set_option', self)
+    _api_prefix = "window_"
 
     @property
     def buffer(self):
         """Get the `Buffer` currently being displayed by the window."""
-        return self._session.request('window_get_buffer', self)
+        return self.request('window_get_buffer')
 
     @property
     def cursor(self):
         """Get the (row, col) tuple with the current cursor position."""
-        return self._session.request('window_get_cursor', self)
+        return self.request('window_get_cursor')
 
     @cursor.setter
     def cursor(self, pos):
         """Set the (row, col) tuple as the new cursor position."""
-        return self._session.request('window_set_cursor', self, pos)
+        return self.request('window_set_cursor', pos)
 
     @property
     def height(self):
         """Get the window height in rows."""
-        return self._session.request('window_get_height', self)
+        return self.request('window_get_height')
 
     @height.setter
     def height(self, height):
         """Set the window height in rows."""
-        return self._session.request('window_set_height', self, height)
+        return self.request('window_set_height', height)
 
     @property
     def width(self):
         """Get the window width in rows."""
-        return self._session.request('window_get_width', self)
+        return self.request('window_get_width')
 
     @width.setter
     def width(self, width):
         """Set the window height in rows."""
-        return self._session.request('window_set_width', self, width)
+        return self.request('window_set_width', width)
 
     @property
     def row(self):
         """0-indexed, on-screen window position(row) in display cells."""
-        return self._session.request('window_get_position', self)[0]
+        return self.request('window_get_position')[0]
 
     @property
     def col(self):
         """0-indexed, on-screen window position(col) in display cells."""
-        return self._session.request('window_get_position', self)[1]
+        return self.request('window_get_position')[1]
 
     @property
     def tabpage(self):
         """Get the `Tabpage` that contains the window."""
-        return self._session.request('window_get_tabpage', self)
+        return self.request('window_get_tabpage')
 
     @property
     def valid(self):
         """Return True if the window still exists."""
-        return self._session.request('window_is_valid', self)
+        return self.request('window_is_valid')

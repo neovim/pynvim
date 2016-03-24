@@ -48,6 +48,12 @@ def test_call():
 
 
 @with_setup(setup=cleanup)
+def test_api():
+    vim.api.command('let g:var = 3')
+    eq(vim.api.eval('g:var'), 3)
+
+
+@with_setup(setup=cleanup)
 def test_strwidth():
     eq(vim.strwidth('abc'), 3)
     # 6 + (neovim)

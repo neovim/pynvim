@@ -11,14 +11,14 @@ def test_call_and_reply():
         cmd = 'let g:result = rpcrequest(%d, "client-call", 1, 2, 3)' % cid
         vim.command(cmd)
         eq(vim.vars['result'], [4, 5, 6])
-        vim.session.stop()
+        vim.stop_loop()
 
     def request_cb(name, args):
         eq(name, 'client-call')
         eq(args, [1, 2, 3])
         return [4, 5, 6]
 
-    vim.session.run(request_cb, None, setup_cb)
+    vim.run_loop(request_cb, None, setup_cb)
 
 
 @with_setup(setup=cleanup)
@@ -27,13 +27,13 @@ def test_call_api_before_reply():
         cmd = 'let g:result = rpcrequest(%d, "client-call2", 1, 2, 3)' % cid
         vim.command(cmd)
         eq(vim.vars['result'], [7, 8, 9])
-        vim.session.stop()
+        vim.stop_loop()
 
     def request_cb(name, args):
         vim.command('let g:result2 = [7, 8, 9]')
         return vim.vars['result2']
 
-    vim.session.run(request_cb, None, setup_cb)
+    vim.run_loop(request_cb, None, setup_cb)
 
 @with_setup(setup=cleanup)
 def test_async_call():
@@ -41,11 +41,11 @@ def test_async_call():
     def request_cb(name, args):
         if name == "test-event":
             vim.vars['result'] = 17
-        vim.session.stop()
+        vim.stop_loop()
 
     # this would have dead-locked if not async
     vim.funcs.rpcrequest(vim.channel_id, "test-event", async=True)
-    vim.session.run(request_cb, None, None)
+    vim.run_loop(request_cb, None, None)
     eq(vim.vars['result'], 17)
 
 
@@ -62,7 +62,7 @@ def test_recursion():
         eq(vim.vars['result2'], 8)
         eq(vim.vars['result3'], 16)
         eq(vim.vars['result4'], 32)
-        vim.session.stop()
+        vim.stop_loop()
 
     def request_cb(name, args):
         n = args[0]
@@ -77,4 +77,4 @@ def test_recursion():
             vim.command(cmd)
         return n
 
-    vim.session.run(request_cb, None, setup_cb)
+    vim.run_loop(request_cb, None, setup_cb)

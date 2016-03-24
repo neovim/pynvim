@@ -77,6 +77,16 @@ def test_vars():
 
 
 @with_setup(setup=cleanup)
+def test_api():
+    vim.current.buffer.api.set_var('myvar', 'thetext')
+    eq(vim.current.buffer.api.get_var('myvar'), 'thetext')
+    eq(vim.eval('b:myvar'), 'thetext')
+    vim.current.buffer.api.set_line_slice(0,-1,True,True,['alpha', 'beta'])
+    eq(vim.current.buffer.api.get_line_slice(0,-1,True,True), ['alpha', 'beta'])
+    eq(vim.current.buffer[:], ['alpha', 'beta'])
+
+
+@with_setup(setup=cleanup)
 def test_options():
     eq(vim.current.buffer.options['shiftwidth'], 8)
     vim.current.buffer.options['shiftwidth'] = 4

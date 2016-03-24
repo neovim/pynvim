@@ -1,14 +1,15 @@
 """Main Nvim interface."""
 import functools
 import os
+import sys
 
 from traceback import format_exc, format_stack
 
 from msgpack import ExtType
 
 from .buffer import Buffer
-from .common import (DecodeHook, Remote, RemoteMap, RemoteSequence,
-                     SessionFilter, SessionHook, walk)
+from .common import (DecodeHook, Remote, RemoteApi,
+                     RemoteMap, RemoteSequence, walk)
 from .tabpage import Tabpage
 from .window import Window
 from ..compat import IS_PYTHON3
@@ -24,7 +25,7 @@ class Nvim(object):
 
     """Class that represents a remote Nvim instance.
 
-    This class is main entry point to Nvim remote API, it is a thin wrapper
+    This class is main entry point to Nvim remote API, it is a wrapper
     around Session instances.
 
     The constructor of this class must not be called directly. Instead, the
@@ -32,9 +33,10 @@ class Nvim(object):
     from a raw `Session` instance.
 
     Subsequent instances for the same session can be created by calling the
-    `with_hook` instance method and passing a SessionHook instance. This can
-    be useful to have multiple `Nvim` objects that behave differently without
-    one affecting the other.
+    `with_decodehook` instance method to change the decoding behavior or
+    `SubClass.from_nvim(nvim)` where `SubClass` is a subclass of `Nvim`, which
+    is useful for having multiple `Nvim` objects that behave differently
+    without one affecting the other.
     """
 
     @classmethod
@@ -49,9 +51,8 @@ class Nvim(object):
         channel_id, metadata = session.request(b'vim_get_api_info')
 
         if IS_PYTHON3:
-            hook = DecodeHook()
             # decode all metadata strings for python3
-            metadata = walk(hook.from_nvim, metadata, None, None, None)
+            metadata = DecodeHook().walk(metadata)
 
         types = {
             metadata['types']['Buffer']['id']: Buffer,
@@ -59,32 +60,110 @@ class Nvim(object):
             metadata['types']['Tabpage']['id']: Tabpage,
         }
 
-        return cls(session, channel_id, metadata).with_hook(ExtHook(types))
+        return cls(session, channel_id, metadata, types)
 
-    def __init__(self, session, channel_id, metadata):
+    @classmethod
+    def from_nvim(cls, nvim):
+        """Create a new Nvim instance from an existing instance."""
+        return cls(nvim._session, nvim.channel_id, nvim.metadata,
+                   nvim.types, nvim._decodehook, nvim._err_cb)
+
+    def __init__(self, session, channel_id, metadata, types,
+                 decodehook=None, err_cb=None):
         """Initialize a new Nvim instance. This method is module-private."""
         self._session = session
         self.channel_id = channel_id
         self.metadata = metadata
-        self.vars = RemoteMap(session, 'vim_get_var', 'vim_set_var')
-        self.vvars = RemoteMap(session, 'vim_get_vvar', None)
-        self.options = RemoteMap(session, 'vim_get_option', 'vim_set_option')
-        self.buffers = RemoteSequence(session, 'vim_get_buffers')
-        self.windows = RemoteSequence(session, 'vim_get_windows')
-        self.tabpages = RemoteSequence(session, 'vim_get_tabpages')
-        self.current = Current(session)
+        self.types = types
+        self.api = RemoteApi(self, 'vim_')
+        self.vars = RemoteMap(self, 'vim_get_var', 'vim_set_var')
+        self.vvars = RemoteMap(self, 'vim_get_vvar', None)
+        self.options = RemoteMap(self, 'vim_get_option', 'vim_set_option')
+        self.buffers = RemoteSequence(self, 'vim_get_buffers')
+        self.windows = RemoteSequence(self, 'vim_get_windows')
+        self.tabpages = RemoteSequence(self, 'vim_get_tabpages')
+        self.current = Current(self)
         self.funcs = Funcs(self)
         self.error = NvimError
+        self._decodehook = decodehook
+        self._err_cb = err_cb
 
-    def with_hook(self, hook):
+    def _from_nvim(self, obj):
+        if type(obj) is ExtType:
+            cls = self.types[obj.code]
+            return cls(self, (obj.code, obj.data))
+        if self._decodehook is not None:
+            obj = self._decodehook.decode_if_bytes(obj)
+        return obj
+
+    def _to_nvim(self, obj):
+        if isinstance(obj, Remote):
+            return ExtType(*obj.code_data)
+        return obj
+
+    def request(self, name, *args, **kwargs):
+        r"""Send an API request or notification to nvim.
+
+        It is rarely needed to call this function directly, as most API
+        functions have python wrapper functions. The `api` object can
+        be also be used to call API functions as methods:
+
+            vim.api.err_write('ERROR\n', async=True)
+            vim.current.buffer.api.get_mark('.')
+
+        is equivalent to
+
+            vim.request('vim_err_write', 'ERROR\n', async=True)
+            vim.request('buffer_get_mark', vim.current.buffer, '.')
+
+
+        Normally a blocking request will be sent.  If the `async` flag is
+        present and True, a asynchronous notification is sent instead. This
+        will never block, and the return value or error is ignored.
+        """
+        args = walk(self._to_nvim, args)
+        res = self._session.request(name, *args, **kwargs)
+        return walk(self._from_nvim, res)
+
+    def next_message(self):
+        """Block until a message(request or notification) is available.
+
+        If any messages were previously enqueued, return the first in queue.
+        If not, run the event loop until one is received.
+        """
+        msg = self._session.next_message()
+        if msg:
+            return walk(self._from_nvim, msg)
+
+    def run_loop(self, request_cb, notification_cb,
+                 setup_cb=None, err_cb=None):
+        """Run the event loop to receive requests and notifications from Nvim.
+
+        This should not be called from a plugin running in the host, which
+        already runs the loop and dispatches events to plugins.
+        """
+        def filter_request_cb(name, args):
+            args = walk(self._from_nvim, args)
+            result = request_cb(self._from_nvim(name), args)
+            return walk(self._to_nvim, result)
+
+        def filter_notification_cb(name, args):
+            notification_cb(self._from_nvim(name), walk(self._from_nvim, args))
+
+        if err_cb is None:
+            err_cb = sys.stderr.write
+        self._err_cb = err_cb
+
+        self._session.run(filter_request_cb, filter_notification_cb, setup_cb)
+
+    def stop_loop(self):
+        """Stop the event loop being started with `run_loop`."""
+        self._session.stop()
+
+    def with_decodehook(self, hook):
         """Initialize a new Nvim instance."""
-        return Nvim(SessionFilter(self.session, hook), self.channel_id,
-                    self.metadata)
-
-    @property
-    def session(self):
-        """Return the Session or SessionFilter for a Nvim instance."""
-        return self._session
+        return Nvim(self._session, self.channel_id,
+                    self.metadata, self.types, hook, self._err_cb)
 
     def ui_attach(self, width, height, rgb):
         """Register as a remote UI.
@@ -92,38 +171,38 @@ class Nvim(object):
         After this method is called, the client will receive redraw
         notifications.
         """
-        return self._session.request('ui_attach', width, height, rgb)
+        return self.request('ui_attach', width, height, rgb)
 
     def ui_detach(self):
         """Unregister as a remote UI."""
-        return self._session.request('ui_detach')
+        return self.request('ui_detach')
 
     def ui_try_resize(self, width, height):
         """Notify nvim that the client window has resized.
 
         If possible, nvim will send a redraw request to resize.
         """
-        return self._session.request('ui_try_resize', width, height)
+        return self.request('ui_try_resize', width, height)
 
     def subscribe(self, event):
         """Subscribe to a Nvim event."""
-        return self._session.request('vim_subscribe', event)
+        return self.request('vim_subscribe', event)
 
     def unsubscribe(self, event):
         """Unsubscribe to a Nvim event."""
-        return self._session.request('vim_unsubscribe', event)
+        return self.request('vim_unsubscribe', event)
 
     def command(self, string, async=False):
         """Execute a single ex command."""
-        return self._session.request('vim_command', string, async=async)
+        return self.request('vim_command', string, async=async)
 
     def command_output(self, string):
         """Execute a single ex command and return the output."""
-        return self._session.request('vim_command_output', string)
+        return self.request('vim_command_output', string)
 
     def eval(self, string, async=False):
         """Evaluate a vimscript expression."""
-        return self._session.request('vim_eval', string, async=async)
+        return self.request('vim_eval', string, async=async)
 
     def call(self, name, *args, **kwargs):
         """Call a vimscript function."""
@@ -131,18 +210,18 @@ class Nvim(object):
             if k != "async":
                 raise TypeError(
                     "call() got an unexpected keyword argument '{}'".format(k))
-        return self._session.request('vim_call_function', name, args, **kwargs)
+        return self.request('vim_call_function', name, args, **kwargs)
 
     def strwidth(self, string):
         """Return the number of display cells `string` occupies.
 
         Tab is counted as one cell.
         """
-        return self._session.request('vim_strwidth', string)
+        return self.request('vim_strwidth', string)
 
     def list_runtime_paths(self):
         """Return a list of paths contained in the 'runtimepath' option."""
-        return self._session.request('vim_list_runtime_paths')
+        return self.request('vim_list_runtime_paths')
 
     def foreach_rtp(self, cb):
         """Invoke `cb` for each path in 'runtimepath'.
@@ -152,7 +231,7 @@ class Nvim(object):
         are no longer paths. If stopped in case callable returned non-None,
         vim.foreach_rtp function returns the value returned by callable.
         """
-        for path in self._session.request('vim_list_runtime_paths'):
+        for path in self.request('vim_list_runtime_paths'):
             try:
                 if cb(path) is not None:
                     break
@@ -162,7 +241,7 @@ class Nvim(object):
     def chdir(self, dir_path):
         """Run os.chdir, then all appropriate vim stuff."""
         os_chdir(dir_path)
-        return self._session.request('vim_change_directory', dir_path)
+        return self.request('vim_change_directory', dir_path)
 
     def feedkeys(self, keys, options='', escape_csi=True):
         """Push `keys` to Nvim user input buffer.
@@ -173,7 +252,7 @@ class Nvim(object):
         - 't': Handle keys as if typed; otherwise they are handled as if coming
                from a mapping. This matters for undo, opening folds, etc.
         """
-        return self._session.request('vim_feedkeys', keys, options, escape_csi)
+        return self.request('vim_feedkeys', keys, options, escape_csi)
 
     def input(self, bytes):
         """Push `bytes` to Nvim low level input buffer.
@@ -183,7 +262,7 @@ class Nvim(object):
         written(which can be less than what was requested if the buffer is
         full).
         """
-        return self._session.request('vim_input', bytes)
+        return self.request('vim_input', bytes)
 
     def replace_termcodes(self, string, from_part=False, do_lt=True,
                           special=True):
@@ -199,16 +278,16 @@ class Nvim(object):
 
         The returned sequences can be used as input to `feedkeys`.
         """
-        return self._session.request('vim_replace_termcodes', string,
-                                     from_part, do_lt, special)
+        return self.request('vim_replace_termcodes', string,
+                            from_part, do_lt, special)
 
     def out_write(self, msg):
         """Print `msg` as a normal message."""
-        return self._session.request('vim_out_write', msg)
+        return self.request('vim_out_write', msg)
 
     def err_write(self, msg, async=False):
         """Print `msg` as an error message."""
-        return self._session.request('vim_err_write', msg, async=async)
+        return self.request('vim_err_write', msg, async=async)
 
     def quit(self, quit_command='qa!'):
         """Send a quit command to Nvim.
@@ -245,9 +324,9 @@ class Nvim(object):
                 fn(*args, **kwargs)
             except Exception as err:
                 msg = ("error caught while executing async callback:\n"
-                       "{!r}\n{}\n \nthe call was requested at\n{}"
+                       "{0!r}\n{1}\n \nthe call was requested at\n{2}"
                        .format(err, format_exc(5), call_point))
-                self.err_write(msg, async=True)
+                self._err_cb(msg)
                 raise
         self._session.threadsafe_call(handler)
 
@@ -302,24 +381,6 @@ class Funcs(object):
 
     def __getattr__(self, name):
         return functools.partial(self._nvim.call, name)
-
-
-class ExtHook(SessionHook):
-    def __init__(self, types):
-        self.types = types
-        super(ExtHook, self).__init__(from_nvim=self.from_ext,
-                                      to_nvim=self.to_ext)
-
-    def from_ext(self, obj, session, method, kind):
-        if type(obj) is ExtType:
-            cls = self.types[obj.code]
-            return cls(session, (obj.code, obj.data))
-        return obj
-
-    def to_ext(self, obj, session, method, kind):
-        if isinstance(obj, Remote):
-            return ExtType(*obj.code_data)
-        return obj
 
 
 class NvimError(Exception):

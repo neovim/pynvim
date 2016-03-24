@@ -1,5 +1,5 @@
 """API for working with Nvim buffers."""
-from .common import Remote, RemoteMap
+from .common import Remote
 from ..compat import IS_PYTHON3
 
 
@@ -14,22 +14,11 @@ class Buffer(Remote):
 
     """A remote Nvim buffer."""
 
-    def __init__(self, session, code_data):
-        """Initialize from session and code_data immutable object.
-
-        The `code_data` contains serialization information required for
-        msgpack-rpc calls. It must be immutable for Buffer equality to work.
-        """
-        self._session = session
-        self.code_data = code_data
-        self.vars = RemoteMap(session, 'buffer_get_var', 'buffer_set_var',
-                              self)
-        self.options = RemoteMap(session, 'buffer_get_option',
-                                 'buffer_set_option', self)
+    _api_prefix = "buffer_"
 
     def __len__(self):
         """Return the number of lines contained in a Buffer."""
-        return self._session.request('buffer_line_count', self)
+        return self.request('buffer_line_count')
 
     def __getitem__(self, idx):
         """Get a buffer line or slice by integer index.
@@ -121,7 +110,7 @@ class Buffer(Remote):
 
     def mark(self, name):
         """Return (row, col) tuple for a named mark."""
-        return self._session.request('buffer_get_mark', self, name)
+        return self.request('buffer_get_mark', name)
 
     def range(self, start, end):
         """Return a `Range` object, which represents part of the Buffer."""
@@ -132,34 +121,33 @@ class Buffer(Remote):
         """Add a highlight to the buffer."""
         if async is None:
             async = (src_id != 0)
-        return self._session.request('buffer_add_highlight', self, src_id,
-                                     hl_group, line, col_start,
-                                     col_end, async=async)
+        return self.request('buffer_add_highlight', src_id, hl_group,
+                            line, col_start, col_end, async=async)
 
     def clear_highlight(self, src_id, line_start=0, line_end=-1, async=True):
         """clear highlights from the buffer."""
-        self._session.request('buffer_clear_highlight', self, src_id,
-                              line_start, line_end, async=async)
+        self.request('buffer_clear_highlight', src_id,
+                     line_start, line_end, async=async)
 
     @property
     def name(self):
         """Get the buffer name."""
-        return self._session.request('buffer_get_name', self)
+        return self.request('buffer_get_name')
 
     @name.setter
     def name(self, value):
         """Set the buffer name. BufFilePre/BufFilePost are triggered."""
-        return self._session.request('buffer_set_name', self, value)
+        return self.request('buffer_set_name', value)
 
     @property
     def valid(self):
         """Return True if the buffer still exists."""
-        return self._session.request('buffer_is_valid', self)
+        return self.request('buffer_is_valid')
 
     @property
     def number(self):
         """Get the buffer number."""
-        return self._session.request('buffer_get_number', self)
+        return self.request('buffer_get_number')
 
 
 class Range(object):
