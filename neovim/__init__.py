@@ -6,16 +6,16 @@ import logging
 import os
 import sys
 
-from .api import DecodeHook, Nvim
+from .api import Nvim
 from .msgpack_rpc import (ErrorResponse, child_session, socket_session,
                           stdio_session, tcp_session)
-from .plugin import (Host, autocmd, command, encoding, function, plugin,
-                     rpc_export, shutdown_hook)
+from .plugin import (Host, autocmd, command, decode, encoding, function,
+                     plugin, rpc_export, shutdown_hook)
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
-           'start_host', 'autocmd', 'command', 'encoding', 'function',
-           'plugin', 'rpc_export', 'Host', 'DecodeHook', 'Nvim',
+           'start_host', 'autocmd', 'command', 'encoding', 'decode',
+           'function', 'plugin', 'rpc_export', 'Host', 'Nvim',
            'shutdown_hook', 'attach', 'setup_logging', 'ErrorResponse')
 
 

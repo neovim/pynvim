@@ -76,10 +76,14 @@ class Session(object):
         sent instead. This will never block, and the return value or error is
         ignored.
         """
-        async = kwargs.get('async', False)
+        async = kwargs.pop('async', False)
         if async:
             self._async_session.notify(method, args)
             return
+
+        if kwargs:
+            raise ValueError("request got unsupported keyword argument(s): {0}"
+                             .format(', '.join(kwargs.keys())))
 
         if self._is_running:
             v = self._yielding_request(method, args)

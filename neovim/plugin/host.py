@@ -10,7 +10,7 @@ import re
 from traceback import format_exc
 
 from . import script_host
-from ..api import DecodeHook
+from ..api import decode_if_bytes, walk
 from ..compat import IS_PYTHON3, find_module
 from ..msgpack_rpc import ErrorResponse
 
@@ -41,9 +41,9 @@ class Host(object):
             'specs': self._on_specs_request,
             'shutdown': self.shutdown
         }
-        self._nvim_encoding = nvim.options['encoding']
-        if IS_PYTHON3 and isinstance(self._nvim_encoding, bytes):
-            self._nvim_encoding = self._nvim_encoding.decode('ascii')
+
+        # Decode per default for Python3
+        self._decode_default = IS_PYTHON3
 
     def _on_async_err(self, msg):
         self.nvim.err_write(msg, async=True)
@@ -62,8 +62,8 @@ class Host(object):
 
     def _on_request(self, name, args):
         """Handle a msgpack-rpc request."""
-        if IS_PYTHON3 and isinstance(name, bytes):
-            name = name.decode(self._nvim_encoding)
+        if IS_PYTHON3:
+            name = decode_if_bytes(name)
         handler = self._request_handlers.get(name, None)
         if not handler:
             msg = self._missing_handler_error(name, 'request')
@@ -77,8 +77,8 @@ class Host(object):
 
     def _on_notification(self, name, args):
         """Handle a msgpack-rpc notification."""
-        if IS_PYTHON3 and isinstance(name, bytes):
-            name = name.decode(self._nvim_encoding)
+        if IS_PYTHON3:
+            name = decode_if_bytes(name)
         handler = self._notification_handlers.get(name, None)
         if not handler:
             msg = self._missing_handler_error(name, 'notification')
@@ -155,20 +155,21 @@ class Host(object):
     def _discover_functions(self, obj, handlers, plugin_path):
         def predicate(o):
             return hasattr(o, '_nvim_rpc_method_name')
+
+        def decoder(fn, decode, *args):
+            return fn(*walk(decode_if_bytes, args, decode))
         specs = []
-        objenc = getattr(obj, '_nvim_encoding', None)
+        objdecode = getattr(obj, '_nvim_decode', self._decode_default)
         for _, fn in inspect.getmembers(obj, predicate):
-            enc = getattr(fn, '_nvim_encoding', objenc)
+            decode = getattr(fn, '_nvim_decode', objdecode)
             if fn._nvim_bind:
                 # bind a nvim instance to the handler
                 fn2 = functools.partial(fn, self._configure_nvim_for(fn))
                 # copy _nvim_* attributes from the original function
                 self._copy_attributes(fn, fn2)
                 fn = fn2
-            decodehook = self._decodehook_for(enc)
-            if decodehook is not None:
-                decoder = lambda fn, hook, *args: fn(*hook.walk(args))
-                fn2 = functools.partial(decoder, fn, decodehook)
+            if decode:
+                fn2 = functools.partial(decoder, fn, decode)
                 self._copy_attributes(fn, fn2)
                 fn = fn2
 
@@ -199,25 +200,16 @@ class Host(object):
                 setattr(fn2, attr, getattr(fn, attr))
 
     def _on_specs_request(self, path):
-        if IS_PYTHON3 and isinstance(path, bytes):
-            path = path.decode(self._nvim_encoding)
+        if IS_PYTHON3:
+            path = decode_if_bytes(path)
         if path in self._load_errors:
             self.nvim.out_write(self._load_errors[path] + '\n')
         return self._specs.get(path, 0)
 
-    def _decodehook_for(self, encoding):
-        if IS_PYTHON3 and encoding is None:
-            encoding = True
-        if encoding is True:
-            encoding = self._nvim_encoding
-        if encoding:
-            return DecodeHook(encoding)
-
     def _configure_nvim_for(self, obj):
         # Configure a nvim instance for obj (checks encoding configuration)
         nvim = self.nvim
-        encoding = getattr(obj, '_nvim_encoding', None)
-        hook = self._decodehook_for(encoding)
-        if hook is not None:
-            nvim = nvim.with_decodehook(hook)
+        decode = getattr(obj, '_nvim_decode', self._decode_default)
+        if decode:
+            nvim = nvim.with_decode(decode)
         return nvim

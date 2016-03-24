@@ -153,38 +153,20 @@ def _identity(obj, session, method, kind):
     return obj
 
 
-class DecodeHook(object):
-
-    """SessionHook subclass that decodes utf-8 strings coming from Nvim.
-
-    This class is useful for python3, where strings are now unicode by
-    default(byte strings need to be prefixed with "b").
-    """
-
-    def __init__(self, encoding='utf-8', encoding_errors='strict'):
-        """Initialize with encoding and encoding errors policy."""
-        self.encoding = encoding
-        self.encoding_errors = encoding_errors
-
-    def decode_if_bytes(self, obj):
-        """Decode obj if it is bytes."""
-        if isinstance(obj, bytes):
-            return obj.decode(self.encoding, errors=self.encoding_errors)
-        return obj
-
-    def walk(self, obj):
-        """Decode bytes found in obj (any msgpack object).
-
-        Uses encoding and policy specified in constructor.
-        """
-        return walk(self.decode_if_bytes, obj)
+def decode_if_bytes(obj, mode=True):
+    """Decode obj if it is bytes."""
+    if mode is True:
+        mode = "strict"
+    if isinstance(obj, bytes):
+        return obj.decode("utf-8", errors=mode)
+    return obj
 
 
-def walk(fn, obj, *args):
+def walk(fn, obj, *args, **kwargs):
     """Recursively walk an object graph applying `fn`/`args` to objects."""
     if type(obj) in [list, tuple]:
         return list(walk(fn, o, *args) for o in obj)
     if type(obj) is dict:
         return dict((walk(fn, k, *args), walk(fn, v, *args)) for k, v in
                     obj.items())
-    return fn(obj, *args)
+    return fn(obj, *args, **kwargs)

@@ -5,11 +5,11 @@ instances.
 """
 
 from .buffer import Buffer
-from .common import DecodeHook
+from .common import decode_if_bytes, walk
 from .nvim import Nvim, NvimError
 from .tabpage import Tabpage
 from .window import Window
 
 
 __all__ = ('Nvim', 'Buffer', 'Window', 'Tabpage', 'NvimError',
-           'DecodeHook')
+           'decode_if_bytes', 'walk')

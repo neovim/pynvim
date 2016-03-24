@@ -8,7 +8,7 @@ from ..compat import IS_PYTHON3
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)
 __all__ = ('plugin', 'rpc_export', 'command', 'autocmd', 'function',
-           'encoding', 'shutdown_hook')
+           'encoding', 'decode', 'shutdown_hook')
 
 
 def plugin(cls):
@@ -141,9 +141,20 @@ def shutdown_hook(f):
     return f
 
 
-def encoding(encoding=True):
+def decode(mode='strict'):
     """Configure automatic encoding/decoding of strings."""
     def dec(f):
-        f._nvim_encoding = encoding
+        f._nvim_decode = mode
+        return f
+    return dec
+
+
+def encoding(encoding=True):
+    """DEPRECATED: use neovim.decode()."""
+    if isinstance(encoding, str):
+        encoding = True
+
+    def dec(f):
+        f._nvim_decode = encoding
         return f
     return dec

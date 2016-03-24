@@ -21,7 +21,7 @@ else:
 if sys.version_info >= (3, 0):
     # For Python3 we decode binary strings as Unicode for compatibility
     # with Python2
-    vim = vim.with_decodehook(neovim.DecodeHook())
+    vim = vim.with_decode()
 
 cleanup_func = ''':function BeforeEachTest()
   set all&
