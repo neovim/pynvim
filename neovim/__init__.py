@@ -7,6 +7,7 @@ import os
 import sys
 
 from .api import Nvim
+from .compat import IS_PYTHON3
 from .msgpack_rpc import (ErrorResponse, child_session, socket_session,
                           stdio_session, tcp_session)
 from .plugin import (Host, autocmd, command, decode, encoding, function,
@@ -63,7 +64,8 @@ def start_host(session=None):
     host.start(plugins)
 
 
-def attach(session_type, address=None, port=None, path=None, argv=None):
+def attach(session_type, address=None, port=None,
+           path=None, argv=None, decode=None):
     """Provide a nicer interface to create python api sessions.
 
     Previous machinery to create python api sessions is still there. This only
@@ -89,7 +91,10 @@ def attach(session_type, address=None, port=None, path=None, argv=None):
     if not session:
         raise Exception('Unknown session type "%s"' % session_type)
 
-    return Nvim.from_session(session)
+    if decode is None:
+        decode = IS_PYTHON3
+
+    return Nvim.from_session(session).with_decode(decode)
 
 
 def setup_logging():
