@@ -118,10 +118,16 @@ to use it for the plugin host.
 To run the tests execute
 
 ```sh
-NVIM_CHILD_ARGV='["nvim", "-u", "NONE", "--embed"]' nosetests
+nosetests
 ```
 
-Alternatively, if you want to see the state of nvim, you could
+This will run the tests in an embedded instance of nvim.
+If you want to test a different version than `nvim` in `$PATH` use
+```sh
+NVIM_CHILD_ARGV='["/path/to/nvim", "-u", "NONE", "--embed"]' nosetests
+```
+
+Alternatively, if you want to see the state of nvim, you could use
 
 ```sh
 export NVIM_LISTEN_ADDRESS=/tmp/nvimtest
