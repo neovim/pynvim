@@ -83,6 +83,7 @@ class Nvim(object):
         self.windows = RemoteSequence(self, 'vim_get_windows')
         self.tabpages = RemoteSequence(self, 'vim_get_tabpages')
         self.current = Current(self)
+        self.session = CompatibilitySession(self)
         self.funcs = Funcs(self)
         self.error = NvimError
         self._decode = decode
@@ -328,6 +329,14 @@ class Nvim(object):
                 self._err_cb(msg)
                 raise
         self._session.threadsafe_call(handler)
+
+
+class CompatibilitySession(object):
+
+    """Helper class for API compatibility."""
+
+    def __init__(self, nvim):
+        self.threadsafe_call = nvim.async_call
 
 
 class Current(object):
