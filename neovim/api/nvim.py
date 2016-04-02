@@ -8,8 +8,8 @@ from traceback import format_exc, format_stack
 from msgpack import ExtType
 
 from .buffer import Buffer
-from .common import (DecodeHook, Remote, RemoteApi,
-                     RemoteMap, RemoteSequence, walk)
+from .common import (Remote, RemoteApi, RemoteMap, RemoteSequence,
+                     decode_if_bytes, walk)
 from .tabpage import Tabpage
 from .window import Window
 from ..compat import IS_PYTHON3
@@ -33,7 +33,7 @@ class Nvim(object):
     from a raw `Session` instance.
 
     Subsequent instances for the same session can be created by calling the
-    `with_decodehook` instance method to change the decoding behavior or
+    `with_decode` instance method to change the decoding behavior or
     `SubClass.from_nvim(nvim)` where `SubClass` is a subclass of `Nvim`, which
     is useful for having multiple `Nvim` objects that behave differently
     without one affecting the other.
@@ -52,7 +52,7 @@ class Nvim(object):
 
         if IS_PYTHON3:
             # decode all metadata strings for python3
-            metadata = DecodeHook().walk(metadata)
+            metadata = walk(decode_if_bytes, metadata)
 
         types = {
             metadata['types']['Buffer']['id']: Buffer,
@@ -66,10 +66,10 @@ class Nvim(object):
     def from_nvim(cls, nvim):
         """Create a new Nvim instance from an existing instance."""
         return cls(nvim._session, nvim.channel_id, nvim.metadata,
-                   nvim.types, nvim._decodehook, nvim._err_cb)
+                   nvim.types, nvim._decode, nvim._err_cb)
 
     def __init__(self, session, channel_id, metadata, types,
-                 decodehook=None, err_cb=None):
+                 decode=False, err_cb=None):
         """Initialize a new Nvim instance. This method is module-private."""
         self._session = session
         self.channel_id = channel_id
@@ -85,15 +85,17 @@ class Nvim(object):
         self.current = Current(self)
         self.funcs = Funcs(self)
         self.error = NvimError
-        self._decodehook = decodehook
+        self._decode = decode
         self._err_cb = err_cb
 
-    def _from_nvim(self, obj):
+    def _from_nvim(self, obj, decode=None):
+        if decode is None:
+            decode = self._decode
         if type(obj) is ExtType:
             cls = self.types[obj.code]
             return cls(self, (obj.code, obj.data))
-        if self._decodehook is not None:
-            obj = self._decodehook.decode_if_bytes(obj)
+        if decode:
+            obj = decode_if_bytes(obj, decode)
         return obj
 
     def _to_nvim(self, obj):
@@ -121,9 +123,10 @@ class Nvim(object):
         present and True, a asynchronous notification is sent instead. This
         will never block, and the return value or error is ignored.
         """
+        decode = kwargs.pop('decode', self._decode)
         args = walk(self._to_nvim, args)
         res = self._session.request(name, *args, **kwargs)
-        return walk(self._from_nvim, res)
+        return walk(self._from_nvim, res, decode=decode)
 
     def next_message(self):
         """Block until a message(request or notification) is available.
@@ -160,10 +163,10 @@ class Nvim(object):
         """Stop the event loop being started with `run_loop`."""
         self._session.stop()
 
-    def with_decodehook(self, hook):
+    def with_decode(self, decode=True):
         """Initialize a new Nvim instance."""
         return Nvim(self._session, self.channel_id,
-                    self.metadata, self.types, hook, self._err_cb)
+                    self.metadata, self.types, decode, self._err_cb)
 
     def ui_attach(self, width, height, rgb):
         """Register as a remote UI.
@@ -192,24 +195,20 @@ class Nvim(object):
         """Unsubscribe to a Nvim event."""
         return self.request('vim_unsubscribe', event)
 
-    def command(self, string, async=False):
+    def command(self, string, **kwargs):
         """Execute a single ex command."""
-        return self.request('vim_command', string, async=async)
+        return self.request('vim_command', string, **kwargs)
 
     def command_output(self, string):
         """Execute a single ex command and return the output."""
         return self.request('vim_command_output', string)
 
-    def eval(self, string, async=False):
+    def eval(self, string, **kwargs):
         """Evaluate a vimscript expression."""
-        return self.request('vim_eval', string, async=async)
+        return self.request('vim_eval', string, **kwargs)
 
     def call(self, name, *args, **kwargs):
         """Call a vimscript function."""
-        for k in kwargs:
-            if k != "async":
-                raise TypeError(
-                    "call() got an unexpected keyword argument '{}'".format(k))
         return self.request('vim_call_function', name, args, **kwargs)
 
     def strwidth(self, string):
@@ -285,9 +284,9 @@ class Nvim(object):
         """Print `msg` as a normal message."""
         return self.request('vim_out_write', msg)
 
-    def err_write(self, msg, async=False):
+    def err_write(self, msg, **kwargs):
         """Print `msg` as an error message."""
-        return self.request('vim_err_write', msg, async=async)
+        return self.request('vim_err_write', msg, **kwargs)
 
     def quit(self, quit_command='qa!'):
         """Send a quit command to Nvim.

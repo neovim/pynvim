@@ -18,11 +18,6 @@ if child_argv is not None:
 else:
     vim = neovim.attach('socket', path=listen_address)
 
-if sys.version_info >= (3, 0):
-    # For Python3 we decode binary strings as Unicode for compatibility
-    # with Python2
-    vim = vim.with_decodehook(neovim.DecodeHook())
-
 cleanup_func = ''':function BeforeEachTest()
   set all&
   redir => groups
