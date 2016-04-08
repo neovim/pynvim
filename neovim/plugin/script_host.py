@@ -6,7 +6,7 @@ import os
 import sys
 
 from .decorators import plugin, rpc_export
-from ..api import Nvim
+from ..api import Nvim, walk
 
 __all__ = ('ScriptHost',)
 
@@ -161,15 +161,23 @@ class RedirectStream(io.IOBase):
         self.redirect_handler('\n'.join(seq))
 
 
+if IS_PYTHON3:
+    num_types = (int, float)
+else:
+    num_types = (int, long, float)
+
+
+def num_to_str(obj):
+    if isinstance(obj, num_types):
+        return str(obj)
+    else:
+        return obj
+
+
 class LegacyVim(Nvim):
     def eval(self, expr):
         obj = self.request("vim_eval", expr)
-        if IS_PYTHON3:
-            if isinstance(obj, (int, float)):
-                return str(obj)
-        elif isinstance(obj, (int, long, float)):
-            return str(obj)
-        return obj
+        return walk(num_to_str, obj)
 
 
 # This was copied/adapted from nvim-python help
