@@ -59,10 +59,10 @@ def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
             opts['count'] = count
 
         if bang:
-            opts['bang'] = True
+            opts['bang'] = ''
 
         if register:
-            opts['register'] = True
+            opts['register'] = ''
 
         if nargs:
             opts['nargs'] = nargs
