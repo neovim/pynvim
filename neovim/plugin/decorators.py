@@ -3,7 +3,7 @@
 import inspect
 import logging
 
-from ..compat import IS_PYTHON3
+from ..compat import IS_PYTHON3, unicode_errors_default
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)
@@ -141,7 +141,7 @@ def shutdown_hook(f):
     return f
 
 
-def decode(mode='strict'):
+def decode(mode=unicode_errors_default):
     """Configure automatic encoding/decoding of strings."""
     def dec(f):
         f._nvim_decode = mode

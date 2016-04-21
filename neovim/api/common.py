@@ -1,6 +1,8 @@
 """Code shared between the API classes."""
 import functools
 
+from ..compat import unicode_errors_default
+
 
 class Remote(object):
 
@@ -156,7 +158,7 @@ def _identity(obj, session, method, kind):
 def decode_if_bytes(obj, mode=True):
     """Decode obj if it is bytes."""
     if mode is True:
-        mode = "strict"
+        mode = unicode_errors_default
     if isinstance(obj, bytes):
         return obj.decode("utf-8", errors=mode)
     return obj

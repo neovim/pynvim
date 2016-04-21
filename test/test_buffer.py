@@ -2,6 +2,8 @@ import os
 from nose.tools import with_setup, eq_ as eq, ok_ as ok
 from test_common import vim, cleanup
 
+from neovim.compat import IS_PYTHON3
+
 
 @with_setup(setup=cleanup)
 def test_get_length():
@@ -147,6 +149,15 @@ def test_mark():
     vim.command('mark V')
     eq(vim.current.buffer.mark('V'), [3, 0])
 
+@with_setup(setup=cleanup)
+def test_invalid_utf8():
+    vim.command('normal "=printf("%c", 0xFF)\np')
+    eq(vim.eval("char2nr(getline(1))"), 0xFF)
+
+    eq(vim.current.buffer[:], ['\udcff'] if IS_PYTHON3 else ['\xff'])
+    vim.current.line += 'x'
+    eq(vim.eval("getline(1)", decode=False), b'\xFFx')
+    eq(vim.current.buffer[:], ['\udcffx'] if IS_PYTHON3 else ['\xffx'])
 
 @with_setup(setup=cleanup)
 def test_get_exceptions():
