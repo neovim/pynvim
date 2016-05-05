@@ -30,7 +30,9 @@ if IS_PYTHON3:
 
     # There is no 'long' type in Python3 just int
     long = int
+    unicode_errors_default = 'surrogateescape'
 else:
     find_module = original_find_module
+    unicode_errors_default = 'strict'
 
 NUM_TYPES = (int, long, float)

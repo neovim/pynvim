@@ -3,6 +3,7 @@ import logging
 
 from msgpack import Packer, Unpacker
 
+from ..compat import unicode_errors_default
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)
@@ -19,7 +20,7 @@ class MsgpackStream(object):
     def __init__(self, event_loop):
         """Wrap `event_loop` on a msgpack-aware interface."""
         self._event_loop = event_loop
-        self._packer = Packer(use_bin_type=True)
+        self._packer = Packer(unicode_errors=unicode_errors_default)
         self._unpacker = Unpacker()
         self._message_cb = None
 
