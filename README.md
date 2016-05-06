@@ -61,6 +61,22 @@ below.
   wait for nvim to complete the request, which also means that the return value
   is unavailable.
 
+### Subscribe to events
+
+You can subscribe to Neovim events (different from Vim's autocmd events)
+by using subscribe:
+
+```python
+vim.subscribe("my-event")
+message = vim.next_message()
+```
+
+And then from Neovim you can trigger the event with:
+
+```vim
+:call rpcnotify(0, "my-event")`
+```
+
 #### Remote (new-style) plugins
 
 Neovim allows python plugins to be defined by placing python files or packages
@@ -154,7 +170,7 @@ If the host cannot start at all, the error could be found in `~/.nvimlog` if
 
 A number of different transports are supported, but the simplest way to get
 started is with the python REPL. First, start Nvim with a known address (or use
-the `$NVIM_LISTEN_ADDRESS` of a running instance): 
+the `$NVIM_LISTEN_ADDRESS` of a running instance):
 
 ```sh
 $ NVIM_LISTEN_ADDRESS=/tmp/nvim nvim
@@ -168,7 +184,7 @@ bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim)):
 >>> from neovim import attach
 # Create a python API session attached to unix domain socket created above:
 >>> nvim = attach('socket', path='/tmp/nvim')
-# Now do some work. 
+# Now do some work.
 >>> buffer = nvim.buffers[0] # Get the first buffer
 >>> buffer[0] = 'replace first line'
 >>> buffer[:] = ['replace whole buffer']
