@@ -53,9 +53,6 @@ def start_host(session=None):
         if os.path.isdir(path) and dup in plugins:
             plugins.remove(dup)
 
-    if not plugins:
-        sys.exit('must specify at least one plugin as argument')
-
     setup_logging()
 
     if not session:
