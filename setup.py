@@ -1,5 +1,6 @@
 import platform
 import sys
+import os
 
 from setuptools import setup
 
@@ -7,7 +8,9 @@ install_requires = [
     'msgpack-python>=0.4.0',
 ]
 
-if sys.version_info < (3, 4):
+if os.name == 'nt':
+    install_requires.append('pyuv')
+elif sys.version_info < (3, 4):
     # trollius is just a backport of 3.4 asyncio module
     install_requires.append('trollius')
 
