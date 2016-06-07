@@ -113,9 +113,9 @@ class RemoteSequence(object):
     sequences(of lines, buffers, windows and tabpages) with an API that
     is similar to the one provided by the python-vim interface.
 
-    For example, the 'buffers' property of the `Nvim class is a RemoteSequence
-    sequence instance, and the expression `nvim.buffers[0]` is translated to
-    session.request('vim_get_buffers')[0].
+    For example, the 'windows' property of the `Nvim` class is a RemoteSequence
+    sequence instance, and the expression `nvim.windows[0]` is translated to
+    session.request('vim_get_windows')[0].
 
     It can also receive an optional self_obj that will be passed as first
     argument of the request. For example, `tabpage.windows[0]` is translated

@@ -92,13 +92,29 @@ def test_options():
 
 @with_setup(setup=cleanup)
 def test_buffers():
+    buffers = []
+
+    # Number of elements
     eq(len(vim.buffers), 1)
-    eq(vim.buffers[0], vim.current.buffer)
+
+    # Indexing (by buffer number)
+    eq(vim.buffers[vim.current.buffer.number], vim.current.buffer)
+
+    buffers.append(vim.current.buffer)
     vim.command('new')
     eq(len(vim.buffers), 2)
-    eq(vim.buffers[1], vim.current.buffer)
-    vim.current.buffer = vim.buffers[0]
-    eq(vim.buffers[0], vim.current.buffer)
+    buffers.append(vim.current.buffer)
+    eq(vim.buffers[vim.current.buffer.number], vim.current.buffer)
+    vim.current.buffer = buffers[0]
+    eq(vim.buffers[vim.current.buffer.number], buffers[0])
+
+    # Membership test
+    ok(buffers[0] in vim.buffers)
+    ok(buffers[1] in vim.buffers)
+    ok({} not in vim.buffers)
+
+    # Iteration
+    eq(buffers, list(vim.buffers))
 
 
 @with_setup(setup=cleanup)

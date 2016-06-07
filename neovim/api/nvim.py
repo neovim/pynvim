@@ -79,7 +79,7 @@ class Nvim(object):
         self.vars = RemoteMap(self, 'vim_get_var', 'vim_set_var')
         self.vvars = RemoteMap(self, 'vim_get_vvar', None)
         self.options = RemoteMap(self, 'vim_get_option', 'vim_set_option')
-        self.buffers = RemoteSequence(self, 'vim_get_buffers')
+        self.buffers = Buffers(self)
         self.windows = RemoteSequence(self, 'vim_get_windows')
         self.tabpages = RemoteSequence(self, 'vim_get_tabpages')
         self.current = Current(self)
@@ -329,6 +329,41 @@ class Nvim(object):
                 self._err_cb(msg)
                 raise
         self._session.threadsafe_call(handler)
+
+
+class Buffers(object):
+
+    """Remote NVim buffers.
+
+    Currently the interface for interacting with remote NVim buffers is the
+    `vim_get_buffers` msgpack-rpc function. Most methods fetch the list of
+    buffers from NVim.
+
+    Conforms to *python-buffers*.
+    """
+
+    def __init__(self, nvim):
+        """Initialize a Buffers object with Nvim object `nvim`."""
+        self._fetch_buffers = nvim.api.get_buffers
+
+    def __len__(self):
+        """Return the count of buffers."""
+        return len(self._fetch_buffers())
+
+    def __getitem__(self, number):
+        """Return the Buffer object matching buffer number `number`."""
+        for b in self._fetch_buffers():
+            if b.number == number:
+                return b
+        raise KeyError(number)
+
+    def __contains__(self, b):
+        """Return whether Buffer `b` is a known valid buffer."""
+        return isinstance(b, Buffer) and b.valid
+
+    def __iter__(self):
+        """Return an iterator over the list of buffers."""
+        return iter(self._fetch_buffers())
 
 
 class CompatibilitySession(object):

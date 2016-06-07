@@ -1,4 +1,4 @@
-"""API for working with Nvim buffers."""
+"""API for working with a Nvim Buffer."""
 from .common import Remote
 from ..compat import IS_PYTHON3
 
