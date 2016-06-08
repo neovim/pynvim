@@ -7,6 +7,8 @@ import sys
 
 from .decorators import plugin, rpc_export
 from ..api import Nvim, walk
+from ..msgpack_rpc import ErrorResponse
+from ..util import format_exc_skip
 
 __all__ = ('ScriptHost',)
 
@@ -72,7 +74,10 @@ class ScriptHost(object):
     def python_execute(self, script, range_start, range_stop):
         """Handle the `python` ex command."""
         self._set_current_range(range_start, range_stop)
-        exec(script, self.module.__dict__)
+        try:
+            exec(script, self.module.__dict__)
+        except Exception:
+            raise ErrorResponse(format_exc_skip(1))
 
     @rpc_export('python_execute_file', sync=True)
     def python_execute_file(self, file_path, range_start, range_stop):
@@ -80,7 +85,10 @@ class ScriptHost(object):
         self._set_current_range(range_start, range_stop)
         with open(file_path) as f:
             script = compile(f.read(), file_path, 'exec')
-            exec(script, self.module.__dict__)
+            try:
+                exec(script, self.module.__dict__)
+            except Exception:
+                raise ErrorResponse(format_exc_skip(1))
 
     @rpc_export('python_do_range', sync=True)
     def python_do_range(self, start, stop, code):

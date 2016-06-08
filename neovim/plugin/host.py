@@ -13,6 +13,7 @@ from . import script_host
 from ..api import decode_if_bytes, walk
 from ..compat import IS_PYTHON3, find_module
 from ..msgpack_rpc import ErrorResponse
+from ..util import format_exc_skip
 
 __all__ = ('Host')
 
@@ -60,6 +61,24 @@ class Host(object):
         self._unload()
         self.nvim.stop_loop()
 
+    def _wrap_function(self, fn, sync, decode, nvim_bind, name, *args):
+        if decode:
+            args = walk(decode_if_bytes, args, decode)
+        if nvim_bind is not None:
+            args.insert(0, nvim_bind)
+        try:
+            return fn(*args)
+        except Exception:
+            if sync:
+                msg = ("error caught in request handler '{} {}':\n{}"
+                       .format(name, args, format_exc_skip(1, 5)))
+                raise ErrorResponse(msg)
+            else:
+                msg = ("error caught in async handler '{} {}'\n{}\n"
+                       .format(name, args, format_exc_skip(1, 5)))
+                self._on_async_err(msg + "\n")
+                raise
+
     def _on_request(self, name, args):
         """Handle a msgpack-rpc request."""
         if IS_PYTHON3:
@@ -87,13 +106,7 @@ class Host(object):
             return
 
         debug('calling notification handler for "%s", args: "%s"', name, args)
-        try:
-            handler(*args)
-        except Exception as err:
-            msg = ("error caught in async handler '{} {}':\n{!r}\n{}\n"
-                   .format(name, args, err, format_exc(5)))
-            self._on_async_err(msg + "\n")
-            raise
+        handler(*args)
 
     def _missing_handler_error(self, name, kind):
         msg = 'no {} handler registered for "{}"'.format(kind, name)
@@ -156,40 +169,36 @@ class Host(object):
         def predicate(o):
             return hasattr(o, '_nvim_rpc_method_name')
 
-        def decoder(fn, decode, *args):
-            return fn(*walk(decode_if_bytes, args, decode))
         specs = []
         objdecode = getattr(obj, '_nvim_decode', self._decode_default)
         for _, fn in inspect.getmembers(obj, predicate):
+            sync = fn._nvim_rpc_sync
             decode = getattr(fn, '_nvim_decode', objdecode)
+            nvim_bind = None
             if fn._nvim_bind:
-                # bind a nvim instance to the handler
-                fn2 = functools.partial(fn, self._configure_nvim_for(fn))
-                # copy _nvim_* attributes from the original function
-                self._copy_attributes(fn, fn2)
-                fn = fn2
-            if decode:
-                fn2 = functools.partial(decoder, fn, decode)
-                self._copy_attributes(fn, fn2)
-                fn = fn2
+                nvim_bind = self._configure_nvim_for(fn)
 
-            # register in the rpc handler dict
             method = fn._nvim_rpc_method_name
             if fn._nvim_prefix_plugin_path:
                 method = '{0}:{1}'.format(plugin_path, method)
-            if fn._nvim_rpc_sync:
+
+            fn_wrapped = functools.partial(self._wrap_function, fn,
+                                           sync, decode, nvim_bind, method)
+            self._copy_attributes(fn, fn_wrapped)
+            # register in the rpc handler dict
+            if sync:
                 if method in self._request_handlers:
                     raise Exception(('Request handler for "{0}" is ' +
                                     'already registered').format(method))
-                self._request_handlers[method] = fn
+                self._request_handlers[method] = fn_wrapped
             else:
                 if method in self._notification_handlers:
                     raise Exception(('Notification handler for "{0}" is ' +
                                     'already registered').format(method))
-                self._notification_handlers[method] = fn
+                self._notification_handlers[method] = fn_wrapped
             if hasattr(fn, '_nvim_rpc_spec'):
                 specs.append(fn._nvim_rpc_spec)
-            handlers.append(fn)
+            handlers.append(fn_wrapped)
         if specs:
             self._specs[plugin_path] = specs
 
