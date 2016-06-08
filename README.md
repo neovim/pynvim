@@ -169,7 +169,7 @@ bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim)):
 # Create a python API session attached to unix domain socket created above:
 >>> nvim = attach('socket', path='/tmp/nvim')
 # Now do some work. 
->>> buffer = nvim.buffers[0] # Get the first buffer
+>>> buffer = nvim.current.buffer # Get the current buffer
 >>> buffer[0] = 'replace first line'
 >>> buffer[:] = ['replace whole buffer']
 >>> nvim.command('vsplit')
