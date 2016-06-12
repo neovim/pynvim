@@ -3,7 +3,7 @@ import functools
 import os
 import sys
 
-from traceback import format_exc, format_stack
+from traceback import format_stack
 
 from msgpack import ExtType
 
@@ -13,7 +13,7 @@ from .common import (Remote, RemoteApi, RemoteMap, RemoteSequence,
 from .tabpage import Tabpage
 from .window import Window
 from ..compat import IS_PYTHON3
-
+from ..util import format_exc_skip
 
 __all__ = ('Nvim')
 
@@ -325,7 +325,7 @@ class Nvim(object):
             except Exception as err:
                 msg = ("error caught while executing async callback:\n"
                        "{0!r}\n{1}\n \nthe call was requested at\n{2}"
-                       .format(err, format_exc(5), call_point))
+                       .format(err, format_exc_skip(1, 5), call_point))
                 self._err_cb(msg)
                 raise
         self._session.threadsafe_call(handler)
