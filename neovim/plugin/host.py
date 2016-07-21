@@ -77,7 +77,6 @@ class Host(object):
                 msg = ("error caught in async handler '{} {}'\n{}\n"
                        .format(name, args, format_exc_skip(1, 5)))
                 self._on_async_err(msg + "\n")
-                raise
 
     def _on_request(self, name, args):
         """Handle a msgpack-rpc request."""
