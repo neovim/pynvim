@@ -146,17 +146,32 @@ class Nvim(object):
         This should not be called from a plugin running in the host, which
         already runs the loop and dispatches events to plugins.
         """
-        def filter_request_cb(name, args):
-            args = walk(self._from_nvim, args)
-            result = request_cb(self._from_nvim(name), args)
-            return walk(self._to_nvim, result)
-
-        def filter_notification_cb(name, args):
-            notification_cb(self._from_nvim(name), walk(self._from_nvim, args))
-
         if err_cb is None:
             err_cb = sys.stderr.write
         self._err_cb = err_cb
+
+        def filter_request_cb(name, args):
+            name = self._from_nvim(name)
+            args = walk(self._from_nvim, args)
+            try:
+                result = request_cb(name, args)
+            except Exception:
+                msg = ("error caught in request handler '{} {}'\n{}\n\n"
+                       .format(name, args, format_exc_skip(1, 5)))
+                self._err_cb(msg)
+                raise
+            return walk(self._to_nvim, result)
+
+        def filter_notification_cb(name, args):
+            name = self._from_nvim(name)
+            args = walk(self._from_nvim, args)
+            try:
+                notification_cb(name, args)
+            except Exception:
+                msg = ("error caught in notification handler '{} {}'\n{}\n\n"
+                       .format(name, args, format_exc_skip(1, 5)))
+                self._err_cb(msg)
+                raise
 
         self._session.run(filter_request_cb, filter_notification_cb, setup_cb)
 

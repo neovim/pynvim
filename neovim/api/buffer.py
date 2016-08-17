@@ -125,7 +125,7 @@ class Buffer(Remote):
                             line, col_start, col_end, async=async)
 
     def clear_highlight(self, src_id, line_start=0, line_end=-1, async=True):
-        """clear highlights from the buffer."""
+        """Clear highlights from the buffer."""
         self.request('buffer_clear_highlight', src_id,
                      line_start, line_end, async=async)
 
