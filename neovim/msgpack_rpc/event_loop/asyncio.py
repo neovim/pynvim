@@ -59,7 +59,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
 
     def pipe_data_received(self, fd, data):
         """Used to signal `asyncio.SubprocessProtocol` of incoming data."""
-        if fd == sys.stderr.fileno():
+        if fd == 2:  # stderr fd number
             self._on_stderr(data)
         elif self._on_data:
             self._on_data(data)
