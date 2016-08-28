@@ -104,7 +104,7 @@ class Buffer(Remote):
 
     def append(self, lines, index=-1):
         """Append a string or list of lines to the buffer."""
-        if isinstance(lines, basestring):
+        if isinstance(lines, (basestring, bytes)):
             lines = [lines]
         return self._session.request('buffer_insert', self, index, lines)
 

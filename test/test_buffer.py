@@ -140,6 +140,8 @@ def test_append():
     eq(vim.current.buffer[:], ['b', '', 'a', 'c', 'd'])
     vim.current.buffer.append(['c', 'd'], 2)
     eq(vim.current.buffer[:], ['b', '', 'c', 'd', 'a', 'c', 'd'])
+    vim.current.buffer.append(b'bytes')
+    eq(vim.current.buffer[:], ['b', '', 'c', 'd', 'a', 'c', 'd', 'bytes'])
 
 
 @with_setup(setup=cleanup)
