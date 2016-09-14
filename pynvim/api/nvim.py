@@ -208,9 +208,9 @@ class Nvim(object):
             args = walk(self._from_nvim, args)
             try:
                 result = request_cb(name, args)
-            except Exception:
-                msg = ("error caught in request handler '{} {}'\n{}\n\n"
-                       .format(name, args, format_exc_skip(1)))
+            except Exception as exc:
+                msg = ("error caught in request handler '{} {}': {}\n{}\n\n"
+                       .format(name, args, exc, format_exc_skip(1)))
                 self._err_cb(msg)
                 raise
             return walk(self._to_nvim, result)
@@ -220,9 +220,9 @@ class Nvim(object):
             args = walk(self._from_nvim, args)
             try:
                 notification_cb(name, args)
-            except Exception:
-                msg = ("error caught in notification handler '{} {}'\n{}\n\n"
-                       .format(name, args, format_exc_skip(1)))
+            except Exception as exc:
+                msg = ("error caught in notification handler '{} {}': {}\n{}\n\n"  # noqa
+                       .format(name, args, exc, format_exc_skip(1)))
                 self._err_cb(msg)
                 raise
 

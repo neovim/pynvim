@@ -106,8 +106,8 @@ class Host(object):
                        .format(name, args, exc, format_exc_skip(1)))
                 raise ErrorResponse(msg)
             else:
-                msg = ("error caught in async handler '{} {}'\n{}\n"
-                       .format(name, args, format_exc_skip(1)))
+                msg = ("error caught in async handler '{} {}': {}\n{}\n"
+                       .format(name, args, exc, format_exc_skip(1)))
                 self._on_async_err(msg + "\n")
 
     def _on_request(self, name, args):
