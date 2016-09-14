@@ -99,10 +99,11 @@ class Host(object):
             args.insert(0, nvim_bind)
         try:
             return fn(*args)
-        except Exception:
+        except Exception as exc:
             if sync:
-                msg = ("error caught in request handler '{} {}':\n{}"
-                       .format(name, args, format_exc_skip(1)))
+                # NOTE: v:exception only contains the first line.
+                msg = ("error caught in request handler '{} {}': {}\n{}"
+                       .format(name, args, exc, format_exc_skip(1)))
                 raise ErrorResponse(msg)
             else:
                 msg = ("error caught in async handler '{} {}'\n{}\n"
