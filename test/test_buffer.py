@@ -83,8 +83,8 @@ def test_api():
     vim.current.buffer.api.set_var('myvar', 'thetext')
     eq(vim.current.buffer.api.get_var('myvar'), 'thetext')
     eq(vim.eval('b:myvar'), 'thetext')
-    vim.current.buffer.api.set_line_slice(0,-1,True,True,['alpha', 'beta'])
-    eq(vim.current.buffer.api.get_line_slice(0,-1,True,True), ['alpha', 'beta'])
+    vim.current.buffer.api.set_lines(0,-1,True,['alpha', 'beta'])
+    eq(vim.current.buffer.api.get_lines(0,-1,True), ['alpha', 'beta'])
     eq(vim.current.buffer[:], ['alpha', 'beta'])
 
 

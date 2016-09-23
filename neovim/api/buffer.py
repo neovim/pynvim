@@ -24,7 +24,7 @@ class Buffer(Remote):
 
     """A remote Nvim buffer."""
 
-    _api_prefix = "buffer_"
+    _api_prefix = "nvim_buf_"
 
     def __len__(self):
         """Return the number of lines contained in a Buffer."""
@@ -42,10 +42,10 @@ class Buffer(Remote):
         """
         if not isinstance(idx, slice):
             i = adjust_index(idx)
-            return self.request('buffer_get_lines', i, i + 1, True)[0]
+            return self.request('nvim_buf_get_lines', i, i + 1, True)[0]
         start = adjust_index(idx.start, 0)
         end = adjust_index(idx.stop, -1)
-        return self.request('buffer_get_lines', start, end, False)
+        return self.request('nvim_buf_get_lines', start, end, False)
 
     def __setitem__(self, idx, item):
         """Replace a buffer line or slice by integer index.
@@ -58,7 +58,7 @@ class Buffer(Remote):
         if not isinstance(idx, slice):
             i = adjust_index(idx)
             lines = [item] if item is not None else []
-            return self.request('buffer_set_lines', i, i + 1, True, lines)
+            return self.request('nvim_buf_set_lines', i, i + 1, True, lines)
         lines = item if item is not None else []
         start = adjust_index(idx.start, 0)
         end = adjust_index(idx.stop, -1)
@@ -87,11 +87,11 @@ class Buffer(Remote):
         """Append a string or list of lines to the buffer."""
         if isinstance(lines, (basestring, bytes)):
             lines = [lines]
-        return self.request('buffer_set_lines', index, index, True, lines)
+        return self.request('nvim_buf_set_lines', index, index, True, lines)
 
     def mark(self, name):
         """Return (row, col) tuple for a named mark."""
-        return self.request('buffer_get_mark', name)
+        return self.request('nvim_buf_get_mark', name)
 
     def range(self, start, end):
         """Return a `Range` object, which represents part of the Buffer."""
@@ -102,33 +102,33 @@ class Buffer(Remote):
         """Add a highlight to the buffer."""
         if async is None:
             async = (src_id != 0)
-        return self.request('buffer_add_highlight', src_id, hl_group,
+        return self.request('nvim_buf_add_highlight', src_id, hl_group,
                             line, col_start, col_end, async=async)
 
     def clear_highlight(self, src_id, line_start=0, line_end=-1, async=True):
         """Clear highlights from the buffer."""
-        self.request('buffer_clear_highlight', src_id,
+        self.request('nvim_buf_clear_highlight', src_id,
                      line_start, line_end, async=async)
 
     @property
     def name(self):
         """Get the buffer name."""
-        return self.request('buffer_get_name')
+        return self.request('nvim_buf_get_name')
 
     @name.setter
     def name(self, value):
         """Set the buffer name. BufFilePre/BufFilePost are triggered."""
-        return self.request('buffer_set_name', value)
+        return self.request('nvim_buf_set_name', value)
 
     @property
     def valid(self):
         """Return True if the buffer still exists."""
-        return self.request('buffer_is_valid')
+        return self.request('nvim_buf_is_valid')
 
     @property
     def number(self):
         """Get the buffer number."""
-        return self.request('buffer_get_number')
+        return self.request('nvim_buf_get_number')
 
 
 class Range(object):
