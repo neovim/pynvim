@@ -53,7 +53,14 @@ def start_host(session=None):
         if os.path.isdir(path) and dup in plugins:
             plugins.remove(dup)
 
-    setup_logging()
+    # Special case: the legacy scripthost receives a single relative filename
+    # while the rplugin host will receive absolute paths.
+    if plugins == ["script_host.py"]:
+        name = "script"
+    else:
+        name = "rplugin"
+
+    setup_logging(name)
 
     if not session:
         session = stdio_session()
@@ -94,12 +101,13 @@ def attach(session_type, address=None, port=None,
     return Nvim.from_session(session).with_decode(decode)
 
 
-def setup_logging():
+def setup_logging(name):
     """Setup logging according to environment variables."""
     logger = logging.getLogger(__name__)
     if 'NVIM_PYTHON_LOG_FILE' in os.environ:
-        logfile = (os.environ['NVIM_PYTHON_LOG_FILE'].strip() +
-                   '_' + str(os.getpid()))
+        prefix = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
+        major_version = sys.version_info[0]
+        logfile = '{0}_py{1}_{2}'.format(prefix, major_version, name)
         handler = logging.FileHandler(logfile, 'w')
         handler.formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s @ '
