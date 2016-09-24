@@ -145,7 +145,9 @@ You can run the plugin host in nvim with logging enabled to debug errors:
 NVIM_PYTHON_LOG_FILE=logfile NVIM_PYTHON_LOG_LEVEL=DEBUG nvim
 ```
 As more than one python host process might be started, the log filenames take
-the pattern `logfile_PID` where `PID` is the process id.
+the pattern `logfile_pyX_KIND` where `X` is the major python version (2 or 3)
+and `KIND` is either "rplugin" or "script" (for the `:python[3]`
+script interface).
 
 If the host cannot start at all, the error could be found in `~/.nvimlog` if
 `nvim` was compiled with logging.
