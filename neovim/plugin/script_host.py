@@ -96,7 +96,6 @@ class ScriptHost(object):
         self._set_current_range(start, stop)
         nvim = self.nvim
         start -= 1
-        stop -= 1
         fname = '_vim_pydo'
 
         # define the function
@@ -104,15 +103,14 @@ class ScriptHost(object):
         exec(function_def, self.module.__dict__)
         # get the function
         function = self.module.__dict__[fname]
-        while start <= stop:
+        while start < stop:
             # Process batches of 5000 to avoid the overhead of making multiple
             # API calls for every line. Assuming an average line length of 100
             # bytes, approximately 488 kilobytes will be transferred per batch,
             # which can be done very quickly in a single API call.
             sstart = start
             sstop = min(start + 5000, stop)
-            lines = nvim.current.buffer.get_line_slice(sstart, sstop, True,
-                                                       True)
+            lines = nvim.current.buffer.api.get_lines(sstart, sstop, True)
 
             exception = None
             newlines = []
@@ -123,9 +121,8 @@ class ScriptHost(object):
                     # Update earlier lines, and skip to the next
                     if newlines:
                         end = sstart + len(newlines) - 1
-                        nvim.current.buffer.set_line_slice(sstart, end,
-                                                           True, True,
-                                                           newlines)
+                        nvim.current.buffer.api.set_lines(sstart, end,
+                                                          True, newlines)
                     sstart += len(newlines) + 1
                     newlines = []
                     pass
@@ -138,11 +135,10 @@ class ScriptHost(object):
                     break
                 linenr += 1
 
-            start = sstop + 1
+            start = sstop
             if newlines:
-                end = sstart + len(newlines) - 1
-                nvim.current.buffer.set_line_slice(sstart, end, True, True,
-                                                   newlines)
+                end = sstart + len(newlines)
+                nvim.current.buffer.api.set_lines(sstart, end, True, newlines)
             if exception:
                 raise exception
         # delete the function

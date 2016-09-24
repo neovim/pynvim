@@ -10,6 +10,16 @@ if IS_PYTHON3:
     basestring = str
 
 
+def adjust_index(idx, default=None):
+    """Convert from python indexing convention to nvim indexing convention."""
+    if idx is None:
+        return default
+    elif idx < 0:
+        return idx - 1
+    else:
+        return idx
+
+
 class Buffer(Remote):
 
     """A remote Nvim buffer."""
@@ -31,19 +41,13 @@ class Buffer(Remote):
         the whole buffer.
         """
         if not isinstance(idx, slice):
-            return self._session.request('buffer_get_line', self, idx)
-        include_end = False
-        start = idx.start
-        end = idx.stop
-        if start is None:
-            start = 0
-        if end is None:
-            end = -1
-            include_end = True
-        return self._session.request('buffer_get_line_slice', self, start, end,
-                                     True, include_end)
+            i = adjust_index(idx)
+            return self.request('buffer_get_lines', i, i + 1, True)[0]
+        start = adjust_index(idx.start, 0)
+        end = adjust_index(idx.stop, -1)
+        return self.request('buffer_get_lines', start, end, False)
 
-    def __setitem__(self, idx, lines):
+    def __setitem__(self, idx, item):
         """Replace a buffer line or slice by integer index.
 
         Like with `__getitem__`, indexes may be negative.
@@ -52,23 +56,13 @@ class Buffer(Remote):
         the whole buffer.
         """
         if not isinstance(idx, slice):
-            if lines is None:
-                return self._session.request('buffer_del_line', self, idx)
-            else:
-                return self._session.request('buffer_set_line', self, idx,
-                                             lines)
-        if lines is None:
-            lines = []
-        include_end = False
-        start = idx.start
-        end = idx.stop
-        if start is None:
-            start = 0
-        if end is None:
-            end = -1
-            include_end = True
-        return self._session.request('buffer_set_line_slice', self, start, end,
-                                     True, include_end, lines)
+            i = adjust_index(idx)
+            lines = [item] if item is not None else []
+            return self.request('buffer_set_lines', i, i + 1, True, lines)
+        lines = item if item is not None else []
+        start = adjust_index(idx.start, 0)
+        end = adjust_index(idx.stop, -1)
+        return self.request('buffer_set_lines', start, end, False, lines)
 
     def __iter__(self):
         """Iterate lines of a buffer.
@@ -87,26 +81,13 @@ class Buffer(Remote):
 
         This is the same as __setitem__(idx, [])
         """
-        if not isinstance(idx, slice):
-            self.__setitem__(idx, None)
-        else:
-            self.__setitem__(idx, [])
-
-    def get_line_slice(self, start, stop, start_incl, end_incl):
-        """More flexible wrapper for retrieving slices."""
-        return self._session.request('buffer_get_line_slice', self, start,
-                                     stop, start_incl, end_incl)
-
-    def set_line_slice(self, start, stop, start_incl, end_incl, lines):
-        """More flexible wrapper for replacing slices."""
-        return self._session.request('buffer_set_line_slice', self, start,
-                                     stop, start_incl, end_incl, lines)
+        self.__setitem__(idx, None)
 
     def append(self, lines, index=-1):
         """Append a string or list of lines to the buffer."""
         if isinstance(lines, (basestring, bytes)):
             lines = [lines]
-        return self._session.request('buffer_insert', self, index, lines)
+        return self.request('buffer_set_lines', index, index, True, lines)
 
     def mark(self, name):
         """Return (row, col) tuple for a named mark."""
