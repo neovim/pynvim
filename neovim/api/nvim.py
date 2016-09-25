@@ -322,6 +322,20 @@ class Nvim(object):
         """Return new src_id for use with Buffer.add_highlight."""
         return self.current.buffer.add_highlight("", 0, src_id=0)
 
+    def _error_wrapper(self, fn, call_point, *args, **kwargs):
+        if fn is None:
+            return None
+        def handler():
+            try:
+                fn(*args, **kwargs)
+            except Exception as err:
+                msg = ("error caught while executing async callback:\n"
+                       "{0!r}\n{1}\n \nthe call was requested at\n{2}"
+                       .format(err, format_exc_skip(1, 5), call_point))
+                self._err_cb(msg)
+                raise
+        return handler
+
     def async_call(self, fn, *args, **kwargs):
         """Schedule `fn` to be called by the event loop soon.
 
@@ -333,17 +347,32 @@ class Nvim(object):
         that shouldn't block neovim.
         """
         call_point = ''.join(format_stack(None, 5)[:-1])
+        handler = self._error_wrapper(fn, call_point, *args, **kwargs)
 
-        def handler():
-            try:
-                fn(*args, **kwargs)
-            except Exception as err:
-                msg = ("error caught while executing async callback:\n"
-                       "{0!r}\n{1}\n \nthe call was requested at\n{2}"
-                       .format(err, format_exc_skip(1, 5), call_point))
-                self._err_cb(msg)
-                raise
         self._session.threadsafe_call(handler)
+
+    def poll_fd(self, fd, on_readable=None, on_writable=None, greenlet=True):
+        """
+        Invoke callbacks when the fd is ready for reading and/or writing. if
+        `on_readable` is not None, it should be callback, which will be invoked
+        (with no arguments) when the fd is ready for writing. Similarily if
+        `on_writable` is not None it will be invoked when the fd is ready for
+        writing.
+
+        Only one callback (of each kind) can be registered on the same fd at a
+        time. If both readability and writability should be monitored, both
+        callbacks must be registered by the same `poll_fd` call.
+
+        By default, the function is invoked in a greenlet, just like a callback
+        scheduled by async_call. 
+
+        Returns a function that deactivates the callback(s).
+        """
+        call_point = ''.join(format_stack(None, 5)[:-1])
+        on_readable = self._error_wrapper(on_readable, call_point)
+        on_writable = self._error_wrapper(on_writable, call_point)
+        return self._session.poll_fd(fd, on_readable, on_writable, greenlet)
+
 
 
 class Buffers(object):

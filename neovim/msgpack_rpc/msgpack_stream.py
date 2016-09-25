@@ -28,6 +28,10 @@ class MsgpackStream(object):
         """Wrapper around `BaseEventLoop.threadsafe_call`."""
         self._event_loop.threadsafe_call(fn)
 
+    def poll_fd(self, fd, on_readable, on_writable):
+        """Wrapper around `BaseEventLoop.poll_fd`."""
+        return self._event_loop.poll_fd(fd, on_readable, on_writable)
+
     def send(self, msg):
         """Queue `msg` for sending to Nvim."""
         debug('sent %s', msg)

@@ -106,6 +106,22 @@ class UvEventLoop(BaseEventLoop):
         while self._callbacks:
             self._callbacks.popleft()()
 
+    def _poll_fd(self, fd, on_readable, on_writable):
+        poll = pyuv.Poll(self._loop, fd)
+        events = 0
+        if on_readable is not None:
+            events |= pyuv.UV_READABLE
+        if on_writable is not None:
+            events |= pyuv.UV_WRITABLE
+        def callback(poll_handle, evts, errorno):
+            if evts & pyuv.UV_READABLE:
+                on_readable()
+            if evts & pyuv.UV_WRITABLE:
+                on_writable()
+
+        poll.start(events, callback)
+        return poll.stop
+
     def _setup_signals(self, signals):
         self._signal_handles = []
 
