@@ -28,3 +28,8 @@ class Tabpage(Remote):
     def valid(self):
         """Return True if the tabpage still exists."""
         return self.request('tabpage_is_valid')
+
+    @property
+    def number(self):
+        """Get the tabpage number."""
+        return self.request('nvim_tabpage_get_number')

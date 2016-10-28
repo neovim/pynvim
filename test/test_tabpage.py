@@ -28,3 +28,12 @@ def test_valid():
     ok(tabpage.valid)
     vim.command('tabclose')
     ok(not tabpage.valid)
+
+
+@with_setup(setup=cleanup)
+def test_number():
+    curnum = vim.current.tabpage.number
+    vim.command('tabnew')
+    eq(vim.current.tabpage.number, curnum + 1)
+    vim.command('tabnew')
+    eq(vim.current.tabpage.number, curnum + 2)
