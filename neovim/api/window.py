@@ -65,3 +65,8 @@ class Window(Remote):
     def valid(self):
         """Return True if the window still exists."""
         return self.request('window_is_valid')
+
+    @property
+    def number(self):
+        """Get the window number."""
+        return self.request('nvim_win_get_number')

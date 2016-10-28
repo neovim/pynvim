@@ -94,3 +94,12 @@ def test_valid():
     ok(window.valid)
     vim.command('q')
     ok(not window.valid)
+
+
+@with_setup(setup=cleanup)
+def test_number():
+    curnum = vim.current.window.number
+    vim.command('bot split')
+    eq(vim.current.window.number, curnum + 1)
+    vim.command('bot split')
+    eq(vim.current.window.number, curnum + 2)
