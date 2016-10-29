@@ -13,7 +13,7 @@ from .common import (Remote, RemoteApi, RemoteMap, RemoteSequence,
 from .tabpage import Tabpage
 from .window import Window
 from ..compat import IS_PYTHON3
-from ..util import format_exc_skip
+from ..util import Version, format_exc_skip
 
 __all__ = ('Nvim')
 
@@ -74,6 +74,8 @@ class Nvim(object):
         self._session = session
         self.channel_id = channel_id
         self.metadata = metadata
+        version = metadata.get("version", {"api_level": 0})
+        self.version = Version(**version)
         self.types = types
         self.api = RemoteApi(self, 'nvim_')
         self.vars = RemoteMap(self, 'nvim_get_var', 'nvim_set_var')
