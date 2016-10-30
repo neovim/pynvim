@@ -12,12 +12,16 @@ from .msgpack_rpc import (ErrorResponse, child_session, socket_session,
                           stdio_session, tcp_session)
 from .plugin import (Host, autocmd, command, decode, encoding, function,
                      plugin, rpc_export, shutdown_hook)
+from .util import Version
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'start_host', 'autocmd', 'command', 'encoding', 'decode',
-           'function', 'plugin', 'rpc_export', 'Host', 'Nvim',
+           'function', 'plugin', 'rpc_export', 'Host', 'Nvim', 'VERSION',
            'shutdown_hook', 'attach', 'setup_logging', 'ErrorResponse')
+
+
+VERSION = Version(major=0, minor=1, patch=11, prerelease="dev")
 
 
 def start_host(session=None):
@@ -64,7 +68,14 @@ def start_host(session=None):
 
     if not session:
         session = stdio_session()
-    host = Host(Nvim.from_session(session))
+    nvim = Nvim.from_session(session)
+
+    if nvim.version.api_level < 1:
+        sys.stderr.write("This version of the neovim python package "
+                         "requires nvim 0.1.6 or later")
+        sys.exit(1)
+
+    host = Host(nvim)
     host.start(plugins)
 
 

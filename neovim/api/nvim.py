@@ -13,7 +13,7 @@ from .common import (Remote, RemoteApi, RemoteMap, RemoteSequence,
 from .tabpage import Tabpage
 from .window import Window
 from ..compat import IS_PYTHON3
-from ..util import format_exc_skip
+from ..util import Version, format_exc_skip
 
 __all__ = ('Nvim')
 
@@ -74,14 +74,16 @@ class Nvim(object):
         self._session = session
         self.channel_id = channel_id
         self.metadata = metadata
+        version = metadata.get("version", {"api_level": 0})
+        self.version = Version(**version)
         self.types = types
-        self.api = RemoteApi(self, 'vim_')
-        self.vars = RemoteMap(self, 'vim_get_var', 'vim_set_var')
+        self.api = RemoteApi(self, 'nvim_')
+        self.vars = RemoteMap(self, 'nvim_get_var', 'nvim_set_var')
         self.vvars = RemoteMap(self, 'vim_get_vvar', None)
-        self.options = RemoteMap(self, 'vim_get_option', 'vim_set_option')
+        self.options = RemoteMap(self, 'nvim_get_option', 'nvim_set_option')
         self.buffers = Buffers(self)
-        self.windows = RemoteSequence(self, 'vim_get_windows')
-        self.tabpages = RemoteSequence(self, 'vim_get_tabpages')
+        self.windows = RemoteSequence(self, 'nvim_list_wins')
+        self.tabpages = RemoteSequence(self, 'nvim_list_tabpages')
         self.current = Current(self)
         self.session = CompatibilitySession(self)
         self.funcs = Funcs(self)
@@ -116,8 +118,8 @@ class Nvim(object):
 
         is equivalent to
 
-            vim.request('vim_err_write', 'ERROR\n', async=True)
-            vim.request('buffer_get_mark', vim.current.buffer, '.')
+            vim.request('nvim_err_write', 'ERROR\n', async=True)
+            vim.request('nvim_buf_get_mark', vim.current.buffer, '.')
 
 
         Normally a blocking request will be sent.  If the `async` flag is
@@ -205,38 +207,38 @@ class Nvim(object):
 
     def subscribe(self, event):
         """Subscribe to a Nvim event."""
-        return self.request('vim_subscribe', event)
+        return self.request('nvim_subscribe', event)
 
     def unsubscribe(self, event):
         """Unsubscribe to a Nvim event."""
-        return self.request('vim_unsubscribe', event)
+        return self.request('nvim_unsubscribe', event)
 
     def command(self, string, **kwargs):
         """Execute a single ex command."""
-        return self.request('vim_command', string, **kwargs)
+        return self.request('nvim_command', string, **kwargs)
 
     def command_output(self, string):
         """Execute a single ex command and return the output."""
-        return self.request('vim_command_output', string)
+        return self.request('nvim_command_output', string)
 
     def eval(self, string, **kwargs):
         """Evaluate a vimscript expression."""
-        return self.request('vim_eval', string, **kwargs)
+        return self.request('nvim_eval', string, **kwargs)
 
     def call(self, name, *args, **kwargs):
         """Call a vimscript function."""
-        return self.request('vim_call_function', name, args, **kwargs)
+        return self.request('nvim_call_function', name, args, **kwargs)
 
     def strwidth(self, string):
         """Return the number of display cells `string` occupies.
 
         Tab is counted as one cell.
         """
-        return self.request('vim_strwidth', string)
+        return self.request('nvim_strwidth', string)
 
     def list_runtime_paths(self):
         """Return a list of paths contained in the 'runtimepath' option."""
-        return self.request('vim_list_runtime_paths')
+        return self.request('nvim_list_runtime_paths')
 
     def foreach_rtp(self, cb):
         """Invoke `cb` for each path in 'runtimepath'.
@@ -246,7 +248,7 @@ class Nvim(object):
         are no longer paths. If stopped in case callable returned non-None,
         vim.foreach_rtp function returns the value returned by callable.
         """
-        for path in self.request('vim_list_runtime_paths'):
+        for path in self.request('nvim_list_runtime_paths'):
             try:
                 if cb(path) is not None:
                     break
@@ -256,7 +258,7 @@ class Nvim(object):
     def chdir(self, dir_path):
         """Run os.chdir, then all appropriate vim stuff."""
         os_chdir(dir_path)
-        return self.request('vim_change_directory', dir_path)
+        return self.request('nvim_set_current_dir', dir_path)
 
     def feedkeys(self, keys, options='', escape_csi=True):
         """Push `keys` to Nvim user input buffer.
@@ -267,7 +269,7 @@ class Nvim(object):
         - 't': Handle keys as if typed; otherwise they are handled as if coming
                from a mapping. This matters for undo, opening folds, etc.
         """
-        return self.request('vim_feedkeys', keys, options, escape_csi)
+        return self.request('nvim_feedkeys', keys, options, escape_csi)
 
     def input(self, bytes):
         """Push `bytes` to Nvim low level input buffer.
@@ -277,7 +279,7 @@ class Nvim(object):
         written(which can be less than what was requested if the buffer is
         full).
         """
-        return self.request('vim_input', bytes)
+        return self.request('nvim_input', bytes)
 
     def replace_termcodes(self, string, from_part=False, do_lt=True,
                           special=True):
@@ -298,11 +300,11 @@ class Nvim(object):
 
     def out_write(self, msg):
         """Print `msg` as a normal message."""
-        return self.request('vim_out_write', msg)
+        return self.request('nvim_out_write', msg)
 
     def err_write(self, msg, **kwargs):
         """Print `msg` as an error message."""
-        return self.request('vim_err_write', msg, **kwargs)
+        return self.request('nvim_err_write', msg, **kwargs)
 
     def quit(self, quit_command='qa!'):
         """Send a quit command to Nvim.
@@ -359,7 +361,7 @@ class Buffers(object):
 
     def __init__(self, nvim):
         """Initialize a Buffers object with Nvim object `nvim`."""
-        self._fetch_buffers = nvim.api.get_buffers
+        self._fetch_buffers = nvim.api.list_bufs
 
     def __len__(self):
         """Return the count of buffers."""
@@ -399,35 +401,35 @@ class Current(object):
 
     @property
     def line(self):
-        return self._session.request('vim_get_current_line')
+        return self._session.request('nvim_get_current_line')
 
     @line.setter
     def line(self, line):
-        return self._session.request('vim_set_current_line', line)
+        return self._session.request('nvim_set_current_line', line)
 
     @property
     def buffer(self):
-        return self._session.request('vim_get_current_buffer')
+        return self._session.request('nvim_get_current_buf')
 
     @buffer.setter
     def buffer(self, buffer):
-        return self._session.request('vim_set_current_buffer', buffer)
+        return self._session.request('nvim_set_current_buf', buffer)
 
     @property
     def window(self):
-        return self._session.request('vim_get_current_window')
+        return self._session.request('nvim_get_current_win')
 
     @window.setter
     def window(self, window):
-        return self._session.request('vim_set_current_window', window)
+        return self._session.request('nvim_set_current_win', window)
 
     @property
     def tabpage(self):
-        return self._session.request('vim_get_current_tabpage')
+        return self._session.request('nvim_get_current_tabpage')
 
     @tabpage.setter
     def tabpage(self, tabpage):
-        return self._session.request('vim_set_current_tabpage', tabpage)
+        return self._session.request('nvim_set_current_tabpage', tabpage)
 
 
 class Funcs(object):
