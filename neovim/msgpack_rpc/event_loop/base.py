@@ -85,7 +85,7 @@ class BaseEventLoop(object):
         self._on_data = None
         self._error = None
         self._init()
-        getattr(self, '_connect_{0}'.format(transport_type))(*args)
+        getattr(self, '_connect_{}'.format(transport_type))(*args)
         self._start_reading()
 
     def connect_tcp(self, address, port):
@@ -149,7 +149,7 @@ class BaseEventLoop(object):
         debug('Stopped event loop')
 
     def _on_signal(self, signum):
-        msg = 'Received {0}'.format(self._signames[signum])
+        msg = 'Received {}'.format(self._signames[signum])
         debug(msg)
         if signum == signal.SIGINT and self._transport_type == 'stdio':
             # When the transport is stdio, we are probably running as a Nvim

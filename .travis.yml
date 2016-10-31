@@ -17,7 +17,6 @@ matrix:
 python:
   # If the build matrix gets bigger, also update the number of runs
   # at the bottom of .scrutinizer.yml.
-  - 2.6
   - 2.7
   - 3.3
   - 3.4

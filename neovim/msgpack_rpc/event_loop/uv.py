@@ -21,7 +21,7 @@ class UvEventLoop(BaseEventLoop):
     def _on_connect(self, stream, error):
         self.stop()
         if error:
-            msg = 'Cannot connect to {0}: {1}'.format(
+            msg = 'Cannot connect to {}: {}'.format(
                 self._connect_address, pyuv.errno.strerror(error))
             self._connection_error = IOError(msg)
             return
@@ -49,7 +49,7 @@ class UvEventLoop(BaseEventLoop):
 
     def _connect_tcp(self, address, port):
         stream = pyuv.TCP(self._loop)
-        self._connect_address = '{0}:{1}'.format(address, port)
+        self._connect_address = '{}:{}'.format(address, port)
         stream.connect((address, port), self._on_connect)
 
     def _connect_socket(self, path):

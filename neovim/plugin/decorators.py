@@ -46,7 +46,7 @@ def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
             register=False, sync=False, eval=None):
     """Tag a function or plugin method as a Nvim command handler."""
     def dec(f):
-        f._nvim_rpc_method_name = 'command:{0}'.format(name)
+        f._nvim_rpc_method_name = 'command:{}'.format(name)
         f._nvim_rpc_sync = sync
         f._nvim_bind = True
         f._nvim_prefix_plugin_path = True
@@ -86,7 +86,7 @@ def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
 def autocmd(name, pattern='*', sync=False, eval=None):
     """Tag a function or plugin method as a Nvim autocommand handler."""
     def dec(f):
-        f._nvim_rpc_method_name = 'autocmd:{0}:{1}'.format(name, pattern)
+        f._nvim_rpc_method_name = 'autocmd:{}:{}'.format(name, pattern)
         f._nvim_rpc_sync = sync
         f._nvim_bind = True
         f._nvim_prefix_plugin_path = True
@@ -111,7 +111,7 @@ def autocmd(name, pattern='*', sync=False, eval=None):
 def function(name, range=False, sync=False, eval=None):
     """Tag a function or plugin method as a Nvim function handler."""
     def dec(f):
-        f._nvim_rpc_method_name = 'function:{0}'.format(name)
+        f._nvim_rpc_method_name = 'function:{}'.format(name)
         f._nvim_rpc_sync = sync
         f._nvim_bind = True
         f._nvim_prefix_plugin_path = True

@@ -82,7 +82,7 @@ class Session(object):
             return
 
         if kwargs:
-            raise ValueError("request got unsupported keyword argument(s): {0}"
+            raise ValueError("request got unsupported keyword argument(s): {}"
                              .format(', '.join(kwargs.keys())))
 
         if self._is_running:
@@ -122,13 +122,13 @@ class Session(object):
             gr.switch()
 
         if self._setup_exception:
-            error('Setup error: {0}'.format(self._setup_exception))
+            error('Setup error: {}'.format(self._setup_exception))
             raise self._setup_exception
 
         # Process all pending requests and notifications
         while self._pending_messages:
             msg = self._pending_messages.popleft()
-            getattr(self, '_on_{0}'.format(msg[0]))(*msg[1:])
+            getattr(self, '_on_{}'.format(msg[0]))(*msg[1:])
         self._async_session.run(self._on_request, self._on_notification)
         self._is_running = False
         self._request_cb = None

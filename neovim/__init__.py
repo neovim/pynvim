@@ -118,7 +118,7 @@ def setup_logging(name):
     if 'NVIM_PYTHON_LOG_FILE' in os.environ:
         prefix = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
         major_version = sys.version_info[0]
-        logfile = '{0}_py{1}_{2}'.format(prefix, major_version, name)
+        logfile = '{}_py{}_{}'.format(prefix, major_version, name)
         handler = logging.FileHandler(logfile, 'w')
         handler.formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s @ '
