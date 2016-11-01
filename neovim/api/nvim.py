@@ -341,7 +341,7 @@ class Nvim(object):
                 fn(*args, **kwargs)
             except Exception as err:
                 msg = ("error caught while executing async callback:\n"
-                       "{0!r}\n{1}\n \nthe call was requested at\n{2}"
+                       "{!r}\n{}\n \nthe call was requested at\n{}"
                        .format(err, format_exc_skip(1, 5), call_point))
                 self._err_cb(msg)
                 raise

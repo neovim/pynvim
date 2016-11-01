@@ -120,7 +120,7 @@ class Host(object):
         for path in plugins:
             err = None
             if path in self._loaded:
-                error('{0} is already loaded'.format(path))
+                error('{} is already loaded'.format(path))
                 continue
             try:
                 if path == "script_host.py":
@@ -133,7 +133,7 @@ class Host(object):
                 self._discover_classes(module, handlers, path)
                 self._discover_functions(module, handlers, path)
                 if not handlers:
-                    error('{0} exports no handlers'.format(path))
+                    error('{} exports no handlers'.format(path))
                     continue
                 self._loaded[path] = {'handlers': handlers, 'module': module}
             except Exception as e:
@@ -179,7 +179,7 @@ class Host(object):
 
             method = fn._nvim_rpc_method_name
             if fn._nvim_prefix_plugin_path:
-                method = '{0}:{1}'.format(plugin_path, method)
+                method = '{}:{}'.format(plugin_path, method)
 
             fn_wrapped = functools.partial(self._wrap_function, fn,
                                            sync, decode, nvim_bind, method)
@@ -187,12 +187,12 @@ class Host(object):
             # register in the rpc handler dict
             if sync:
                 if method in self._request_handlers:
-                    raise Exception(('Request handler for "{0}" is ' +
+                    raise Exception(('Request handler for "{}" is ' +
                                     'already registered').format(method))
                 self._request_handlers[method] = fn_wrapped
             else:
                 if method in self._notification_handlers:
-                    raise Exception(('Notification handler for "{0}" is ' +
+                    raise Exception(('Notification handler for "{}" is ' +
                                     'already registered').format(method))
                 self._notification_handlers[method] = fn_wrapped
             if hasattr(fn, '_nvim_rpc_spec'):
