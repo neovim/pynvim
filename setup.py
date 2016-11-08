@@ -19,7 +19,7 @@ if platform.python_implementation() != 'PyPy':
     install_requires.append('greenlet')
 
 setup(name='neovim',
-      version='0.1.11dev',
+      version='0.1.11',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
       download_url='https://github.com/neovim/python-client/archive/0.1.10.tar.gz',
