@@ -103,3 +103,17 @@ def test_number():
     eq(vim.current.window.number, curnum + 1)
     vim.command('bot split')
     eq(vim.current.window.number, curnum + 2)
+
+
+@with_setup(setup=cleanup)
+def test_handle():
+    hnd1 = vim.current.window.handle
+    vim.command('bot split')
+    hnd2 = vim.current.window.handle
+    ok(hnd2 != hnd1)
+    vim.command('bot split')
+    hnd3 = vim.current.window.handle
+    ok(hnd3 != hnd1)
+    ok(hnd3 != hnd2)
+    vim.command('wincmd w')
+    eq(vim.current.window.handle,hnd1)
