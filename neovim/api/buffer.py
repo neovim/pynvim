@@ -128,7 +128,7 @@ class Buffer(Remote):
     @property
     def number(self):
         """Get the buffer number."""
-        return self.request('nvim_buf_get_number')
+        return self.handle
 
 
 class Range(object):
