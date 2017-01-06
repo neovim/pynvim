@@ -73,12 +73,11 @@ class UvEventLoop(BaseEventLoop):
                             flags=pyuv.UV_CREATE_PIPE + pyuv.UV_WRITABLE_PIPE)
         stderr = pyuv.StdIO(self._error_stream,
                             flags=pyuv.UV_CREATE_PIPE + pyuv.UV_WRITABLE_PIPE)
-        self._process = pyuv.Process(self._loop)
-        self._process.spawn(file=argv[0],
-                            exit_callback=self._on_exit,
-                            args=argv[1:],
-                            flags=pyuv.UV_PROCESS_WINDOWS_HIDE,
-                            stdio=(stdin, stdout, stderr,))
+        pyuv.Process.spawn(self._loop,
+                           args=argv,
+                           exit_callback=self._on_exit,
+                           flags=pyuv.UV_PROCESS_WINDOWS_HIDE,
+                           stdio=(stdin, stdout, stderr,))
         self._error_stream.start_read(self._on_read)
 
     def _start_reading(self):
