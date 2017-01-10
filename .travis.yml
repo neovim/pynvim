@@ -21,11 +21,12 @@ python:
   - 3.3
   - 3.4
   - 3.5
+  - 3.6
   - pypy
 before_install:
   - if [ $CI_TARGET = tests ]; then
       eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64";
-      pip install -q scrutinizer-ocular;
+      pip install -q scrutinizer-ocular tox-travis;
     else
       pip install -q flake8 flake8-import-order flake8-docstrings pep8-naming;
     fi
@@ -33,7 +34,7 @@ install:
   - pip install .
 script:
   - if [ $CI_TARGET = tests ]; then
-      nosetests;
+      tox;
     else
       flake8 neovim;
     fi
