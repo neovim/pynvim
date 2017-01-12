@@ -10,9 +10,7 @@ env:
     - CI_TARGET=tests
 matrix:
   include:
-    - python: 2.7
-      env: CI_TARGET=flake
-    - python: 3.4
+    - python: 3.6
       env: CI_TARGET=flake
 python:
   # If the build matrix gets bigger, also update the number of runs
