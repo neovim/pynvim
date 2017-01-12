@@ -5,3 +5,6 @@ neovim/ui/screen.so
 build/
 dist/
 *.pyc
+.cache
+.eggs
+.tox
