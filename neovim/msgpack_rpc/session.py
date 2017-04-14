@@ -1,5 +1,6 @@
 """Synchronous msgpack-rpc session layer."""
 import logging
+import threading
 from collections import deque
 from traceback import format_exc
 
@@ -29,6 +30,7 @@ class Session(object):
         self._is_running = False
         self._setup_exception = None
         self.loop = async_session.loop
+        self._loop_thread = None
 
     def threadsafe_call(self, fn, *args, **kwargs):
         """Wrapper around `AsyncSession.threadsafe_call`."""
@@ -110,6 +112,7 @@ class Session(object):
         self._notification_cb = notification_cb
         self._is_running = True
         self._setup_exception = None
+        self._loop_thread = threading.current_thread()
 
         def on_setup():
             try:
@@ -135,6 +138,7 @@ class Session(object):
         self._is_running = False
         self._request_cb = None
         self._notification_cb = None
+        self._loop_thread = None
 
         if self._setup_exception:
             raise self._setup_exception
