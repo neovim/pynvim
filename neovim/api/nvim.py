@@ -392,11 +392,17 @@ class Nvim(object):
 
     def err_write(self, msg, **kwargs):
         """Print `msg` as an error message."""
-        if (self._session._loop_thread is not None and 
-                threading.current_thread() != self._session._loop_thread):
+        if self._thread_invalid():
+            # special case: if a non-main thread writes to stderr
+            # i.e. due to an uncaught exception, pass it through
+            # without raising an additional exception.
             self.async_call(self.err_write, msg, **kwargs)
             return
         return self.request('nvim_err_write', msg, **kwargs)
+
+    def _thread_invalid(self):
+        return (self._session._loop_thread is not None and
+                threading.current_thread() != self._session._loop_thread)
 
     def quit(self, quit_command='qa!'):
         """Send a quit command to Nvim.
