@@ -306,6 +306,13 @@ class Nvim(object):
         """Print `msg` as an error message."""
         return self.request('nvim_err_write', msg, **kwargs)
 
+    def err_writeln(self, msg, **kwargs):
+        """Print `msg` as an error message.
+
+        Appends a `linefeed` to ensure all contents are writen.
+        """
+        return self.request('nvim_err_writeln', msg, **kwargs)
+
     def quit(self, quit_command='qa!'):
         """Send a quit command to Nvim.
 
