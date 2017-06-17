@@ -1,7 +1,6 @@
 """Synchronous msgpack-rpc session layer."""
 import logging
 from collections import deque
-
 from traceback import format_exc
 
 import greenlet

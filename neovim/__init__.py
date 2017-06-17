@@ -126,11 +126,11 @@ def setup_logging(name):
         logging.root.addHandler(handler)
         level = logging.INFO
         if 'NVIM_PYTHON_LOG_LEVEL' in os.environ:
-            l = getattr(logging,
-                        os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
-                        level)
-            if isinstance(l, int):
-                level = l
+            lvl = getattr(logging,
+                          os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
+                          level)
+            if isinstance(lvl, int):
+                level = lvl
         logger.setLevel(level)
 
 

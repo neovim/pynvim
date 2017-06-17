@@ -1,12 +1,11 @@
 """Implements a Nvim host for python plugins."""
-import functools
 import imp
 import inspect
 import logging
 import os
 import os.path
 import re
-
+from functools import partial
 from traceback import format_exc
 
 from . import script_host
@@ -181,8 +180,8 @@ class Host(object):
             if fn._nvim_prefix_plugin_path:
                 method = '{}:{}'.format(plugin_path, method)
 
-            fn_wrapped = functools.partial(self._wrap_function, fn,
-                                           sync, decode, nvim_bind, method)
+            fn_wrapped = partial(self._wrap_function, fn,
+                                 sync, decode, nvim_bind, method)
             self._copy_attributes(fn, fn_wrapped)
             # register in the rpc handler dict
             if sync:
