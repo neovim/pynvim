@@ -42,8 +42,7 @@ traditional `:python` interface or the new mechanism is used, as discussed
 below.
 
 * `vim.funcs` exposes vimscript functions (both builtin and global user defined
-  functions) as a python namespace. For instance to set the value of the value
-  of a register
+  functions) as a python namespace. For instance to set the value of a register
 
     `vim.funcs.setreg('0', ["some", "text"], 'l')`
 
