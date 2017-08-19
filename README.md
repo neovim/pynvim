@@ -148,13 +148,13 @@ to use it for the plugin host.
 To run the tests execute
 
 ```sh
-nosetests
+pytest
 ```
 
 This will run the tests in an embedded instance of nvim.
 If you want to test a different version than `nvim` in `$PATH` use
 ```sh
-NVIM_CHILD_ARGV='["/path/to/nvim", "-u", "NONE", "--embed"]' nosetests
+NVIM_CHILD_ARGV='["/path/to/nvim", "-u", "NONE", "--embed"]' pytest
 ```
 
 Alternatively, if you want to see the state of nvim, you could use
@@ -162,7 +162,7 @@ Alternatively, if you want to see the state of nvim, you could use
 ```sh
 export NVIM_LISTEN_ADDRESS=/tmp/nvimtest
 xterm -e "nvim -u NONE"&
-nosetests
+pytest
 ```
 
 But note you need to restart nvim every time you run the tests! Substitute your

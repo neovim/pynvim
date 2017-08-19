@@ -8,6 +8,14 @@ install_requires = [
     'msgpack>=0.5.0',
 ]
 
+tests_require = [
+    'pytest>=3.4.0',
+]
+
+extras_require = {
+    'pyuv': ['pyuv>=1.0.0'],
+}
+
 if os.name == 'nt':
     install_requires.append('pyuv>=1.0.0')
 elif sys.version_info < (3, 4):
@@ -29,4 +37,6 @@ setup(name='neovim',
       packages=['neovim', 'neovim.api', 'neovim.msgpack_rpc',
                 'neovim.msgpack_rpc.event_loop', 'neovim.plugin'],
       install_requires=install_requires,
+      tests_require=tests_require,
+      extras_require=extras_require,
       zip_safe=False)
