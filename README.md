@@ -43,24 +43,32 @@ below.
 
 * `vim.funcs` exposes vimscript functions (both builtin and global user defined
   functions) as a python namespace. For instance to set the value of a register
-
-    `vim.funcs.setreg('0', ["some", "text"], 'l')`
-
+  ```
+  vim.funcs.setreg('0', ["some", "text"], 'l')
+  ```
 * The API is not thread-safe in general. However, `vim.async_call` allows a
   spawned thread to schedule code to be executed on the main thread. This method
   could also be called from `:python` or a synchronous request handler, to defer
   some execution that shouldn't block nvim.
+  ```
+  :python vim.async_call(myfunc, args...)
 
-    `:python vim.async_call(myfunc, args...)`
-
+  ```
   Note that this code will still block the plugin host if it does long-running
   computations. Intensive computations should be done in a separate thread (or
   process), and `vim.async_call` can be used to send results back to nvim.
 
-* Some methods accept an extra keyword-only argument `async`: `vim.eval`,
+* Some methods accept an `async` parameter: `vim.eval`,
   `vim.command` as well as the `vim.funcs` wrappers. The python host will not
-  wait for nvim to complete the request, which also means that the return value
-  is unavailable.
+  wait for nvim to complete the request (which also means that the return value
+  is unavailable).
+
+* You can publish arbitrary events (msgpack **notification** messages) by
+  passing `async=True` to `vim.request()` (this is analogous to the VimL
+  `rpcnotify()` function).
+  ```
+  vim.request("my_event", "arg1", "arg2", async=True)
+  ```
 
 #### Remote (new-style) plugins
 
