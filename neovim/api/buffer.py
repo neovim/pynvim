@@ -183,3 +183,49 @@ class Range(object):
             if index > self.end:
                 index = self.end
         return index
+
+
+class Selection(object):
+    def __init__(self, buffer, startmark, endmark):
+        self._range = buffer.range(startmark[0], endmark[0]+1)
+        self.slice = slice(startmark[1], endmark[1]+1)
+
+    def __len__(self):
+        return len(self._range)
+
+    def __getitem__(self, idx):
+        if not isinstance(idx, slice):
+            return self._range[idx]
+        start = idx.start
+        end = idx.stop
+        if start is None:
+            start = self._range.start
+        if end is None:
+            end = self._range.stop
+        return [l[self.slice] for l in self._range[start:end]]
+
+    def __setitem__(self, idx, lineparts):
+        if not isinstance(idx, slice):
+            new_line = self._assemble_line(self._range[idx], lineparts)
+            self._range[idx] = new_line
+            return
+        start = idx.start
+        end = idx.stop
+        if start is None:
+            start = self._range.start
+        if end is None:
+            end = self._range.stop
+        assert(end - start == len(lineparts))
+        lines = []
+        for i in range(start, end):
+            lines.append(self._assemble_line(self._range[i], lineparts[i-start]))
+        self._range[start:end] = lines
+
+    def __iter__(self):
+        for i in range(self._range.start, self._range.end + 1):
+            yield self._buffer[i][self.slice]
+
+    def _assemble_line(self, orig_line, replacement):
+            new_line = orig_line[:self.slice.start] + replacement + orig_line[self.slice.stop:]
+            return new_line
+
