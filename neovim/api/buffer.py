@@ -130,6 +130,13 @@ class Buffer(Remote):
         """Get the buffer number."""
         return self.handle
 
+    @property
+    def visual_selection(self):
+        """Get the current visual selection"""
+        startmark = self.mark('<')
+        endmark   = self.mark('>')
+        return Selection(self, startmark, endmark)
+
 
 class Range(object):
     def __init__(self, buffer, start, end):
