@@ -132,10 +132,10 @@ class Buffer(Remote):
 
     @property
     def visual_selection(self):
-        """Get the current visual selection"""
+        """Get the current visual selection as Region object"""
         startmark = self.mark('<')
         endmark = self.mark('>')
-        return Selection(self, startmark, endmark)
+        return Region(self, startmark, endmark)
 
 
 class Range(object):
@@ -192,7 +192,7 @@ class Range(object):
         return index
 
 
-class Selection(object):
+class Region(object):
     def __init__(self, buffer, startmark, endmark):
         self._range = buffer.range(startmark[0], endmark[0] + 1)
         self.slice = slice(startmark[1], endmark[1] + 1)
