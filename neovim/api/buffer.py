@@ -132,7 +132,7 @@ class Buffer(Remote):
 
     @property
     def visual_selection(self):
-        """Get the current visual selection as Region object"""
+        """Get the current visual selection as a Region object."""
         startmark = self.mark('<')
         endmark = self.mark('>')
         return Region(self, startmark, endmark)
