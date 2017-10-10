@@ -134,7 +134,7 @@ class Buffer(Remote):
     def visual_selection(self):
         """Get the current visual selection"""
         startmark = self.mark('<')
-        endmark   = self.mark('>')
+        endmark = self.mark('>')
         return Selection(self, startmark, endmark)
 
 
@@ -194,8 +194,8 @@ class Range(object):
 
 class Selection(object):
     def __init__(self, buffer, startmark, endmark):
-        self._range = buffer.range(startmark[0], endmark[0]+1)
-        self.slice = slice(startmark[1], endmark[1]+1)
+        self._range = buffer.range(startmark[0], endmark[0] + 1)
+        self.slice = slice(startmark[1], endmark[1] + 1)
 
     def __len__(self):
         return len(self._range)
@@ -225,7 +225,8 @@ class Selection(object):
         assert(end - start == len(lineparts))
         lines = []
         for i in range(start, end):
-            lines.append(self._assemble_line(self._range[i], lineparts[i-start]))
+            ni = i = start  # normalized index
+            lines.append(self._assemble_line(self._range[i], lineparts[ni]))
         self._range[start:end] = lines
 
     def __iter__(self):
@@ -233,6 +234,7 @@ class Selection(object):
             yield self._buffer[i][self.slice]
 
     def _assemble_line(self, orig_line, replacement):
-            new_line = orig_line[:self.slice.start] + replacement + orig_line[self.slice.stop:]
+            orig_prefix = orig_line[:self.slice.start]
+            orig_suffix = orig_line[self.slice.stop:]
+            new_line = orig_prefix + replacement + orig_suffix
             return new_line
-
