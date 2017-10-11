@@ -58,7 +58,7 @@ below.
   computations. Intensive computations should be done in a separate thread (or
   process), and `vim.async_call` can be used to send results back to nvim.
 
-* Some methods accept an `async` parameter: `vim.eval`,
+* Some methods accept an `async` keyword argument: `vim.eval`,
   `vim.command` as well as the `vim.funcs` wrappers. The python host will not
   wait for nvim to complete the request (which also means that the return value
   is unavailable).
