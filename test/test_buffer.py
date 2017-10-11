@@ -172,3 +172,10 @@ def test_get_exceptions():
 @with_setup(setup=cleanup)
 def test_contains():
     ok(vim.current.buffer in vim.buffers)
+
+@with_setup(setup=cleanup)
+def test_set_items_for_range():
+    vim.current.buffer[:] = ['a', 'b', 'c', 'd', 'e']
+    r = vim.current.buffer.range(1, 3)
+    r[1:3] = ['foo']*3
+    eq(vim.current.buffer[:], ['a', 'foo', 'foo', 'foo', 'd', 'e'])
