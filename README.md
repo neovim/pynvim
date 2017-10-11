@@ -63,13 +63,6 @@ below.
   wait for nvim to complete the request (which also means that the return value
   is unavailable).
 
-* You can publish arbitrary events (msgpack **notification** messages) by
-  passing `async=True` to `vim.request()` (this is analogous to the VimL
-  `rpcnotify()` function).
-  ```
-  vim.request("my_event", "arg1", "arg2", async=True)
-  ```
-
 #### Remote (new-style) plugins
 
 Neovim allows python plugins to be defined by placing python files or packages
