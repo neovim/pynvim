@@ -46,6 +46,24 @@ below.
   ```
   vim.funcs.setreg('0', ["some", "text"], 'l')
   ```
+
+* `vim.api` exposes nvim API methods. For instance to call `nvim_strwidth`,
+  ```
+  result = vim.api.strwidth("some text")
+  ```
+  Note the initial `nvim_` is not included. Also, object methods can be called
+  directly on their object,
+  ```
+  buf = vim.current.buffer
+  len = buf.api.line_count()
+  ```
+  calls `nvim_buf_line_count`. Alternatively msgpack requests can be invoked
+  directly,
+  ```
+  result = vim.request("nvim_strwith", "some text")
+  len = vim.request("nvim_buf_line_count", buf)
+  ```
+
 * The API is not thread-safe in general. However, `vim.async_call` allows a
   spawned thread to schedule code to be executed on the main thread. This method
   could also be called from `:python` or a synchronous request handler, to defer
@@ -59,9 +77,9 @@ below.
   process), and `vim.async_call` can be used to send results back to nvim.
 
 * Some methods accept an `async` keyword argument: `vim.eval`,
-  `vim.command` as well as the `vim.funcs` wrappers. The python host will not
-  wait for nvim to complete the request (which also means that the return value
-  is unavailable).
+  `vim.command`, `vim.request` as well as the `vim.funcs` and `vim.api` wrappers.
+  The python host will not wait for nvim to complete the request (which also
+  means that the return value is unavailable).
 
 #### Remote (new-style) plugins
 
