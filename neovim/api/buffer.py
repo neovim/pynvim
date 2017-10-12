@@ -160,8 +160,8 @@ class Range(object):
         if start is None:
             start = self.start
         if end is None:
-            end = self.end + 1
-        self._buffer[start:end] = lines
+            end = self.end
+        self._buffer[start:end + 1] = lines
 
     def __iter__(self):
         for i in range(self.start, self.end + 1):
