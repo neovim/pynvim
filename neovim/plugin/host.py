@@ -46,7 +46,7 @@ class Host(object):
         self._decode_default = IS_PYTHON3
 
     def _on_async_err(self, msg):
-        self.nvim.err_write(msg, async=True)
+        self.nvim.err_write(msg, async_=True)
 
     def start(self, plugins):
         """Start listening for msgpack-rpc requests and notifications."""

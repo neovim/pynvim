@@ -98,17 +98,17 @@ class Buffer(Remote):
         return Range(self, start, end)
 
     def add_highlight(self, hl_group, line, col_start=0,
-                      col_end=-1, src_id=-1, async=None):
+                      col_end=-1, src_id=-1, async_=None):
         """Add a highlight to the buffer."""
-        if async is None:
-            async = (src_id != 0)
+        if async_ is None:
+            async_ = (src_id != 0)
         return self.request('nvim_buf_add_highlight', src_id, hl_group,
-                            line, col_start, col_end, async=async)
+                            line, col_start, col_end, async_=async_)
 
-    def clear_highlight(self, src_id, line_start=0, line_end=-1, async=True):
+    def clear_highlight(self, src_id, line_start=0, line_end=-1, async_=True):
         """Clear highlights from the buffer."""
         self.request('nvim_buf_clear_highlight', src_id,
-                     line_start, line_end, async=async)
+                     line_start, line_end, async_=async_)
 
     @property
     def name(self):
