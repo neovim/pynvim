@@ -14,7 +14,10 @@ __all__ = ('ScriptHost',)
 
 
 logger = logging.getLogger(__name__)
-debug, info, warn = (logger.debug, logger.info, logger.warn,)
+debug, info, warn, exception = (logger.debug,
+                                logger.info,
+                                logger.warn,
+                                logger.exception)
 
 IS_PYTHON3 = sys.version_info >= (3, 0)
 
@@ -79,6 +82,14 @@ class ScriptHost(object):
         except Exception:
             raise ErrorResponse(format_exc_skip(1))
 
+    @rpc_export('python_execute_async', sync=False)
+    def python_execute_async(self, *args):
+        try:
+            self.python_execute(*args)
+        except Exception:
+            exception('python_execute failed')
+            pass
+
     @rpc_export('python_execute_file', sync=True)
     def python_execute_file(self, file_path, range_start, range_stop):
         """Handle the `pyfile` ex command."""
@@ -89,6 +100,14 @@ class ScriptHost(object):
                 exec(script, self.module.__dict__)
             except Exception:
                 raise ErrorResponse(format_exc_skip(1))
+
+    @rpc_export('python_execute_file_async', sync=False)
+    def python_execute_file_async(self, *args):
+        try:
+            self.python_execute(*args)
+        except Exception as ex:
+            exception('python_execute_file failed')
+            pass
 
     @rpc_export('python_do_range', sync=True)
     def python_do_range(self, start, stop, code):
