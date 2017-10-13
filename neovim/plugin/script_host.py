@@ -84,6 +84,7 @@ class ScriptHost(object):
 
     @rpc_export('python_execute_async', sync=False)
     def python_execute_async(self, *args):
+        """Same as python_execute, except it's notification handler."""
         try:
             self.python_execute(*args)
         except Exception:
@@ -103,6 +104,7 @@ class ScriptHost(object):
 
     @rpc_export('python_execute_file_async', sync=False)
     def python_execute_file_async(self, *args):
+        """Same as python_execute_file, except it's notification handler."""
         try:
             self.python_execute(*args)
         except Exception as ex:
