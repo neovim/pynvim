@@ -225,7 +225,7 @@ class BlockRegion(object):
         assert(end - start == len(lineparts))
         lines = []
         for i in range(start, end):
-            ni = i = start  # normalized index
+            ni = i - start  # normalized index
             lines.append(self._assemble_line(self._range[i], lineparts[ni]))
         self._range[start:end] = lines
 
