@@ -238,3 +238,71 @@ class BlockRegion(object):
             orig_suffix = orig_line[self.slice.stop:]
             new_line = orig_prefix + replacement + orig_suffix
             return new_line
+
+
+class NormalRegion(object):
+    def __init__(self, buffer, startmark, endmark):
+        self._range = buffer.range(startmark[0], endmark[0] + 1)
+        self.startindex = startmark[1]
+        self.stopindex = endmark[1]+1
+
+    def __len__(self):
+        return len(self._range)
+
+    def __getitem__(self, idx):
+        if not isinstance(idx, slice):
+            if idx == 0:  # first line
+                return self._range[idx][self.startindex:]
+            elif idx == len(self._range) - 1:  # last line
+                return self._range[idx][:self.stopindex]
+            else:
+                return self._range[idx]
+
+        start = idx.start
+        end = idx.stop
+        if start is None:
+            start = self._range.start
+        if end is None:
+            end = self._range.stop
+        return [self[i] for i in range(start, stop+1)]
+
+
+    def _assemble_line(self, orig_line, replacement):
+            orig_prefix = orig_line[:self.slice.start]
+            orig_suffix = orig_line[self.slice.stop:]
+            new_line = orig_prefix + replacement + orig_suffix
+            return new_line
+
+    def __setitem__(self, idx, lineparts):
+        if not isinstance(idx, slice):
+            if idx == 0:  # first line
+                if isinstance(lineparts, str)
+                    new_line = self._range[:self.start] + lineparts
+                    self._range[idx] = new_line
+                    return
+                else:
+                    raise Exception("you can only set strings, not {}".format(type(lineparts)))
+            elif idx == len(self._range) - 1:  # last line
+                if isinstance(lineparts, str)
+                    new_line = self._range[:self.start] + lineparts
+                    self._range[idx] = new_line
+                    return
+            else:
+                self._range[idx] = new_line
+                return
+
+        start = idx.start
+        end = idx.stop
+        if start is None:
+            start = self._range.start
+        if end is None:
+            end = self._range.stop
+        assert(end - start == len(lineparts))
+        lines = []
+        for i in range(start, end):
+            ni = i - start  # normalized index
+            self[i] = lineparts[ni]
+
+    def __iter__(self):
+        for i in range(self._range.start, self._range.end + 1):
+            yield self._buffer[i][self.slice]
