@@ -192,7 +192,7 @@ class Range(object):
         return index
 
 
-class Region(object):
+class BlockRegion(object):
     def __init__(self, buffer, startmark, endmark):
         self._range = buffer.range(startmark[0], endmark[0] + 1)
         self.slice = slice(startmark[1], endmark[1] + 1)
