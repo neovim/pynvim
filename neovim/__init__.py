@@ -21,7 +21,7 @@ __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'shutdown_hook', 'attach', 'setup_logging', 'ErrorResponse')
 
 
-VERSION = Version(major=0, minor=2, patch=0, prerelease='')
+VERSION = Version(major=0, minor=2, patch=1, prerelease='dev')
 
 
 def start_host(session=None):
