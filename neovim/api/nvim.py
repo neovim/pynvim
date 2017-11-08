@@ -2,7 +2,6 @@
 import functools
 import os
 import sys
-
 from traceback import format_stack
 
 from msgpack import ExtType
@@ -298,9 +297,9 @@ class Nvim(object):
         return self.request('nvim_replace_termcodes', string,
                             from_part, do_lt, special)
 
-    def out_write(self, msg):
+    def out_write(self, msg, **kwargs):
         """Print `msg` as a normal message."""
-        return self.request('nvim_out_write', msg)
+        return self.request('nvim_out_write', msg, **kwargs)
 
     def err_write(self, msg, **kwargs):
         """Print `msg` as an error message."""
