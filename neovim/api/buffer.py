@@ -134,7 +134,7 @@ class Buffer(Remote):
 class Range(object):
     def __init__(self, buffer, start, end):
         self._buffer = buffer
-        self.start = start - 1
+        self.start = start
         self.end = end - 1
 
     def __len__(self):
