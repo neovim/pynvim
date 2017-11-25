@@ -92,6 +92,7 @@ class Nvim(object):
         self.current = Current(self)
         self.session = CompatibilitySession(self)
         self.funcs = Funcs(self)
+        self.lua = LuaFuncs(self)
         self.error = NvimError
         self._decode = decode
         self._err_cb = err_cb
@@ -252,6 +253,27 @@ class Nvim(object):
     def call(self, name, *args, **kwargs):
         """Call a vimscript function."""
         return self.request('nvim_call_function', name, args, **kwargs)
+
+    def exec_lua(self, code, *args, **kwargs):
+        """Execute lua code.
+
+        Additional parameters are available as `...` inside the lua chunk.
+        Only statements are executed.  To evaluate an expression, prefix it
+        with `return`: `return my_function(...)`
+
+        There is a shorthand syntax to call lua functions with arguments:
+
+            nvim.lua.func(1,2)
+            nvim.lua.mymod.myfunction(data, async_=True)
+
+        is equivalent to
+
+            nvim.exec_lua("return func(...)", 1, 2)
+            nvim.exec_lua("mymod.myfunction(...)", data, async_=True)
+
+        Note that with `async_=True` there is no return value.
+        """
+        return self.request('nvim_execute_lua', code, args, **kwargs)
 
     def strwidth(self, string):
         """Return the number of display cells `string` occupies.
@@ -465,6 +487,30 @@ class Funcs(object):
 
     def __getattr__(self, name):
         return partial(self._nvim.call, name)
+
+
+class LuaFuncs(object):
+
+    """Wrapper to allow lua functions to be called like python methods."""
+
+    def __init__(self, nvim, name=""):
+        self._nvim = nvim
+        self.name = name
+
+    def __getattr__(self, name):
+        """Return wrapper to named api method."""
+        prefix = self.name + "." if self.name else ""
+        return LuaFuncs(self._nvim, prefix + name)
+
+    def __call__(self, *args, **kwargs):
+        # first new function after keyword rename, be a bit noisy
+        if 'async' in kwargs:
+            raise ValueError('"async" argument is not allowed. '
+                             'Use "async_" instead.')
+        async_ = kwargs.get('async_', False)
+        pattern = "return {}(...)" if not async_ else "{}(...)"
+        code = pattern.format(self.name)
+        return self._nvim.exec_lua(code, *args, **kwargs)
 
 
 class NvimError(Exception):
