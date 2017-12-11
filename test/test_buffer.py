@@ -3,6 +3,7 @@ from nose.tools import with_setup, eq_ as eq, ok_ as ok
 from test_common import vim, cleanup
 
 from neovim.compat import IS_PYTHON3
+from neovim.api.buffer import Region
 
 
 @with_setup(setup=cleanup)
@@ -172,3 +173,30 @@ def test_get_exceptions():
 @with_setup(setup=cleanup)
 def test_contains():
     ok(vim.current.buffer in vim.buffers)
+
+
+@with_setup(setup=cleanup)
+def test_region():
+    reference_buffer = ['foo1', 'foo2', 'foo3', 'foo4', 'foo5', 'foo6']
+
+    vim.current.buffer[:] = ['foo1', 'foo2', 'foo3', 'foo4', 'foo5', 'foo6']
+    eq(vim.current.buffer[2:5], ['foo3', 'foo4', 'foo5'])
+
+    r = vim.current.buffer.range(3, 5)
+    eq(r[:], ['foo3', 'foo4', 'foo5'])
+    eq(r[0], 'foo3')
+
+    # reading
+    r = Region(vim.current.buffer, 2, 5)
+    eq(r[:], ['foo2', 'foo3', 'foo4', 'foo5'])
+
+    r = Region(vim.current.buffer, 2, 5, partials=(1, 3))
+    eq(r[:], ['oo']*4)
+
+    r = Region(vim.current.buffer, 2, 4, partials=[(1, 3), (1, 3), (0, 3)])
+    eq(r[:], ['oo']*2 + ['foo'])
+
+    # writing
+    r = Region(vim.current.buffer, 2, 5)
+    r[:] = ['bar']*4
+    eq(vim.current.buffer[:], [])
