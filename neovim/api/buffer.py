@@ -2,6 +2,9 @@
 from .common import Remote
 from ..compat import IS_PYTHON3
 
+from collections import Iterable
+import itertools
+
 
 __all__ = ('Buffer')
 
@@ -133,6 +136,36 @@ class Buffer(Remote):
     @property
     def visual_selection(self):
         """Get the current visual selection as a Region object."""
+
+        """
+
+        if  variant not in ['normal', 'block', 'line']:
+            raise Exception("No valid Region type specified")
+
+        elif variant == 'normal':
+            if rs == re:  # it's a one-liner
+                self._partials = slice(sc, ec)
+                return
+            else:
+                # start and end have to be treated special as they can be real
+                # partials
+                start_slice = slice(sc, None)
+                end_slice = slice(None, ec + 1)
+
+                # all slices in between (can be 0)
+                intermediate_slices = [slice(None, None)]*(er - sr - 1)
+
+                self._partials = start_slice + intermediate_slices + end_slice
+
+        elif variant == 'block':
+            # simple, all lines have the same partials
+            self._partials = [slice(sc, ec + 1)]*len(self._range)
+
+        elif variant == 'line':
+            # simple, no line is partial
+            self._partials = [slice(None, None)]*len(self._range)
+        """
+
         startmark = self.mark('<')
         endmark = self.mark('>')
         return Region(self, startmark, endmark)
@@ -192,117 +225,73 @@ class Range(object):
         return index
 
 
-class BlockRegion(object):
-    def __init__(self, buffer, startmark, endmark):
-        self._range = buffer.range(startmark[0], endmark[0] + 1)
-        self.slice = slice(startmark[1], endmark[1] + 1)
+
+class Region(object):
+    def __init__(self, buffer, startrow, endrow, partials=(None, None)):
+        if not startrow <= endrow:
+            raise ValueError("Negative span of rows provided.")
+
+        # the range of the buffer this Region covers
+        self._range = buffer.range(startrow, endrow)
+
+        if not isinstance(partials[0], Iterable):
+            # in this case we assume the provided partial
+            # to be (int, int) and the default for all lines,
+            # so create a list of appropriate length
+            partials = [partials]*len(self._range)
+        else:
+            # we only need to assert this if we haven't created
+            # that list ourselves
+            if len(self._range) != len(partials):
+                raise ValueError("length mismatch between partials and provided range")
+
+        self._partials = [slice(*p) for p in partials]
+        return
 
     def __len__(self):
-        return len(self._range)
+        """
+        Returns the number of characters covered by the Region
+        """
+        return sum([len(line[part]) for line, part in zip(self._range, self._partials)])
 
     def __getitem__(self, idx):
         if not isinstance(idx, slice):
-            return self._range[idx]
-        start = idx.start
-        end = idx.stop
-        if start is None:
-            start = self._range.start
-        if end is None:
-            end = self._range.stop
-        return [l[self.slice] for l in self._range[start:end]]
+            i = adjust_index(idx)
+            return self.request('nvim_buf_get_lines', i, i + 1, True)[0]
+        start = adjust_index(idx.start, 0)
+        end = adjust_index(idx.stop, -1)
+        #for i, (a, b, c) in enumerate(itertools.islice(zip(l1, l2, l3), 3, 7)):
+        if not isinstance(idx, slice):
+            return self._range[idx][self.partials[idx+1]]
+
+        start = idx.start or 0
+        end = idx.stop or len(self._range)
+
+        lineiter = itertools.islice(zip(self._range, self._partials), start, end)
+        return [line[partial] for line, partial in lineiter]
 
     def __setitem__(self, idx, lineparts):
         if not isinstance(idx, slice):
-            new_line = self._assemble_line(self._range[idx], lineparts)
+            new_line = self._assemble_line(idx, lineparts[0])
             self._range[idx] = new_line
             return
-        start = idx.start
-        end = idx.stop
-        if start is None:
-            start = self._range.start
-        if end is None:
-            end = self._range.stop
-        assert(end - start == len(lineparts))
+        start = idx.start or 0
+        end = idx.stop or len(self._range)
+        if end - start != len(lineparts):
+            raise ValueError("mismatch of target lines and inserts")
+
         lines = []
         for i in range(start, end):
             ni = i - start  # normalized index
-            lines.append(self._assemble_line(self._range[i], lineparts[ni]))
+            lines.append(self._assemble_line(i, lineparts[ni]))
         self._range[start:end] = lines
 
     def __iter__(self):
-        for i in range(self._range.start, self._range.end + 1):
-            yield self._buffer[i][self.slice]
+        for line, partial in zip(self._range, self._partials):
+            yield line[partial]
 
-    def _assemble_line(self, orig_line, replacement):
-            orig_prefix = orig_line[:self.slice.start]
-            orig_suffix = orig_line[self.slice.stop:]
+    def _assemble_line(self, i, replacement):
+            orig_prefix = self._range[i][:self._partials[i].start]
+            orig_suffix = self._range[i][self._partials[i].stop:]
             new_line = orig_prefix + replacement + orig_suffix
             return new_line
-
-
-class NormalRegion(object):
-    def __init__(self, buffer, startmark, endmark):
-        self._range = buffer.range(startmark[0], endmark[0] + 1)
-        self.startindex = startmark[1]
-        self.stopindex = endmark[1]+1
-
-    def __len__(self):
-        return len(self._range)
-
-    def __getitem__(self, idx):
-        if not isinstance(idx, slice):
-            if idx == 0:  # first line
-                return self._range[idx][self.startindex:]
-            elif idx == len(self._range) - 1:  # last line
-                return self._range[idx][:self.stopindex]
-            else:
-                return self._range[idx]
-
-        start = idx.start
-        end = idx.stop
-        if start is None:
-            start = self._range.start
-        if end is None:
-            end = self._range.stop
-        return [self[i] for i in range(start, stop+1)]
-
-
-    def _assemble_line(self, orig_line, replacement):
-            orig_prefix = orig_line[:self.slice.start]
-            orig_suffix = orig_line[self.slice.stop:]
-            new_line = orig_prefix + replacement + orig_suffix
-            return new_line
-
-    def __setitem__(self, idx, lineparts):
-        if not isinstance(idx, slice):
-            if idx == 0:  # first line
-                if isinstance(lineparts, str)
-                    new_line = self._range[:self.start] + lineparts
-                    self._range[idx] = new_line
-                    return
-                else:
-                    raise Exception("you can only set strings, not {}".format(type(lineparts)))
-            elif idx == len(self._range) - 1:  # last line
-                if isinstance(lineparts, str)
-                    new_line = self._range[:self.start] + lineparts
-                    self._range[idx] = new_line
-                    return
-            else:
-                self._range[idx] = new_line
-                return
-
-        start = idx.start
-        end = idx.stop
-        if start is None:
-            start = self._range.start
-        if end is None:
-            end = self._range.stop
-        assert(end - start == len(lineparts))
-        lines = []
-        for i in range(start, end):
-            ni = i - start  # normalized index
-            self[i] = lineparts[ni]
-
-    def __iter__(self):
-        for i in range(self._range.start, self._range.end + 1):
-            yield self._buffer[i][self.slice]
