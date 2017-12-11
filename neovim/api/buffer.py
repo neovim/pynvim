@@ -31,7 +31,7 @@ class Buffer(Remote):
 
     def __len__(self):
         """Return the number of lines contained in a Buffer."""
-        return self.request('buffer_line_count')
+        return self.request('nvim_buf_line_count')
 
     def __getitem__(self, idx):
         """Get a buffer line or slice by integer index.
@@ -65,7 +65,7 @@ class Buffer(Remote):
         lines = item if item is not None else []
         start = adjust_index(idx.start, 0)
         end = adjust_index(idx.stop, -1)
-        return self.request('buffer_set_lines', start, end, False, lines)
+        return self.request('nvim_buf_set_lines', start, end, False, lines)
 
     def __iter__(self):
         """Iterate lines of a buffer.
@@ -200,8 +200,8 @@ class Range(object):
         if start is None:
             start = self.start
         if end is None:
-            end = self.end + 1
-        self._buffer[start:end] = lines
+            end = self.end
+        self._buffer[start:end + 1] = lines
 
     def __iter__(self):
         for i in range(self.start, self.end + 1):

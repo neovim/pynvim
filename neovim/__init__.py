@@ -21,7 +21,7 @@ __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'shutdown_hook', 'attach', 'setup_logging', 'ErrorResponse')
 
 
-VERSION = Version(major=0, minor=1, patch=14, prerelease="dev")
+VERSION = Version(major=0, minor=2, patch=1, prerelease='dev')
 
 
 def start_host(session=None):
@@ -119,18 +119,18 @@ def setup_logging(name):
         prefix = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
         major_version = sys.version_info[0]
         logfile = '{}_py{}_{}'.format(prefix, major_version, name)
-        handler = logging.FileHandler(logfile, 'w')
+        handler = logging.FileHandler(logfile, 'w', 'utf-8')
         handler.formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s @ '
             '%(filename)s:%(funcName)s:%(lineno)s] %(process)s - %(message)s')
         logging.root.addHandler(handler)
         level = logging.INFO
         if 'NVIM_PYTHON_LOG_LEVEL' in os.environ:
-            l = getattr(logging,
-                        os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
-                        level)
-            if isinstance(l, int):
-                level = l
+            lvl = getattr(logging,
+                          os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
+                          level)
+            if isinstance(lvl, int):
+                level = lvl
         logger.setLevel(level)
 
 

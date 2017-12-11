@@ -176,6 +176,14 @@ def test_contains():
 
 
 @with_setup(setup=cleanup)
+def test_set_items_for_range():
+    vim.current.buffer[:] = ['a', 'b', 'c', 'd', 'e']
+    r = vim.current.buffer.range(1, 3)
+    r[1:3] = ['foo']*3
+    eq(vim.current.buffer[:], ['a', 'foo', 'foo', 'foo', 'd', 'e'])
+
+
+@with_setup(setup=cleanup)
 def test_region():
     reference_buffer = ['foo1', 'foo2', 'foo3', 'foo4', 'foo5', 'foo6']
 

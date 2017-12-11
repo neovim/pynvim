@@ -2,7 +2,6 @@
 import functools
 import os
 import sys
-
 from traceback import format_stack
 
 from msgpack import ExtType
@@ -79,7 +78,7 @@ class Nvim(object):
         self.types = types
         self.api = RemoteApi(self, 'nvim_')
         self.vars = RemoteMap(self, 'nvim_get_var', 'nvim_set_var')
-        self.vvars = RemoteMap(self, 'vim_get_vvar', None)
+        self.vvars = RemoteMap(self, 'nvim_get_vvar', None)
         self.options = RemoteMap(self, 'nvim_get_option', 'nvim_set_option')
         self.buffers = Buffers(self)
         self.windows = RemoteSequence(self, 'nvim_list_wins')
@@ -295,12 +294,12 @@ class Nvim(object):
 
         The returned sequences can be used as input to `feedkeys`.
         """
-        return self.request('vim_replace_termcodes', string,
+        return self.request('nvim_replace_termcodes', string,
                             from_part, do_lt, special)
 
-    def out_write(self, msg):
+    def out_write(self, msg, **kwargs):
         """Print `msg` as a normal message."""
-        return self.request('nvim_out_write', msg)
+        return self.request('nvim_out_write', msg, **kwargs)
 
     def err_write(self, msg, **kwargs):
         """Print `msg` as an error message."""
@@ -353,7 +352,7 @@ class Buffers(object):
     """Remote NVim buffers.
 
     Currently the interface for interacting with remote NVim buffers is the
-    `vim_get_buffers` msgpack-rpc function. Most methods fetch the list of
+    `nvim_list_bufs` msgpack-rpc function. Most methods fetch the list of
     buffers from NVim.
 
     Conforms to *python-buffers*.

@@ -46,6 +46,24 @@ below.
   ```
   vim.funcs.setreg('0', ["some", "text"], 'l')
   ```
+
+* `vim.api` exposes nvim API methods. For instance to call `nvim_strwidth`,
+  ```
+  result = vim.api.strwidth("some text")
+  ```
+  Note the initial `nvim_` is not included. Also, object methods can be called
+  directly on their object,
+  ```
+  buf = vim.current.buffer
+  len = buf.api.line_count()
+  ```
+  calls `nvim_buf_line_count`. Alternatively msgpack requests can be invoked
+  directly,
+  ```
+  result = vim.request("nvim_strwith", "some text")
+  len = vim.request("nvim_buf_line_count", buf)
+  ```
+
 * The API is not thread-safe in general. However, `vim.async_call` allows a
   spawned thread to schedule code to be executed on the main thread. This method
   could also be called from `:python` or a synchronous request handler, to defer
@@ -58,17 +76,10 @@ below.
   computations. Intensive computations should be done in a separate thread (or
   process), and `vim.async_call` can be used to send results back to nvim.
 
-* Some methods accept an `async` parameter: `vim.eval`,
-  `vim.command` as well as the `vim.funcs` wrappers. The python host will not
-  wait for nvim to complete the request (which also means that the return value
-  is unavailable).
-
-* You can publish arbitrary events (msgpack **notification** messages) by
-  passing `async=True` to `vim.request()` (this is analogous to the VimL
-  `rpcnotify()` function).
-  ```
-  vim.request("my_event", "arg1", "arg2", async=True)
-  ```
+* Some methods accept an `async` keyword argument: `vim.eval`, `vim.command`,
+  `vim.request` as well as the `vim.funcs` and `vim.api` wrappers.  When
+  `async=True` is passed the client will not wait for nvim to complete the
+  request (which also means that the return value is unavailable).
 
 #### Remote (new-style) plugins
 
@@ -102,6 +113,14 @@ class TestPlugin(object):
 If `sync=True` is supplied nvim will wait for the handler to finish (this is
 required for function return values), but by default handlers are executed
 asynchronously.
+
+Normally async handlers (`sync=False`, the default) are blocked while a
+synchronous handler is running. This ensures that async handlers can call
+requests without nvim confusing these requests with requests from a synchronous
+handler. To execute an asynchronous handler even when other handlers are
+running, add `allow_nested=True` to the decorator. The handler must then not
+make synchronous nvim requests, but it can make asynchronous requests, i e
+passing `async=True`.
 
 You need to run `:UpdateRemotePlugins` in nvim for changes in the specifications
 to have effect. For details see `:help remote-plugin` in nvim.
