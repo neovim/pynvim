@@ -287,6 +287,9 @@ class Region(object):
         self._range[start:end] = lines
 
     def __iter__(self):
+        return self
+
+    def __next__(self):
         for line, partial in zip(self._range, self._partials):
             yield line[partial]
 
