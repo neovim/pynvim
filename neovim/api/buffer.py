@@ -137,37 +137,31 @@ class Buffer(Remote):
     def visual_selection(self):
         """Get the current visual selection as a Region object."""
 
-        """
-
-        if  variant not in ['normal', 'block', 'line']:
-            raise Exception("No valid Region type specified")
-
-        elif variant == 'normal':
-            if rs == re:  # it's a one-liner
-                self._partials = slice(sc, ec)
-                return
-            else:
-                # start and end have to be treated special as they can be real
-                # partials
-                start_slice = slice(sc, None)
-                end_slice = slice(None, ec + 1)
-
-                # all slices in between (can be 0)
-                intermediate_slices = [slice(None, None)]*(er - sr - 1)
-
-                self._partials = start_slice + intermediate_slices + end_slice
-
-        elif variant == 'block':
-            # simple, all lines have the same partials
-            self._partials = [slice(sc, ec + 1)]*len(self._range)
-
-        elif variant == 'line':
-            # simple, no line is partial
-            self._partials = [slice(None, None)]*len(self._range)
-        """
-
         startmark = self.mark('<')
         endmark = self.mark('>')
+
+        rowstart, colstart = self.mark('<')
+        rowend, colend     = self.mark('>')
+
+        if rowend - rowstart == 0:
+            # same line, one liners are easy
+            return Region(self, rowstart, rowend, partials=(colstart, colend))
+
+        vmode = self.nvim.funcs.visualmode()
+
+        if vmode == "v":
+            # standard visual mode
+            line_count = rowend - rowstart + 1
+            full_lines_count = line_count - 2  # all except the first and last line
+            partiallist = [(colstart, None)] + full_lines_count*[(None, None)] + [(None, colend)]
+            return Region(self, rowstart, rowend, partials=partiallist)
+        elif vmode == "":
+            # visual block mode
+            return Region(self, rowstart, rowend, partials=(colstart, colend))
+        elif vmode == "V":
+            # visual line mode
+            return Region(self, rowstart, rowend, partials=(None, None))
+
         return Region(self, startmark, endmark)
 
 
