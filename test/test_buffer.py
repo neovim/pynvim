@@ -187,7 +187,7 @@ def test_set_items_for_range():
 def test_region():
     reference_buffer = ['foo1', 'foo2', 'foo3', 'foo4', 'foo5', 'foo6']
 
-    vim.current.buffer[:] = ['foo1', 'foo2', 'foo3', 'foo4', 'foo5', 'foo6']
+    vim.current.buffer[:] = reference_buffer
     eq(vim.current.buffer[2:5], ['foo3', 'foo4', 'foo5'])
 
     r = vim.current.buffer.range(3, 5)
@@ -205,6 +205,17 @@ def test_region():
     eq(r[:], ['oo']*2 + ['foo'])
 
     # writing
+    vim.current.buffer[:] = reference_buffer
+    r = Region(vim.current.buffer, 2, 4, partials=[(1, 3), (1, 3), (0, 3)])
+    r[:] = ['bar']*3
+    eq(vim.current.buffer[:], ['foo1', 'fbar2', 'fbar3', 'bar4', 'foo5', 'foo6'])
+
+    vim.current.buffer[:] = reference_buffer
+    r = Region(vim.current.buffer, 2, 4, partials=(1, 3))
+    r[:] = ['bar']*3
+    eq(vim.current.buffer[:], ['foo1', 'fbar2', 'fbar3', 'fbar4', 'foo5', 'foo6'])
+
+    vim.current.buffer[:] = reference_buffer
     r = Region(vim.current.buffer, 2, 5)
     r[:] = ['bar']*4
-    eq(vim.current.buffer[:], [])
+    eq(vim.current.buffer[:], ['foo1', 'bar', 'bar', 'bar', 'bar', 'foo6'])
