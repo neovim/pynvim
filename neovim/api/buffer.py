@@ -137,9 +137,6 @@ class Buffer(Remote):
     def visual_selection(self):
         """Get the current visual selection as a Region object."""
 
-        startmark = self.mark('<')
-        endmark = self.mark('>')
-
         rowstart, colstart = self.mark('<')
         rowend, colend     = self.mark('>')
 
