@@ -294,7 +294,13 @@ class Region(object):
             yield line[partial]
 
     def _assemble_line(self, i, replacement):
-            orig_prefix = self._range[i][:self._partials[i].start]
-            orig_suffix = self._range[i][self._partials[i].stop:]
-            new_line = orig_prefix + replacement + orig_suffix
-            return new_line
+        start = self._partials[i].start or 0
+        stop = self._partials[i].stop
+        orig_prefix = self._range[i][:start]
+
+        if stop:
+            orig_suffix = self._range[i][stop:]
+        else:
+            orig_suffix = ""
+        new_line = orig_prefix + replacement + orig_suffix
+        return new_line
