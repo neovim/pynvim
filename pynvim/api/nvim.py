@@ -13,7 +13,7 @@ from .common import (NvimError, Remote, RemoteApi, RemoteMap, RemoteSequence,
 from .tabpage import Tabpage
 from .window import Window
 from ..compat import IS_PYTHON3
-from ..util import Version, format_exc_skip
+from ..util import Version, format_exc_msg
 
 __all__ = ('Nvim')
 
@@ -209,9 +209,8 @@ class Nvim(object):
             try:
                 result = request_cb(name, args)
             except Exception as exc:
-                msg = ("error caught in request handler '{} {}': {}\n{}\n\n"
-                       .format(name, args, exc, format_exc_skip(1)))
-                self._err_cb(msg)
+                self._err_cb("error caught in request handler '{} {}': {}"
+                             .format(name, args, format_exc_msg()))
                 raise
             return walk(self._to_nvim, result)
 
@@ -221,9 +220,8 @@ class Nvim(object):
             try:
                 notification_cb(name, args)
             except Exception as exc:
-                msg = ("error caught in notification handler '{} {}': {}\n{}\n\n"  # noqa
-                       .format(name, args, exc, format_exc_skip(1)))
-                self._err_cb(msg)
+                self._err_cb("error caught in notification handler '{} {}': {}"
+                             .format(name, args, format_exc_msg()))
                 raise
 
         self._session.run(filter_request_cb, filter_notification_cb, setup_cb)
@@ -447,8 +445,8 @@ class Nvim(object):
                 fn(*args, **kwargs)
             except Exception as err:
                 msg = ("error caught while executing async callback:\n"
-                       "{!r}\n{}\n \nthe call was requested at\n{}"
-                       .format(err, format_exc_skip(1), call_point))
+                       "{}the call was requested at\n{}"
+                       .format(format_exc_msg(), call_point))
                 self._err_cb(msg)
                 raise
         self._session.threadsafe_call(handler)

@@ -12,6 +12,12 @@ def format_exc_skip(skip, limit=None):
     return (''.join(format_exception(etype, val, tb, limit))).rstrip()
 
 
+def format_exc_msg(skip=1, limit=None):
+    """Format ``exc`` to be used in error messages."""
+    _, exc, _ = sys.exc_info()
+    return "{!r}\n{}\n\n".format(exc, format_exc_skip(skip))
+
+
 # Taken from SimpleNamespace in python 3
 class Version:
     """Helper class for version info."""

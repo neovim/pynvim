@@ -12,7 +12,7 @@ from . import script_host
 from ..api import decode_if_bytes, walk
 from ..compat import IS_PYTHON3, find_module
 from ..msgpack_rpc import ErrorResponse
-from ..util import format_exc_skip, get_client_info
+from ..util import format_exc_msg, get_client_info
 
 __all__ = ('Host')
 
@@ -102,13 +102,13 @@ class Host(object):
         except Exception as exc:
             if sync:
                 # NOTE: v:exception only contains the first line.
-                msg = ("error caught in request handler '{} {}': {}\n{}"
-                       .format(name, args, exc, format_exc_skip(1)))
-                raise ErrorResponse(msg)
+                raise ErrorResponse(
+                    "error caught in request handler '{} {}': {}"
+                    .format(name, args, format_exc_msg()))
             else:
-                msg = ("error caught in async handler '{} {}': {}\n{}\n"
-                       .format(name, args, exc, format_exc_skip(1)))
-                self._on_async_err(msg + "\n")
+                self._on_async_err(
+                    "error caught in async handler '{} {}': {}"
+                    .format(name, args, format_exc_msg()))
 
     def _on_request(self, name, args):
         """Handle a msgpack-rpc request."""
