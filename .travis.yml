@@ -11,7 +11,7 @@ env:
 matrix:
   include:
     - python: 3.6
-      env: CI_TARGET=flake
+      env: CI_TARGET=checkqa TOXENV=checkqa
 python:
   # If the build matrix gets bigger, also update the number of runs
   # at the bottom of .scrutinizer.yml.
@@ -25,17 +25,11 @@ before_install:
   - if [ $CI_TARGET = tests ]; then
       eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64";
       pip install -q scrutinizer-ocular tox-travis;
-    else
-      pip install -q flake8 flake8-import-order flake8-docstrings pep8-naming;
     fi
 install:
   - pip install .
 script:
-  - if [ $CI_TARGET = tests ]; then
-      tox;
-    else
-      flake8 neovim;
-    fi
+  - tox
 after_script:
   - if [ $CI_TARGET = tests ]; then
       ocular;
