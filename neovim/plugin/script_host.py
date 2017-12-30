@@ -24,6 +24,10 @@ if IS_PYTHON3:
     if sys.version_info >= (3, 4):
         from importlib.machinery import PathFinder
 
+    PYTHON_SUBDIR = 'python3'
+else:
+    PYTHON_SUBDIR = 'python2'
+
 
 @plugin
 class ScriptHost(object):
@@ -236,16 +240,11 @@ def path_hook(nvim):
 
 def discover_runtime_directories(nvim):
     rv = []
-    for path in nvim.list_runtime_paths():
-        if not os.path.exists(path):
+    for rtp in nvim.list_runtime_paths():
+        if not os.path.exists(rtp):
             continue
-        path1 = os.path.join(path, 'pythonx')
-        if IS_PYTHON3:
-            path2 = os.path.join(path, 'python3')
-        else:
-            path2 = os.path.join(path, 'python2')
-        if os.path.exists(path1):
-            rv.append(path1)
-        if os.path.exists(path2):
-            rv.append(path2)
+        for subdir in ['pythonx', PYTHON_SUBDIR]:
+            path = os.path.join(rtp, subdir)
+            if os.path.exists(path):
+                rv.append(path)
     return rv
