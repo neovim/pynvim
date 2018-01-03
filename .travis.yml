@@ -25,6 +25,8 @@ before_install:
   - if [ $CI_TARGET = tests ]; then
       eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64";
       pip install -q scrutinizer-ocular tox-travis;
+    else
+      pip install -q tox;
     fi
 install:
   - pip install .
