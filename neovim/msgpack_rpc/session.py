@@ -26,6 +26,7 @@ class Session(object):
         self._pending_messages = deque()
         self._is_running = False
         self._setup_exception = None
+        self.loop = async_session.loop
 
     def threadsafe_call(self, fn, *args, **kwargs):
         """Wrapper around `AsyncSession.threadsafe_call`."""

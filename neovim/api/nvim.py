@@ -36,6 +36,12 @@ class Nvim(object):
     `SubClass.from_nvim(nvim)` where `SubClass` is a subclass of `Nvim`, which
     is useful for having multiple `Nvim` objects that behave differently
     without one affecting the other.
+
+    When this library is used on python3.4+, asyncio event loop is guaranteed
+    to be used. It is available as the "loop" attribute of this class. Note
+    that asyncio callbacks cannot make blocking requests, which includes
+    accessing state-dependent attributes. They should instead schedule another
+    callback using nvim.async_call, which will not have this restriction.
     """
 
     @classmethod
@@ -89,6 +95,10 @@ class Nvim(object):
         self.error = NvimError
         self._decode = decode
         self._err_cb = err_cb
+
+        # only on python3.4+ we expose asyncio
+        if IS_PYTHON3:
+            self.loop = self._session.loop._loop
 
     def _from_nvim(self, obj, decode=None):
         if decode is None:
