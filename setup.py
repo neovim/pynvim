@@ -5,7 +5,7 @@ import os
 from setuptools import setup
 
 install_requires = [
-    'msgpack-python>=0.4.0',
+    'msgpack>=0.5.0',
 ]
 extras_require = {
     'pyuv': ['pyuv>=1.0.0'],
