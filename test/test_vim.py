@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, tempfile
+import os, sys, tempfile
 from nose.tools import with_setup, eq_ as eq, ok_ as ok
 from test_common import vim, cleanup
 
@@ -15,7 +15,7 @@ def source(code):
 def test_command():
     fname = tempfile.mkstemp()[1]
     vim.command('new')
-    vim.command('edit %s' % fname)
+    vim.command('edit {}'.format(fname))
     # skip the "press return" state, which does not handle deferred calls
     vim.input('\r')
     vim.command('normal itesting\npython\napi')
@@ -162,3 +162,20 @@ def test_hash():
     eq(d[vim.current.buffer], "alpha")
     vim.command('winc w')
     eq(d[vim.current.buffer], "beta")
+
+
+@with_setup(setup=cleanup)
+def test_cwd():
+    pycmd = 'python'
+    if sys.version_info >= (3, 0):
+        pycmd = 'python3'
+
+    vim.command('{} import os'.format(pycmd))
+    cwd_before = vim.command_output('{} print(os.getcwd())'.format(pycmd))
+
+    vim.command('cd test')
+    cwd_vim = vim.command_output('pwd')
+    cwd_python = vim.command_output('{} print(os.getcwd())'.format(pycmd))
+    eq(cwd_vim, cwd_python)
+    ok(cwd_python != cwd_before)
+

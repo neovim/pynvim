@@ -8,15 +8,15 @@ Using pip
 
 You can install the package without being root by adding the ``--user`` flag::
 
-    pip2 install neovim
-    pip3 install neovim
+    pip2 install --user neovim
+    pip3 install --user neovim
 
 .. note::
   
     If you only use one of python2 or python3,
     it is enough to install that version.
 
-If you follow Neovim master,
+If you follow Neovim HEAD,
 make sure to upgrade the ``python-client`` when you upgrade Neovim::
 
     pip2 install --upgrade neovim

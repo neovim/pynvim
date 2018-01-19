@@ -45,6 +45,14 @@ class ScriptHost(object):
         self.legacy_vim = LegacyVim.from_nvim(nvim)
         sys.modules['vim'] = self.legacy_vim
 
+        # Handle DirChanged. #296
+        nvim.command(
+            'autocmd DirChanged * call rpcrequest({}, "python_chdir", v:event)'
+            .format(nvim.channel_id), async=True)
+        # XXX: Avoid race condition.
+        # https://github.com/neovim/python-client/pull/296#issuecomment-358970531
+        os.chdir(nvim.eval('getcwd()', async=False))
+
     def setup(self, nvim):
         """Setup import hooks and global streams.
 
@@ -152,6 +160,11 @@ class ScriptHost(object):
     def python_eval(self, expr):
         """Handle the `pyeval` vim function."""
         return eval(expr, self.module.__dict__)
+
+    @rpc_export('python_chdir', sync=True)
+    def python_chdir(self, args):
+        """Handle working directory changes."""
+        os.chdir(args['cwd'])
 
     def _set_current_range(self, start, stop):
         current = self.legacy_vim.current
