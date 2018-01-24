@@ -242,9 +242,9 @@ def path_hook(nvim):
                 return None
 
         @staticmethod
-        def find_spec(fullname, path=None, target=None):
+        def find_spec(fullname, target=None):
             """Method for Python 3.4+."""
-            return PathFinder.find_spec(fullname, path or _get_paths(), target)
+            return PathFinder.find_spec(fullname, _get_paths(), target)
 
     def hook(path):
         if path == nvim.VIM_SPECIAL_PATH:
