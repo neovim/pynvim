@@ -227,8 +227,10 @@ def path_hook(nvim):
 
         def load_module(self, fullname, path=None):
             # Check sys.modules, required for reload (see PEP302).
-            if fullname in sys.modules:
+            try:
                 return sys.modules[fullname]
+            except KeyError:
+                pass
             return imp.load_module(fullname, *self.module)
 
     class VimPathFinder(object):
