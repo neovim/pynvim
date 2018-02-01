@@ -55,7 +55,7 @@ def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
 
         if range is not None:
             opts['range'] = '' if range is True else str(range)
-        elif count:
+        elif count is not None:
             opts['count'] = count
 
         if bang:
