@@ -22,10 +22,10 @@ if platform.python_implementation() != 'PyPy':
     install_requires.append('greenlet')
 
 setup(name='neovim',
-      version='0.2.1dev',
+      version='0.2.1',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
-      download_url='https://github.com/neovim/python-client/archive/0.2.0.tar.gz',
+      download_url='https://github.com/neovim/python-client/archive/0.2.1.tar.gz',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='Apache',
