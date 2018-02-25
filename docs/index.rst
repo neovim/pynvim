@@ -17,6 +17,9 @@ Also works as a library for connecting to and scripting Neovim processes through
    :maxdepth: 2
 
    api/nvim
+   api/buffer
+   api/window
+   api/tabpage
 
 .. toctree::
    :caption: Development
