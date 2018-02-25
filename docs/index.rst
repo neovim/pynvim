@@ -16,6 +16,7 @@ Also works as a library for connecting to and scripting Neovim processes through
    :caption: API documentation
    :maxdepth: 2
 
+   plugin-decorators
    api/nvim
    api/buffer
    api/window
