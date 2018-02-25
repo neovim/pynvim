@@ -47,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Neovim'
+project = 'Neovim Python Client'
 copyright = '2018, Neovim'
 author = 'Neovim'
 
