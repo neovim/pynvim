@@ -1,6 +1,7 @@
 Neovim Class
 ============
 
-.. module:: neovim.api.nvim
+An instance of this class is used by remote plugins.
 
-Here is the all API
+.. autoclass:: neovim.api.nvim.Nvim
+   :members:
