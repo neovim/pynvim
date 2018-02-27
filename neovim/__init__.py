@@ -96,6 +96,18 @@ def attach(session_type, address=None, port=None,
         nvim = attach('socket', path=<path>)
         nvim = attach('child', argv=<argv>)
         nvim = attach('stdio')
+
+    When the session is not needed anymore, it is recommended to explicitly
+    close it:
+       nvim.close()
+    It is also possible to use the session as a context mangager:
+       with attach('socket', path=thepath) as nvim:
+           print(nvim.funcs.getpid())
+           print(nvim.current.line)
+    This will automatically close the session when you're done with it, or
+    when an error occured.
+
+
     """
     session = (tcp_session(address, port) if session_type == 'tcp' else
                socket_session(path) if session_type == 'socket' else

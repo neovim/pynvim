@@ -48,6 +48,10 @@ class MsgpackStream(object):
         """Stop the event loop."""
         self._event_loop.stop()
 
+    def close(self):
+        """Close the event loop."""
+        self._event_loop.close()
+
     def _on_data(self, data):
         self._unpacker.feed(data)
         while True:

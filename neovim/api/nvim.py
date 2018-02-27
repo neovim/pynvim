@@ -1,7 +1,7 @@
 """Main Nvim interface."""
-import functools
 import os
 import sys
+from functools import partial
 from traceback import format_stack
 
 from msgpack import ExtType
@@ -179,6 +179,21 @@ class Nvim(object):
     def stop_loop(self):
         """Stop the event loop being started with `run_loop`."""
         self._session.stop()
+
+    def close(self):
+        """Close the nvim session and release its resources."""
+        self._session.close()
+
+    def __enter__(self):
+        """Enter nvim session as a context manager."""
+        return self
+
+    def __exit__(self, *exc_info):
+        """Exit nvim session as a context manager.
+
+        Closes the event loop.
+        """
+        self.close()
 
     def with_decode(self, decode=True):
         """Initialize a new Nvim instance."""
@@ -439,7 +454,7 @@ class Funcs(object):
         self._nvim = nvim
 
     def __getattr__(self, name):
-        return functools.partial(self._nvim.call, name)
+        return partial(self._nvim.call, name)
 
 
 class NvimError(Exception):
