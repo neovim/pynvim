@@ -83,9 +83,11 @@ below.
 
 #### Remote (new-style) plugins
 
-Neovim allows python plugins to be defined by placing python files or packages
-in `rplugin/python3/` (in a runtimepath folder). These follow the structure of
-this example:
+Neovim allows python3 plugins to be defined by placing python files or packages
+in `rplugin/python3/` (in a runtimepath folder). Python2 rplugins are also
+supported and placed in `rplugin/python/`, but are considered deprecated.
+Further added library features will only be available on python3. Rplugins follow
+the structure of this example:
 
 ```python
 import neovim
