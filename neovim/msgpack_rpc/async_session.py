@@ -70,6 +70,10 @@ class AsyncSession(object):
         """Stop the event loop."""
         self._msgpack_stream.stop()
 
+    def close(self):
+        """Close the event loop."""
+        self._msgpack_stream.close()
+
     def _on_message(self, msg):
         try:
             self._handlers.get(msg[0], self._on_invalid_message)(msg)

@@ -140,6 +140,10 @@ class Session(object):
         """Stop the event loop."""
         self._async_session.stop()
 
+    def close(self):
+        """Close the event loop."""
+        self._async_session.close()
+
     def _yielding_request(self, method, args):
         gr = greenlet.getcurrent()
         parent = gr.parent

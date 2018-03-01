@@ -39,6 +39,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
     def connection_made(self, transport):
         """Used to signal `asyncio.Protocol` of a successful connection."""
         self._transport = transport
+        self._raw_transport = transport
         if isinstance(transport, asyncio.SubprocessTransport):
             self._transport = transport.get_pipe_transport(0)
 
@@ -74,6 +75,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         self._loop = loop_cls()
         self._queued_data = deque()
         self._fact = lambda: self
+        self._raw_transport = None
 
     def _connect_tcp(self, address, port):
         coroutine = self._loop.create_connection(self._fact, address, port)
@@ -111,6 +113,11 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
 
     def _stop(self):
         self._loop.stop()
+
+    def _close(self):
+        if self._raw_transport is not None:
+            self._raw_transport.close()
+        self._loop.close()
 
     def _threadsafe_call(self, fn):
         self._loop.call_soon_threadsafe(fn)

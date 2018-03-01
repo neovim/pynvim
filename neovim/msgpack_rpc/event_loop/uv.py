@@ -97,6 +97,9 @@ class UvEventLoop(BaseEventLoop):
     def _stop(self):
         self._loop.stop()
 
+    def _close(self):
+        pass
+
     def _threadsafe_call(self, fn):
         self._callbacks.append(fn)
         self._async.send()

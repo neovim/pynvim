@@ -85,7 +85,11 @@ class BaseEventLoop(object):
         self._on_data = None
         self._error = None
         self._init()
-        getattr(self, '_connect_{}'.format(transport_type))(*args)
+        try:
+            getattr(self, '_connect_{}'.format(transport_type))(*args)
+        except Exception as e:
+            self.close()
+            raise e
         self._start_reading()
 
     def connect_tcp(self, address, port):
@@ -147,6 +151,11 @@ class BaseEventLoop(object):
         """Stop the event loop."""
         self._stop()
         debug('Stopped event loop')
+
+    def close(self):
+        """Stop the event loop."""
+        self._close()
+        debug('Closed event loop')
 
     def _on_signal(self, signum):
         msg = 'Received {}'.format(self._signames[signum])
