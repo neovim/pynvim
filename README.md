@@ -9,7 +9,7 @@ connecting to and scripting Nvim processes through its msgpack-rpc API.
 
 #### Installation
 
-Supports python 2.7, and 3.3 or later.
+Supports python 2.7, and 3.4 or later.
 
 ```sh
 pip2 install neovim

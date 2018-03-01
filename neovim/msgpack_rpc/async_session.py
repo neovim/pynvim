@@ -27,6 +27,7 @@ class AsyncSession(object):
             1: self._on_response,
             2: self._on_notification
         }
+        self.loop = msgpack_stream.loop
 
     def threadsafe_call(self, fn):
         """Wrapper around `MsgpackStream.threadsafe_call`."""
