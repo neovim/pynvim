@@ -27,12 +27,12 @@ class MsgpackStream(object):
 
     def threadsafe_call(self, fn):
         """Wrapper around `BaseEventLoop.threadsafe_call`."""
-        self.loop .threadsafe_call(fn)
+        self.loop.threadsafe_call(fn)
 
     def send(self, msg):
         """Queue `msg` for sending to Nvim."""
         debug('sent %s', msg)
-        self.loop .send(self._packer.pack(msg))
+        self.loop.send(self._packer.pack(msg))
 
     def run(self, message_cb):
         """Run the event loop to receive messages from Nvim.
@@ -41,16 +41,16 @@ class MsgpackStream(object):
         a message has been successfully parsed from the input stream.
         """
         self._message_cb = message_cb
-        self.loop .run(self._on_data)
+        self.loop.run(self._on_data)
         self._message_cb = None
 
     def stop(self):
         """Stop the event loop."""
-        self.loop .stop()
+        self.loop.stop()
 
     def close(self):
         """Close the event loop."""
-        self._event_loop.close()
+        self.loop.close()
 
     def _on_data(self, data):
         self._unpacker.feed(data)
