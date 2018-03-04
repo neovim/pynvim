@@ -8,3 +8,6 @@ dist/
 .cache
 .eggs
 .tox
+
+# Sphinx documentation
+docs/_build/
