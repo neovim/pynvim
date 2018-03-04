@@ -12,7 +12,7 @@ as discussed on :docs:`Remote plugins`.
 Exposes vimscript functions (both builtin and global user defined functions) as a python namespace.
 For instance to set the value of a register:
 
-.. code::python
+.. code-block:: python
 
    vim.funcs.setreg('0', ["some", "text"], 'l')
 
@@ -22,14 +22,14 @@ For instance to set the value of a register:
 Exposes Neovim API methods.
 For instance to call ``nvim_strwidth``:
 
-.. code::python
+.. code-block:: python
 
    result = vim.api.strwidth("some text")
 
 Note the initial ``nvim_`` is not included.
 Also, object methods can be called directly on their object:
 
-.. code::python
+.. code-block:: python
 
    buf = vim.current.buffer
    len = buf.api.line_count()
@@ -37,7 +37,7 @@ Also, object methods can be called directly on their object:
 calls ``nvim_buf_line_count``.
 Alternatively msgpack requests can be invoked directly:
 
-.. code::python
+.. code-block:: python
 
    result = vim.request("nvim_strwith", "some text")
    len = vim.request("nvim_buf_line_count", buf)
@@ -50,7 +50,7 @@ However, ``vim.async_call`` allows a spawned thread to schedule code to be execu
 This method could also be called from ``:python`` or a synchronous request handler,
 to defer some execution that shouldn't block Neovim:
 
-.. code::vim
+.. code-block:: vim
 
    :python vim.async_call(myfunc, args...)
 
