@@ -20,6 +20,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('./'))
+import datetime
 
 
 # -- General configuration ------------------------------------------------
@@ -48,7 +49,9 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Neovim Python Client'
-copyright = '2018, Neovim'
+copyright = '2014 - {year}, Neovim'.format(
+    year=datetime.datetime.now().year
+)
 author = 'Neovim'
 
 # The version info for the project you're documenting, acts as replacement for
