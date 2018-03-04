@@ -13,6 +13,13 @@ Also works as a library for connecting to and scripting Neovim processes through
    installation
 
 .. toctree::
+   :caption: Usage
+   :maxdepth: 2
+
+   usage/python-plugin-api
+   usage/remote-plugins
+
+.. toctree::
    :caption: API documentation
    :maxdepth: 2
 
