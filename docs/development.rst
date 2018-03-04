@@ -50,7 +50,7 @@ and ``KIND`` is either "rplugin" or "script" (for the ``:python[3]`` script inte
 If the host cannot start at all,
 the error could be found in ``~/.nvimlog`` if ``nvim`` was compiled with logging.
 
-Usage through the python REPL
+Usage through the Python REPL
 -----------------------------
 
 A number of different transports are supported,
