@@ -1,5 +1,5 @@
 Tabpage Class
 =============
 
-.. autoclass:: neovim.api.Tabpage
+.. autoclass:: pynvim.api.Tabpage
    :members:

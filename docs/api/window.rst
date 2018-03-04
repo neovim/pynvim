@@ -1,5 +1,5 @@
 Window Class
 ============
 
-.. autoclass:: neovim.api.Window
+.. autoclass:: pynvim.api.Window
    :members:

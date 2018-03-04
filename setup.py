@@ -28,16 +28,17 @@ if platform.python_implementation() != 'PyPy':
     # pypy already includes an implementation of the greenlet module
     install_requires.append('greenlet')
 
-setup(name='neovim',
-      version='0.3.0',
+setup(name='pynvim',
+      version='0.3.1dev1',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
       download_url='https://github.com/neovim/python-client/archive/0.3.0.tar.gz',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='Apache',
-      packages=['neovim', 'neovim.api', 'neovim.msgpack_rpc',
-                'neovim.msgpack_rpc.event_loop', 'neovim.plugin'],
+      packages=['pynvim', 'pynvim.api', 'pynvim.msgpack_rpc',
+                'pynvim.msgpack_rpc.event_loop', 'pynvim.plugin',
+                'neovim', 'neovim.api'],
       install_requires=install_requires,
       tests_require=tests_require,
       extras_require=extras_require,

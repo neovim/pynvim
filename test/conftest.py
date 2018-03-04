@@ -2,10 +2,10 @@ import json
 import os
 import textwrap
 
-import neovim
+import pynvim
 import pytest
 
-neovim.setup_logging("test")
+pynvim.setup_logging("test")
 
 
 @pytest.fixture(autouse=True)
@@ -60,8 +60,8 @@ def vim():
         child_argv = '["nvim", "-u", "NONE", "--embed"]'
 
     if child_argv is not None:
-        editor = neovim.attach('child', argv=json.loads(child_argv))
+        editor = pynvim.attach('child', argv=json.loads(child_argv))
     else:
-        editor = neovim.attach('socket', path=listen_address)
+        editor = pynvim.attach('socket', path=listen_address)
 
     return editor

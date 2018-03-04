@@ -8,8 +8,8 @@ Using pip
 
 You can install the package without being root by adding the ``--user`` flag::
 
-    pip2 install --user neovim
-    pip3 install --user neovim
+    pip2 install --user pynvim
+    pip3 install --user pynvim
 
 .. note::
   
@@ -19,8 +19,8 @@ You can install the package without being root by adding the ``--user`` flag::
 If you follow Neovim HEAD,
 make sure to upgrade the ``python-client`` when you upgrade Neovim::
 
-    pip2 install --upgrade neovim
-    pip3 install --upgrade neovim
+    pip2 install --upgrade pynvim
+    pip3 install --upgrade pynvim
 
 Install from source
 -------------------
