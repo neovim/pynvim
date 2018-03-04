@@ -4,7 +4,7 @@ Python Plugin API
 Neovim has a new mechanism for defining plugins,
 as well as a number of extensions to the python API.
 The API extensions are accessible no matter if the traditional ``:python`` interface or the new mechanism is used,
-as discussed on :docs:`Remote plugins`.
+as discussed on :doc:`remote-plugins`.
 
 ``vim.funcs``
 -------------
