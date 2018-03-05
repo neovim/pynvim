@@ -121,7 +121,7 @@ class Nvim(object):
         self._err_cb = err_cb
 
         # only on python3.4+ we expose asyncio
-        if IS_PYTHON3 and os.name != 'nt':
+        if IS_PYTHON3:
             self.loop = self._session.loop._loop
 
     def _from_nvim(self, obj, decode=None):
