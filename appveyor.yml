@@ -1,0 +1,28 @@
+version: '{build}'
+
+environment:
+  matrix:
+    - PYTHON_VERSION: 27
+    - PYTHON_VERSION: 35
+
+install:
+  - set PATH=C:\Python%PYTHON_VERSION%;C:\tools\neovim\Neovim\bin;%PATH%
+  - set NVIM_PYTHON_LOG_LEVEL=DEBUG
+  - set NVIM_PYTHON_LOG_FILE=%cd%\ci.log
+  - choco install neovim --pre -fy --ignore-dependencies
+  - python -m pip install pytest
+  - python -m pip install .
+
+build: off
+
+branches:
+  only:
+    - master
+
+before_test:
+  - python -V
+  - python -m pip -V
+  - nvim -v
+
+test_script:
+- python -m pytest
