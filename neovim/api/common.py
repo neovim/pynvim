@@ -118,11 +118,11 @@ class RemoteSequence(object):
 
     For example, the 'windows' property of the `Nvim` class is a RemoteSequence
     sequence instance, and the expression `nvim.windows[0]` is translated to
-    session.request('vim_get_windows')[0].
+    session.request('nvim_list_wins')[0].
 
     It can also receive an optional self_obj that will be passed as first
     argument of the request. For example, `tabpage.windows[0]` is translated
-    to: session.request('tabpage_get_windows', tabpage_instance)[0].
+    to: session.request('nvim_tabpage_list_wins', tabpage_instance)[0].
 
     One important detail about this class is that all methods will fetch the
     sequence into a list and perform the necessary manipulation
