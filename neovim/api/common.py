@@ -69,8 +69,8 @@ class RemoteMap(object):
     It is used to provide a dict-like API to vim variables and options.
     """
 
-    def __init__(self, obj, get_method, set_method=None, self_obj=None):
-        """Initialize a RemoteMap with session, getter/setter and self_obj."""
+    def __init__(self, obj, get_method, set_method=None):
+        """Initialize a RemoteMap with session, getter/setter."""
         self._get = functools.partial(obj.request, get_method)
         self._set = None
         if set_method:
@@ -120,17 +120,13 @@ class RemoteSequence(object):
     sequence instance, and the expression `nvim.windows[0]` is translated to
     session.request('nvim_list_wins')[0].
 
-    It can also receive an optional self_obj that will be passed as first
-    argument of the request. For example, `tabpage.windows[0]` is translated
-    to: session.request('nvim_tabpage_list_wins', tabpage_instance)[0].
-
     One important detail about this class is that all methods will fetch the
     sequence into a list and perform the necessary manipulation
     locally(iteration, indexing, counting, etc).
     """
 
     def __init__(self, session, method):
-        """Initialize a RemoteSequence with session, method and self_obj."""
+        """Initialize a RemoteSequence with session, method."""
         self._fetch = functools.partial(session.request, method)
 
     def __len__(self):
