@@ -1,4 +1,5 @@
 .. _remote-plugins:
+
 Remote (new-style) plugins
 ==========================
 
@@ -45,3 +46,40 @@ but it can make asynchronous requests, i.e. passing ``async=True``.
 
 You need to run ``:UpdateRemotePlugins`` in Neovim for changes in the specifications to have effect.
 For details see ``:help remote-plugin`` in Neovim.
+
+For local plugin development, it's a good idea to use an isolated vimrc:
+
+.. code-block:: console
+
+    cat vimrc
+    let &runtimepath.=','.escape(expand('<sfile>:p:h'), '\,')
+
+That appends the current directory to the Nvim runtime path so Nvim can
+find your plugin. You can now invoke Neovim:
+
+.. code-block:: console
+
+    nvim -u ./vimrc
+
+Then run ``:UpdateRemotePlugins`` and your plugin should be activated.
+
+In case you run into some issues, you can list loaded plugins:
+
+.. code-block:: console
+
+    :scriptnames
+      1: ~/path/to/your/plugin-git-repo/vimrc
+      2: /usr/share/nvim/runtime/filetype.vim
+      ...
+     25: /usr/share/nvim/runtime/plugin/zipPlugin.vim
+     26: ~/path/to/your/plugin-git-repo/plugin/lucid.vim
+
+You can also inspect the ``runtimepath`` like this:
+
+.. code-block:: console
+
+    :set runtimepath
+      runtimepath=~/.config/nvim,/etc/xdg/nvim,~/.local/share/nvim/site,...,
+    ,~/g/path/to/your/plugin-git-repo
+
+
