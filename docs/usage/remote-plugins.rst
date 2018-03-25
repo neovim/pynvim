@@ -1,4 +1,5 @@
 .. _remote-plugins:
+
 Remote (new-style) plugins
 ==========================
 
