@@ -208,7 +208,7 @@ class Nvim(object):
             args = walk(self._from_nvim, args)
             try:
                 result = request_cb(name, args)
-            except Exception as exc:
+            except Exception:
                 self._err_cb("error caught in request handler '{} {}': {}"
                              .format(name, args, format_exc_msg()))
                 raise
@@ -219,7 +219,7 @@ class Nvim(object):
             args = walk(self._from_nvim, args)
             try:
                 notification_cb(name, args)
-            except Exception as exc:
+            except Exception:
                 self._err_cb("error caught in notification handler '{} {}': {}"
                              .format(name, args, format_exc_msg()))
                 raise
@@ -443,7 +443,7 @@ class Nvim(object):
         def handler():
             try:
                 fn(*args, **kwargs)
-            except Exception as err:
+            except Exception:
                 msg = ("error caught while executing async callback:\n"
                        "{}the call was requested at\n{}"
                        .format(format_exc_msg(), call_point))

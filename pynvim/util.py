@@ -1,7 +1,7 @@
 """Shared utility functions."""
 
 import sys
-from traceback import format_exception
+from traceback import format_exception, format_exception_only
 
 
 def format_exc_skip(skip, limit=None):
@@ -13,9 +13,27 @@ def format_exc_skip(skip, limit=None):
 
 
 def format_exc_msg(skip=1, limit=None):
-    """Format ``exc`` to be used in error messages."""
-    _, exc, _ = sys.exc_info()
-    return "{!r}\n{}\n\n".format(exc, format_exc_skip(skip))
+    """Format ``exc`` to be used in error messages.
+
+    It duplicates the exception itself on the first line, since v:exception
+    will only contain this.
+
+    `repr()` is used for SyntaxErrors, because it will contain more information
+    (including the full path) that cannot be easily displayed on a single line.
+
+        SyntaxError('unexpected EOF while parsing',
+                    ('<string>', 1, 12, 'syntaxerror(')))
+
+    For all other exceptions `traceback.format_exception_only` is used,
+    which is the same as the last line then (via with `format_exception` in
+    `format_exc_skip`).
+    """
+    etype, value, _ = sys.exc_info()
+    if issubclass(etype, SyntaxError):
+        exc_msg = repr(value)
+    else:
+        exc_msg = format_exception_only(etype, value)[-1].rstrip('\n')
+    return "{!s}\n{}\n\n".format(exc_msg, format_exc_skip(skip))
 
 
 # Taken from SimpleNamespace in python 3
