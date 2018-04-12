@@ -26,10 +26,8 @@ def test_command():
     os.unlink(fname)
 
 
-@with_setup
 def test_command_output():
-    eq(vim.command_output('echo test'), 'test')
-
+    eq(vim.command_output('echon "test"'), 'test')
 
 @with_setup(setup=cleanup)
 def test_eval():
