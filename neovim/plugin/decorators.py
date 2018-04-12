@@ -14,7 +14,7 @@ __all__ = ('plugin', 'rpc_export', 'command', 'autocmd', 'function',
 def plugin(cls):
     """Tag a class as a plugin.
 
-    This decorator is required to make the a class methods discoverable by the
+    This decorator is required to make the class methods discoverable by the
     plugin_load method of the host.
     """
     cls._nvim_plugin = True
