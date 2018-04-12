@@ -1,6 +1,6 @@
 """API for working with a Nvim Buffer."""
 from .common import Remote
-from ..compat import IS_PYTHON3
+from ..compat import IS_PYTHON3, check_async
 
 
 __all__ = ('Buffer')
@@ -98,15 +98,17 @@ class Buffer(Remote):
         return Range(self, start, end)
 
     def add_highlight(self, hl_group, line, col_start=0,
-                      col_end=-1, src_id=-1, async_=None):
+                      col_end=-1, src_id=-1, async_=None,
+                      **kwargs):
         """Add a highlight to the buffer."""
-        if async_ is None:
-            async_ = (src_id != 0)
+        async_ = check_async(async_, kwargs, src_id != 0)
         return self.request('nvim_buf_add_highlight', src_id, hl_group,
                             line, col_start, col_end, async_=async_)
 
-    def clear_highlight(self, src_id, line_start=0, line_end=-1, async_=True):
+    def clear_highlight(self, src_id, line_start=0, line_end=-1, async_=None,
+                        **kwargs):
         """Clear highlights from the buffer."""
+        async_ = check_async(async_, kwargs, True)
         self.request('nvim_buf_clear_highlight', src_id,
                      line_start, line_end, async_=async_)
 
