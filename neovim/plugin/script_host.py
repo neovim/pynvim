@@ -172,7 +172,7 @@ class RedirectStream(io.IOBase):
 if IS_PYTHON3:
     num_types = (int, float)
 else:
-    num_types = (int, long, float)
+    num_types = (int, long, float)  # noqa: F821
 
 
 def num_to_str(obj):
