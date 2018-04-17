@@ -19,6 +19,29 @@ __all__ = ('Nvim')
 
 os_chdir = os.chdir
 
+lua_module = """
+local a = vim.api
+local function update_highlights(buf, src_id, hls, clear_first, clear_end)
+  if clear_first ~= nil then
+      a.nvim_buf_clear_highlight(buf, src_id, clear_first, clear_end)
+  end
+  for _,hl in pairs(hls) do
+    local group, line, col_start, col_end = unpack(hl)
+    if col_start == nil then
+      col_start = 0
+    end
+    if col_end == nil then
+      col_end = -1
+    end
+    a.nvim_buf_add_highlight(buf, src_id, group, line, col_start, col_end)
+  end
+end
+
+local chid = ...
+local mod = {update_highlights=update_highlights}
+_G["_pynvim_"..chid] = mod
+"""
+
 
 class Nvim(object):
 
@@ -115,6 +138,12 @@ class Nvim(object):
         if isinstance(obj, Remote):
             return ExtType(*obj.code_data)
         return obj
+
+    def _get_lua_private(self):
+        if not getattr(self._session, "_has_lua", False):
+            self.exec_lua(lua_module, self.channel_id)
+            self._session._has_lua = True
+        return getattr(self.lua, "_pynvim_{}".format(self.channel_id))
 
     def request(self, name, *args, **kwargs):
         r"""Send an API request or notification to nvim.

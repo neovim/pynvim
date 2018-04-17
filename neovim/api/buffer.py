@@ -112,6 +112,29 @@ class Buffer(Remote):
         self.request('nvim_buf_clear_highlight', src_id,
                      line_start, line_end, async_=async_)
 
+    def update_highlights(self, src_id, hls, clear_start=0, clear_end=-1,
+                          clear=False, async_=True):
+        """Add or update highlights in batch to avoid unnecessary redraws.
+
+        A `src_id` must have been allocated prior to use of this function. Use
+        for instance `nvim.new_highlight_source()` to get a src_id for your
+        plugin.
+
+        `hls` should be a list of highlight items. Each item should be a list
+        or tuple on the form `("GroupName", linenr, col_start, col_end)` or
+        `("GroupName", linenr)` to highlight an entire line.
+
+        By default existing highlights are preserved. Specify a line range with
+        clear_start and clear_end to replace highlights in this range. As a
+        shorthand, use clear=True to clear the entire buffer before adding the
+        new highlights.
+        """
+        if clear and clear_start is None:
+            clear_start = 0
+        lua = self._session._get_lua_private()
+        lua.update_highlights(self, src_id, hls, clear_start, clear_end,
+                              async_=async_)
+
     @property
     def name(self):
         """Get the buffer name."""
