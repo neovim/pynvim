@@ -42,7 +42,7 @@ This ensures that async handlers can call requests without Neovim confusing thes
 To execute an asynchronous handler even when other handlers are running,
 add ``allow_nested=True`` to the decorator.
 The handler must then not make synchronous Neovim requests,
-but it can make asynchronous requests, i.e. passing ``async=True``.
+but it can make asynchronous requests, i.e. passing ``async_=True``.
 
 You need to run ``:UpdateRemotePlugins`` in Neovim for changes in the specifications to have effect.
 For details see ``:help remote-plugin`` in Neovim.
