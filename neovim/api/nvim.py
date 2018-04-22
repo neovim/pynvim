@@ -122,16 +122,16 @@ class Nvim(object):
         functions have python wrapper functions. The `api` object can
         be also be used to call API functions as methods:
 
-            vim.api.err_write('ERROR\n', async=True)
+            vim.api.err_write('ERROR\n', async_=True)
             vim.current.buffer.api.get_mark('.')
 
         is equivalent to
 
-            vim.request('nvim_err_write', 'ERROR\n', async=True)
+            vim.request('nvim_err_write', 'ERROR\n', async_=True)
             vim.request('nvim_buf_get_mark', vim.current.buffer, '.')
 
 
-        Normally a blocking request will be sent.  If the `async` flag is
+        Normally a blocking request will be sent.  If the `async_` flag is
         present and True, a asynchronous notification is sent instead. This
         will never block, and the return value or error is ignored.
         """

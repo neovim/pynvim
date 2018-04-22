@@ -5,6 +5,8 @@ from traceback import format_exc
 
 import greenlet
 
+from ..compat import check_async
+
 logger = logging.getLogger(__name__)
 error, debug, info, warn = (logger.error, logger.debug, logger.info,
                             logger.warning,)
@@ -72,12 +74,12 @@ class Session(object):
         - Run the loop until the response is available
         - Put requests/notifications received while waiting into a queue
 
-        If the `async` flag is present and True, a asynchronous notification is
-        sent instead. This will never block, and the return value or error is
-        ignored.
+        If the `async_` flag is present and True, a asynchronous notification
+        is sent instead. This will never block, and the return value or error
+        is ignored.
         """
-        async = kwargs.pop('async', False)
-        if async:
+        async_ = check_async(kwargs.pop('async_', None), kwargs, False)
+        if async_:
             self._async_session.notify(method, args)
             return
 

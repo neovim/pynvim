@@ -44,7 +44,7 @@ def test_async_call():
         vim.stop_loop()
 
     # this would have dead-locked if not async
-    vim.funcs.rpcrequest(vim.channel_id, "test-event", async=True)
+    vim.funcs.rpcrequest(vim.channel_id, "test-event", async_=True)
     vim.run_loop(request_cb, None, None)
     eq(vim.vars['result'], 17)
 

@@ -58,7 +58,7 @@ Note that this code will still block the plugin host if it does long-running com
 Intensive computations should be done in a separate thread (or process),
 and ``vim.async_call`` can be used to send results back to Neovim.
 
-Some methods accept an ``async`` keyword argument:
+Some methods accept an ``async_`` keyword argument:
 ``vim.eval``, ``vim.command``, ``vim.request`` as well as the ``vim.funcs`` and ``vim.api`` wrappers.
-When ``async=True`` is passed the client will not wait for Neovim to complete the request
+When ``async_=True`` is passed the client will not wait for Neovim to complete the request
 (which also means that the return value is unavailable).

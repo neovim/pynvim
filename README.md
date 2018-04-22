@@ -76,9 +76,9 @@ below.
   computations. Intensive computations should be done in a separate thread (or
   process), and `vim.async_call` can be used to send results back to nvim.
 
-* Some methods accept an `async` keyword argument: `vim.eval`, `vim.command`,
+* Some methods accept an `async_` keyword argument: `vim.eval`, `vim.command`,
   `vim.request` as well as the `vim.funcs` and `vim.api` wrappers.  When
-  `async=True` is passed the client will not wait for nvim to complete the
+  `async_=True` is passed the client will not wait for nvim to complete the
   request (which also means that the return value is unavailable).
 
 #### Remote (new-style) plugins
@@ -122,7 +122,7 @@ requests without nvim confusing these requests with requests from a synchronous
 handler. To execute an asynchronous handler even when other handlers are
 running, add `allow_nested=True` to the decorator. The handler must then not
 make synchronous nvim requests, but it can make asynchronous requests, i e
-passing `async=True`.
+passing `async_=True`.
 
 You need to run `:UpdateRemotePlugins` in nvim for changes in the specifications
 to have effect. For details see `:help remote-plugin` in nvim.
