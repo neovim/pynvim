@@ -30,7 +30,7 @@ class BaseEventLoop(object):
     - `_init()`: Implementation-specific initialization
     - `_connect_tcp(address, port)`: connect to Nvim using tcp/ip
     - `_connect_socket(path)`: Same as tcp, but use a UNIX domain socket or
-      or named pipe.
+      named pipe.
     - `_connect_stdio()`: Use stdin/stdout as the connection to Nvim
     - `_connect_child(argv)`: Use the argument vector `argv` to spawn an
       embedded Nvim that has it's stdin/stdout connected to the event loop.
