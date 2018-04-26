@@ -40,7 +40,7 @@ NUM_TYPES = (int, long, float)
 
 
 def check_async(async_, kwargs, default):
-    """Return a value of 'async' in kwargs or default when async_ is None
+    """Return a value of 'async' in kwargs or default when async_ is None.
 
     This helper function exists for backward compatibility (See #274).
     It shows a warning message when 'async' in kwargs is used to note users.

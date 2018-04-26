@@ -161,3 +161,10 @@ def test_set_items_for_range(vim):
     r = vim.current.buffer.range(1, 3)
     r[1:3] = ['foo']*3
     assert vim.current.buffer[:] == ['a', 'foo', 'foo', 'foo', 'd', 'e']
+
+# NB: we can't easily test the effect of this. But at least run the lua
+# function sync, so we know it runs without runtime error with simple args.
+def test_update_highlights(vim):
+    vim.current.buffer[:] = ['a', 'b', 'c']
+    src_id = vim.new_highlight_source()
+    vim.current.buffer.update_highlights(src_id, [["Comment", 0, 0, -1], ("String", 1, 0, 1)], clear=True, async_=False)

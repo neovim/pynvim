@@ -168,3 +168,32 @@ def test_cwd(vim, tmpdir):
     cwd_python = vim.command_output('{} print(os.getcwd())'.format(pycmd))
     assert cwd_python == cwd_vim
     assert cwd_python != cwd_before
+
+lua_code = """
+local a = vim.api
+local y = ...
+function pynvimtest_func(x)
+    return x+y
+end
+
+local function setbuf(buf,lines)
+   a.nvim_buf_set_lines(buf, 0, -1, true, lines)
+end
+
+
+local function getbuf(buf)
+   return a.nvim_buf_line_count(buf)
+end
+
+pynvimtest = {setbuf=setbuf,getbuf=getbuf}
+
+return "eggspam"
+"""
+
+def test_lua(vim):
+  assert vim.exec_lua(lua_code, 7) == "eggspam"
+  assert vim.lua.pynvimtest_func(3) == 10
+  testmod = vim.lua.pynvimtest
+  buf = vim.current.buffer
+  testmod.setbuf(buf, ["a", "b", "c", "d"], async_=True)
+  assert testmod.getbuf(buf) == 4
