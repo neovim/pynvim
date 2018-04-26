@@ -30,6 +30,13 @@ class Remote(object):
         self.options = RemoteMap(self, self._api_prefix + 'get_option',
                                  self._api_prefix + 'set_option')
 
+    def __repr__(self):
+        """Get text representation of the object."""
+        return '<%s(handle=%r)>' % (
+            self.__class__.__name__,
+            self.handle,
+        )
+
     def __eq__(self, other):
         """Return True if `self` and `other` are the same object."""
         return (hasattr(other, 'code_data') and

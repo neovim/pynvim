@@ -28,3 +28,7 @@ def test_number(vim):
     assert vim.current.tabpage.number == curnum + 1
     vim.command('tabnew')
     assert vim.current.tabpage.number == curnum + 2
+
+
+def test_repr(vim):
+    assert repr(vim.current.tabpage) == "<Tabpage(handle=2)>"
