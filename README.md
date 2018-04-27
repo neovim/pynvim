@@ -1,10 +1,11 @@
-### Python client to [Neovim](https://github.com/neovim/neovim)
+### Pynvim: Python client to [Neovim](https://github.com/neovim/neovim)
 
 [![Build Status](https://travis-ci.org/neovim/python-client.svg?branch=master)](https://travis-ci.org/neovim/python-client)
+[![Documentation Status](https://readthedocs.org/projects/pynvim/badge/?version=latest)](http://pynvim.readthedocs.io/en/latest/?badge=latest)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/neovim/python-client/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/neovim/python-client/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/neovim/python-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/neovim/python-client/?branch=master)
 
-Implements support for python plugins in Nvim. Also works as a library for
+Pynvim implements support for python plugins in Nvim. It also works as a library for
 connecting to and scripting Nvim processes through its msgpack-rpc API.
 
 #### Installation
@@ -36,96 +37,23 @@ pip3 install .
 
 #### Python Plugin API
 
-Neovim has a new mechanism for defining plugins, as well as a number of
-extensions to the python API. The API extensions are accessible no matter if the
-traditional `:python` interface or the new mechanism is used, as discussed
-below.
+Pynvim supports python _remote plugins_ (via the language-agnostic Nvim rplugin
+interface), as well as _Vim plugins_ (via the `:python[3]` interface). Thus when
+pynvim is installed Neovim will report support for the `+python[3]` Vim feature.
 
-* `vim.funcs` exposes vimscript functions (both builtin and global user defined
-  functions) as a python namespace. For instance to set the value of a register
-  ```
-  vim.funcs.setreg('0', ["some", "text"], 'l')
-  ```
+The rplugin interface allows plugins to handle vimL function calls as well as
+defining commands and autocommands, and such plugins can operate asynchronously
+without blocking nvim.  For details on the new rplugin interface, 
+see the [Remote Plugin](http://pynvim.readthedocs.io/en/latest/usage/remote-plugins.html) documentation.
 
-* `vim.api` exposes nvim API methods. For instance to call `nvim_strwidth`,
-  ```
-  result = vim.api.strwidth("some text")
-  ```
-  Note the initial `nvim_` is not included. Also, object methods can be called
-  directly on their object,
-  ```
-  buf = vim.current.buffer
-  len = buf.api.line_count()
-  ```
-  calls `nvim_buf_line_count`. Alternatively msgpack requests can be invoked
-  directly,
-  ```
-  result = vim.request("nvim_strwith", "some text")
-  len = vim.request("nvim_buf_line_count", buf)
-  ```
+Pynvim defines some extensions over the vim python API:
 
-* The API is not thread-safe in general. However, `vim.async_call` allows a
-  spawned thread to schedule code to be executed on the main thread. This method
-  could also be called from `:python` or a synchronous request handler, to defer
-  some execution that shouldn't block nvim.
-  ```
-  :python vim.async_call(myfunc, args...)
+* Builtin and plugin vimL functions are available as `nvim.funcs`
+* API functions are available as `vim.api` and for objects such as `buffer.api`
+* Lua functions can be defined using `vim.exec_lua` and called with `vim.lua`
+* Support for thread-safety and async requests.
 
-  ```
-  Note that this code will still block the plugin host if it does long-running
-  computations. Intensive computations should be done in a separate thread (or
-  process), and `vim.async_call` can be used to send results back to nvim.
-
-* Some methods accept an `async_` keyword argument: `vim.eval`, `vim.command`,
-  `vim.request` as well as the `vim.funcs` and `vim.api` wrappers.  When
-  `async_=True` is passed the client will not wait for nvim to complete the
-  request (which also means that the return value is unavailable).
-
-#### Remote (new-style) plugins
-
-Neovim allows python3 plugins to be defined by placing python files or packages
-in `rplugin/python3/` (in a runtimepath folder). Python2 rplugins are also
-supported and placed in `rplugin/python/`, but are considered deprecated.
-Further added library features will only be available on python3. Rplugins follow
-the structure of this example:
-
-```python
-import neovim
-
-@neovim.plugin
-class TestPlugin(object):
-
-    def __init__(self, nvim):
-        self.nvim = nvim
-
-    @neovim.function("TestFunction", sync=True)
-    def testfunction(self, args):
-        return 3
-
-    @neovim.command("TestCommand", range='', nargs='*')
-    def testcommand(self, args, range):
-        self.nvim.current.line = ('Command with args: {}, range: {}'
-                                  .format(args, range))
-
-    @neovim.autocmd('BufEnter', pattern='*.py', eval='expand("<afile>")', sync=True)
-    def on_bufenter(self, filename):
-        self.nvim.out_write("testplugin is in " + filename + "\n")
-```
-
-If `sync=True` is supplied nvim will wait for the handler to finish (this is
-required for function return values), but by default handlers are executed
-asynchronously.
-
-Normally async handlers (`sync=False`, the default) are blocked while a
-synchronous handler is running. This ensures that async handlers can call
-requests without nvim confusing these requests with requests from a synchronous
-handler. To execute an asynchronous handler even when other handlers are
-running, add `allow_nested=True` to the decorator. The handler must then not
-make synchronous nvim requests, but it can make asynchronous requests, i e
-passing `async_=True`.
-
-You need to run `:UpdateRemotePlugins` in nvim for changes in the specifications
-to have effect. For details see `:help remote-plugin` in nvim.
+See the [Python Plugin API](http://pynvim.readthedocs.io/en/latest/usage/python-plugin-api.html) documentation for usage of this new functionality.
 
 #### Development
 
@@ -134,53 +62,8 @@ If you change the code, you need to run
 pip2 install .
 pip3 install .
 ```
-for the changes to have effect. Alternatively you could execute neovim
-with the `$PYTHONPATH` environment variable
-```
-PYTHONPATH=/path/to/python-client nvim
-```
-But note this is not completely reliable as installed packages can appear before
-`$PYTHONPATH` in the python search path.
-
-You need to rerun this command if you have changed the code, in order for nvim
-to use it for the plugin host.
-
-To run the tests execute
-
-```sh
-pytest
-```
-
-This will run the tests in an embedded instance of nvim.
-If you want to test a different version than `nvim` in `$PATH` use
-```sh
-NVIM_CHILD_ARGV='["/path/to/nvim", "-u", "NONE", "--embed"]' pytest
-```
-
-Alternatively, if you want to see the state of nvim, you could use
-
-```sh
-export NVIM_LISTEN_ADDRESS=/tmp/nvimtest
-xterm -e "nvim -u NONE"&
-pytest
-```
-
-But note you need to restart nvim every time you run the tests! Substitute your
-favorite terminal emulator for `xterm`.
-
-#### Troubleshooting
-
-You can run the plugin host in nvim with logging enabled to debug errors:
-```
-NVIM_PYTHON_LOG_FILE=logfile NVIM_PYTHON_LOG_LEVEL=DEBUG nvim
-```
-As more than one python host process might be started, the log filenames take
-the pattern `logfile_pyX_KIND` where `X` is the major python version (2 or 3)
-and `KIND` is either "rplugin" or "script" (for the `:python[3]`
-script interface).
-
-If the host cannot start at all, the error could be found in `~/.nvimlog` if
-`nvim` was compiled with logging.
+for the changes to have effect. For instructions of testing and troubleshooting,
+see the [development](http://pynvim.readthedocs.io/en/latest/development.html) documentation.
 
 #### Usage through the python REPL
 

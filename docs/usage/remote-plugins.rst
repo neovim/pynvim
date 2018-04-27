@@ -41,8 +41,17 @@ are blocked while a synchronous handler is running.
 This ensures that async handlers can call requests without Neovim confusing these requests with requests from a synchronous handler.
 To execute an asynchronous handler even when other handlers are running,
 add ``allow_nested=True`` to the decorator.
-The handler must then not make synchronous Neovim requests,
+This handler must then not make synchronous Neovim requests,
 but it can make asynchronous requests, i.e. passing ``async_=True``.
+
+.. note::
+
+    Plugins must not invoke API methods in ``__init__`` or global module scope
+    (or really do anything with non-trivial side-effects). A well-behaved rplugin
+    will not start executing until its functionality is requested by the user.
+    Initialize the plugin the first time the user invokes a command, or use an
+    appropriate autocommand, if it e.g. makes sense to automatically start the
+    plugin for a given filetype.
 
 You need to run ``:UpdateRemotePlugins`` in Neovim for changes in the specifications to have effect.
 For details see ``:help remote-plugin`` in Neovim.
