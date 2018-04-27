@@ -48,10 +48,10 @@ class ScriptHost(object):
         # Handle DirChanged. #296
         nvim.command(
             'autocmd DirChanged * call rpcrequest({}, "python_chdir", v:event)'
-            .format(nvim.channel_id), async=True)
+            .format(nvim.channel_id), async_=True)
         # XXX: Avoid race condition.
         # https://github.com/neovim/python-client/pull/296#issuecomment-358970531
-        os.chdir(nvim.eval('getcwd()', async=False))
+        os.chdir(nvim.eval('getcwd()', async_=False))
 
     def setup(self, nvim):
         """Setup import hooks and global streams.
