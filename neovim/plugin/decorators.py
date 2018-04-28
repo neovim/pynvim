@@ -42,11 +42,16 @@ def rpc_export(rpc_method_name, sync=False):
     return dec
 
 
-def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
-            register=False, sync=False, allow_nested=False, eval=None):
+def command(name=None, nargs=0, complete=None, range=None,
+            count=None, bang=False, register=False, sync=False,
+            allow_nested=False, eval=None):
     """Tag a function or plugin method as a Nvim command handler."""
     def dec(f):
-        f._nvim_rpc_method_name = 'command:{}'.format(name)
+        if not name:
+            command_name = capitalize_name(f.__name__)
+        else:
+            command_name = name
+        f._nvim_rpc_method_name = 'command:{}'.format(command_name)
         f._nvim_rpc_sync = sync
         f._nvim_bind = True
         f._nvim_prefix_plugin_path = True
@@ -80,7 +85,7 @@ def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
 
         f._nvim_rpc_spec = {
             'type': 'command',
-            'name': name,
+            'name': command_name,
             'sync': rpc_sync,
             'opts': opts
         }
@@ -88,10 +93,14 @@ def command(name, nargs=0, complete=None, range=None, count=None, bang=False,
     return dec
 
 
-def autocmd(name, pattern='*', sync=False, allow_nested=False, eval=None):
+def autocmd(name=None, pattern='*', sync=False, allow_nested=False, eval=None):
     """Tag a function or plugin method as a Nvim autocommand handler."""
     def dec(f):
-        f._nvim_rpc_method_name = 'autocmd:{}:{}'.format(name, pattern)
+        if not name:
+            autocmd_name = capitalize_name(f.__name__)
+        else:
+            autocmd_name = name
+        f._nvim_rpc_method_name = 'autocmd:{}:{}'.format(autocmd_name, pattern)
         f._nvim_rpc_sync = sync
         f._nvim_bind = True
         f._nvim_prefix_plugin_path = True
@@ -110,7 +119,7 @@ def autocmd(name, pattern='*', sync=False, allow_nested=False, eval=None):
 
         f._nvim_rpc_spec = {
             'type': 'autocmd',
-            'name': name,
+            'name': autocmd_name,
             'sync': rpc_sync,
             'opts': opts
         }
@@ -118,10 +127,15 @@ def autocmd(name, pattern='*', sync=False, allow_nested=False, eval=None):
     return dec
 
 
-def function(name, range=False, sync=False, allow_nested=False, eval=None):
+def function(name=None, range=False, sync=False,
+             allow_nested=False, eval=None):
     """Tag a function or plugin method as a Nvim function handler."""
     def dec(f):
-        f._nvim_rpc_method_name = 'function:{}'.format(name)
+        if not name:
+            function_name = capitalize_name(f.__name__)
+        else:
+            function_name = name
+        f._nvim_rpc_method_name = 'function:{}'.format(function_name)
         f._nvim_rpc_sync = sync
         f._nvim_bind = True
         f._nvim_prefix_plugin_path = True
@@ -141,12 +155,21 @@ def function(name, range=False, sync=False, allow_nested=False, eval=None):
 
         f._nvim_rpc_spec = {
             'type': 'function',
-            'name': name,
+            'name': function_name,
             'sync': rpc_sync,
             'opts': opts
         }
         return f
     return dec
+
+
+def capitalize_name(name):
+    words = [
+        word[0].upper() + word[1:]
+        for word in name.split('_')
+        if word
+    ]
+    return ''.join(words)
 
 
 def shutdown_hook(f):
