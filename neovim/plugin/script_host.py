@@ -47,11 +47,15 @@ class ScriptHost(object):
 
         # Handle DirChanged. #296
         nvim.command(
-            'autocmd DirChanged * call rpcrequest({}, "python_chdir", v:event)'
+            'au DirChanged * call rpcnotify({}, "python_chdir", v:event.cwd)'
             .format(nvim.channel_id), async_=True)
         # XXX: Avoid race condition.
         # https://github.com/neovim/python-client/pull/296#issuecomment-358970531
-        os.chdir(nvim.eval('getcwd()', async_=False))
+        # TODO(bfredl): when host initialization has been refactored,
+        # to make __init__ safe again, the following should work:
+        # os.chdir(nvim.eval('getcwd()', async_=False))
+        nvim.command('call rpcnotify({}, "python_chdir", getcwd())'
+                     .format(nvim.channel_id), async_=True)
 
     def setup(self, nvim):
         """Setup import hooks and global streams.
@@ -161,10 +165,10 @@ class ScriptHost(object):
         """Handle the `pyeval` vim function."""
         return eval(expr, self.module.__dict__)
 
-    @rpc_export('python_chdir', sync=True)
-    def python_chdir(self, args):
+    @rpc_export('python_chdir', sync=False)
+    def python_chdir(self, cwd):
         """Handle working directory changes."""
-        os.chdir(args['cwd'])
+        os.chdir(cwd)
 
     def _set_current_range(self, start, stop):
         current = self.legacy_vim.current
