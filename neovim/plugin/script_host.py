@@ -227,8 +227,10 @@ def path_hook(nvim):
 
         def load_module(self, fullname, path=None):
             # Check sys.modules, required for reload (see PEP302).
-            if fullname in sys.modules:
+            try:
                 return sys.modules[fullname]
+            except KeyError:
+                pass
             return imp.load_module(fullname, *self.module)
 
     class VimPathFinder(object):
@@ -242,9 +244,9 @@ def path_hook(nvim):
                 return None
 
         @staticmethod
-        def find_spec(fullname, path=None, target=None):
+        def find_spec(fullname, target=None):
             """Method for Python 3.4+."""
-            return PathFinder.find_spec(fullname, path or _get_paths(), target)
+            return PathFinder.find_spec(fullname, _get_paths(), target)
 
     def hook(path):
         if path == nvim.VIM_SPECIAL_PATH:
