@@ -3,6 +3,10 @@ import os
 from neovim.compat import IS_PYTHON3
 
 
+def test_repr(vim):
+    assert repr(vim.current.buffer) == "<Buffer(handle=2)>"
+
+
 def test_get_length(vim):
     assert len(vim.current.buffer) == 1
     vim.current.buffer.append('line')

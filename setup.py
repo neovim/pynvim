@@ -14,6 +14,7 @@ tests_require = [
 
 extras_require = {
     'pyuv': ['pyuv>=1.0.0'],
+    'test': tests_require,
 }
 
 if os.name == 'nt':

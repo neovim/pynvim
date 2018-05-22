@@ -100,3 +100,7 @@ def test_handle(vim):
     assert hnd1 != hnd2 != hnd3
     vim.command('wincmd w')
     assert vim.current.window.handle == hnd1
+
+
+def test_repr(vim):
+    assert repr(vim.current.window) == "<Window(handle=1001)>"
