@@ -32,10 +32,17 @@ class Host(object):
     def __init__(self, nvim):
         """Set handlers for plugin_load/plugin_unload."""
         self.nvim = nvim
+        self.nvim._session.attached_buffers = {}
+        # TODO: delet this
+        self.nvim._session.elog = []
         self._specs = {}
         self._loaded = {}
         self._load_errors = {}
-        self._notification_handlers = {}
+        self._notification_handlers = {
+                'nvim_buf_lines_event': self._on_buf_lines,
+                'nvim_buf_changedtick_event': self._on_buf_changedtick,
+                'nvim_buf_detach_event': self._on_buf_detach,
+            }
         self._request_handlers = {
             'poll': lambda: 'ok',
             'specs': self._on_specs_request,
@@ -96,6 +103,7 @@ class Host(object):
         """Handle a msgpack-rpc notification."""
         if IS_PYTHON3:
             name = decode_if_bytes(name)
+        self.nvim._session.elog.append([name]+args)
         handler = self._notification_handlers.get(name, None)
         if not handler:
             msg = self._missing_handler_error(name, 'notification')
@@ -220,3 +228,22 @@ class Host(object):
         if decode:
             nvim = nvim.with_decode(decode)
         return nvim
+
+    def _on_buf_lines(self, buf, changedtick, first, last, data, more):
+        a = self.nvim._session.attached_buffers[buf.handle]
+        a.lines[first:last] = data
+        a.changedtick = changedtick
+        if more: return
+        for cb in a.callbacks:
+            cb(buf, changedtick, a.lines)
+
+    def _on_buf_changedtick(self, buf, changedtick):
+        a = self.nvim._session.attached_buffers[buf.handle]
+        a.changedtick = changedtick
+        for cb in a.callbacks:
+            cb(buf, changedtick, a.lines)
+
+    def _on_buf_detach(self, buf, changedtick, first, last, data, more):
+        del self.nvim._session.attached_buffers[buf.handle]
+        for cb in a.callbacks:
+            cb(buf, -1, None)

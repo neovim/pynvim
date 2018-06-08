@@ -134,7 +134,6 @@ class Buffer(Remote):
         lua = self._session._get_lua_private()
         lua.update_highlights(self, src_id, hls, clear_start, clear_end,
                               async_=async_)
-
     @property
     def name(self):
         """Get the buffer name."""
@@ -155,6 +154,32 @@ class Buffer(Remote):
         """Get the buffer number."""
         return self.handle
 
+    def attach(self, cb):
+        sess = self._session._session
+        if self.handle not in sess.attached_buffers:
+            a = BufAttachState()
+            sess.attached_buffers[self.handle] = a
+            a.callbacks.append(cb)
+            self.api.attach(True, {})
+        else:
+            a = sess.attached_buffers[self.handle]
+            a.callbacks.append(cb)
+            cb(self, a.changedtick, a.lines)
+
+        def detach():
+            for i in range(len(a.callbacks)):
+                if a.callbacks[i] is cb:
+                    del a.callbacks[i]
+                    return
+            else:
+                raise ValueError("callback already detached")
+
+        return detach
+
+class BufAttachState(object):
+    def __init__(self):
+        self.callbacks = []
+        self.lines = []
 
 class Range(object):
     def __init__(self, buffer, start, end):
