@@ -60,9 +60,25 @@ class RemoteApi(object):
         self._obj = obj
         self._api_prefix = api_prefix
 
+        self._api_names = None
+
     def __getattr__(self, name):
         """Return wrapper to named api method."""
         return functools.partial(self._obj.request, self._api_prefix + name)
+
+    def __dir__(self):
+        """Return info via nvim_get_api_info.
+
+        This can be used for introspection, and especially completion.
+        """
+        if self._api_names is None:
+            api_info = self._obj.request('nvim_get_api_info')
+            start = len(self._api_prefix)
+            self._api_names = [
+                x['name'][start:] for x in api_info[1]['functions']
+                if x['name'].startswith(self._api_prefix)
+            ]
+        return super(RemoteApi, self).__dir__() + self._api_names
 
 
 class RemoteMap(object):
