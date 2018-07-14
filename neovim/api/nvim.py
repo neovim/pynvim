@@ -1,6 +1,7 @@
 """Main Nvim interface."""
 import os
 import sys
+import warnings
 from functools import partial
 from traceback import format_stack
 
@@ -240,17 +241,24 @@ class Nvim(object):
         return Nvim(self._session, self.channel_id,
                     self.metadata, self.types, decode, self._err_cb)
 
-    def ui_attach(self, width, height, rgb):
+    def ui_attach(self, width, height, options=None):
         """Register as a remote UI.
 
         After this method is called, the client will receive redraw
         notifications.
         """
-        return self.request('ui_attach', width, height, rgb)
+        if options is not None:
+            if type(options) is bool:
+                warnings.warn(
+                    '"rgb" attribute is deprecated. Use "options" instead.',
+                    DeprecationWarning,
+                )
+                options = {'rgb': options}
+        return self.request('nvim_ui_attach', width, height, options)
 
     def ui_detach(self):
         """Unregister as a remote UI."""
-        return self.request('ui_detach')
+        return self.request('nvim_ui_detach')
 
     def ui_try_resize(self, width, height):
         """Notify nvim that the client window has resized.
