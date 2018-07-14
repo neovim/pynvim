@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 
 
 def test_call_and_reply(vim):
@@ -41,6 +42,11 @@ def test_async_call(vim):
     # this would have dead-locked if not async
     vim.funcs.rpcrequest(vim.channel_id, "test-event", async_=True)
     vim.run_loop(request_cb, None, None)
+
+    # TODO(blueyed): This sleep is required on Travis, where it hangs with
+    # "Entering event loop" otherwise  (asyncio's EpollSelector._epoll.poll).
+    time.sleep(0.1)
+
     assert vim.vars['result'] == 17
 
 
