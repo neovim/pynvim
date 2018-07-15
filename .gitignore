@@ -1,5 +1,6 @@
 *.egg-info/
 __pycache__
+.pytest_cache/
 neovim/ui/screen.c
 neovim/ui/screen.so
 build/
