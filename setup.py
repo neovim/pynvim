@@ -17,11 +17,12 @@ extras_require = {
     'test': tests_require,
 }
 
-if os.name == 'nt':
-    install_requires.append('pyuv>=1.0.0')
-elif sys.version_info < (3, 4):
-    # trollius is just a backport of 3.4 asyncio module
-    install_requires.append('trollius')
+if sys.version_info < (3, 4):
+    if os.name == 'nt':
+        install_requires.append('pyuv>=1.0.0')
+    else:
+        # trollius is just a backport of 3.4 asyncio module
+        install_requires.append('trollius')
 
 if platform.python_implementation() != 'PyPy':
     # pypy already includes an implementation of the greenlet module

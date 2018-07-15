@@ -10,6 +10,7 @@ is a backport of `asyncio` that works on Python 2.6+.
 """
 from __future__ import absolute_import
 
+import logging
 import os
 import sys
 from collections import deque
@@ -23,11 +24,17 @@ except (ImportError, SyntaxError):
 
 from .base import BaseEventLoop
 
+logger = logging.getLogger(__name__)
+debug, info, warn = (logger.debug, logger.info, logger.warning,)
 
 loop_cls = asyncio.SelectorEventLoop
 if os.name == 'nt':
+    from asyncio.windows_utils import PipeHandle
+    import msvcrt
+
     # On windows use ProactorEventLoop which support pipes and is backed by the
     # more powerful IOCP facility
+    # NOTE: we override in the stdio case, because it doesn't work.
     loop_cls = asyncio.ProactorEventLoop
 
 
@@ -89,14 +96,26 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         self._loop.run_until_complete(coroutine)
 
     def _connect_stdio(self):
-        coroutine = self._loop.connect_read_pipe(self._fact, sys.stdin)
+        if os.name == 'nt':
+            pipe = PipeHandle(msvcrt.get_osfhandle(sys.stdin.fileno()))
+        else:
+            pipe = sys.stdin
+        coroutine = self._loop.connect_read_pipe(self._fact, pipe)
         self._loop.run_until_complete(coroutine)
-        coroutine = self._loop.connect_write_pipe(self._fact, sys.stdout)
+        debug("native stdin connection successful")
+
+        if os.name == 'nt':
+            pipe = PipeHandle(msvcrt.get_osfhandle(sys.stdout.fileno()))
+        else:
+            pipe = sys.stdout
+        coroutine = self._loop.connect_write_pipe(self._fact, pipe)
         self._loop.run_until_complete(coroutine)
+        debug("native stdout connection successful")
 
     def _connect_child(self, argv):
-        self._child_watcher = asyncio.get_child_watcher()
-        self._child_watcher.attach_loop(self._loop)
+        if os.name != 'nt':
+            self._child_watcher = asyncio.get_child_watcher()
+            self._child_watcher.attach_loop(self._loop)
         coroutine = self._loop.subprocess_exec(self._fact, *argv)
         self._loop.run_until_complete(coroutine)
 
