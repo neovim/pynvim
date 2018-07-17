@@ -12,16 +12,14 @@ from .msgpack_rpc import (ErrorResponse, child_session, socket_session,
                           stdio_session, tcp_session)
 from .plugin import (Host, autocmd, command, decode, encoding, function,
                      plugin, rpc_export, shutdown_hook)
-from .util import Version
+from .util import VERSION, Version
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'start_host', 'autocmd', 'command', 'encoding', 'decode',
-           'function', 'plugin', 'rpc_export', 'Host', 'Nvim', 'VERSION',
-           'shutdown_hook', 'attach', 'setup_logging', 'ErrorResponse')
-
-
-VERSION = Version(major=0, minor=2, patch=6, prerelease='')
+           'function', 'plugin', 'rpc_export', 'Host', 'Nvim', 'Version',
+           'VERSION', 'shutdown_hook', 'attach', 'setup_logging',
+           'ErrorResponse')
 
 
 def start_host(session=None):

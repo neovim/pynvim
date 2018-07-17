@@ -30,3 +30,6 @@ class Version:
     def __eq__(self, other):
         """Check if version is same as other."""
         return self.__dict__ == other.__dict__
+
+
+VERSION = Version(major=0, minor=2, patch=6, prerelease='')
