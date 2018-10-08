@@ -10,7 +10,7 @@ neovim.setup_logging("test")
 
 @pytest.fixture(autouse=True)
 def cleanup_func(vim):
-    fun = textwrap.dedent(''':function BeforeEachTest()
+    fun = textwrap.dedent('''function! BeforeEachTest()
         set all&
         redir => groups
         silent augroup
@@ -47,7 +47,7 @@ def cleanup_func(vim):
         comclear
         endfunction
     ''')
-    vim.input(fun)
+    vim.command(fun)
     vim.command('call BeforeEachTest()')
     assert len(vim.tabpages) == len(vim.windows) == len(vim.buffers) == 1
 

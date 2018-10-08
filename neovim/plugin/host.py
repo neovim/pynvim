@@ -5,6 +5,7 @@ import logging
 import os
 import os.path
 import re
+import sys
 from functools import partial
 from traceback import format_exc
 
@@ -12,13 +13,15 @@ from . import script_host
 from ..api import decode_if_bytes, walk
 from ..compat import IS_PYTHON3, find_module
 from ..msgpack_rpc import ErrorResponse
-from ..util import format_exc_skip
+from ..util import VERSION, format_exc_skip
 
 __all__ = ('Host')
 
 logger = logging.getLogger(__name__)
 error, debug, info, warn = (logger.error, logger.debug, logger.info,
                             logger.warning,)
+
+host_method_spec = {"poll": {}, "specs": {"nargs": 1}, "shutdown": {}}
 
 
 class Host(object):
@@ -116,6 +119,7 @@ class Host(object):
         return msg
 
     def _load(self, plugins):
+        has_script = False
         for path in plugins:
             err = None
             if path in self._loaded:
@@ -124,6 +128,7 @@ class Host(object):
             try:
                 if path == "script_host.py":
                     module = script_host
+                    has_script = True
                 else:
                     directory, name = os.path.split(os.path.splitext(path)[0])
                     file, pathname, descr = find_module(name, [directory])
@@ -140,6 +145,17 @@ class Host(object):
                        .format(type(e).__name__, path, e, format_exc(5)))
                 error(err)
                 self._load_errors[path] = err
+
+        if len(plugins) == 1 and has_script:
+            kind = "script"
+        else:
+            kind = "rplugin"
+        name = "python{}-{}-host".format(sys.version_info[0], kind)
+        attributes = {"license": "Apache v2",
+                      "website": "github.com/neovim/python-client"}
+        self.nvim.api.set_client_info(
+            name, VERSION.__dict__, "host", host_method_spec,
+            attributes, async_=True)
 
     def _unload(self):
         for path, plugin in self._loaded.items():
