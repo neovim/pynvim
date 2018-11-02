@@ -1,6 +1,7 @@
 """Main Nvim interface."""
 import os
 import sys
+import threading
 from functools import partial
 from traceback import format_stack
 
@@ -165,6 +166,15 @@ class Nvim(object):
         present and True, a asynchronous notification is sent instead. This
         will never block, and the return value or error is ignored.
         """
+        if (self._session._loop_thread is not None and
+                threading.current_thread() != self._session._loop_thread):
+
+            msg = ("request from non-main thread:\n{}\n"
+                   .format('\n'.join(format_stack(None, 5)[:-1])))
+
+            self.async_call(self._err_cb, msg)
+            raise NvimError("request from non-main thread")
+
         decode = kwargs.pop('decode', self._decode)
         args = walk(self._to_nvim, args)
         res = self._session.request(name, *args, **kwargs)
@@ -382,7 +392,17 @@ class Nvim(object):
 
     def err_write(self, msg, **kwargs):
         """Print `msg` as an error message."""
+        if self._thread_invalid():
+            # special case: if a non-main thread writes to stderr
+            # i.e. due to an uncaught exception, pass it through
+            # without raising an additional exception.
+            self.async_call(self.err_write, msg, **kwargs)
+            return
         return self.request('nvim_err_write', msg, **kwargs)
+
+    def _thread_invalid(self):
+        return (self._session._loop_thread is not None and
+                threading.current_thread() != self._session._loop_thread)
 
     def quit(self, quit_command='qa!'):
         """Send a quit command to Nvim.

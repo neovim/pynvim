@@ -208,6 +208,8 @@ class LegacyVim(Nvim):
 # This was copied/adapted from nvim-python help
 def path_hook(nvim):
     def _get_paths():
+        if nvim._thread_invalid():
+            return []
         return discover_runtime_directories(nvim)
 
     def _find_module(fullname, oldtail, path):
