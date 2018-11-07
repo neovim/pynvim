@@ -169,7 +169,9 @@ class Nvim(object):
         if (self._session._loop_thread is not None and
                 threading.current_thread() != self._session._loop_thread):
 
-            msg = ("request from non-main thread:\n{}\n"
+            msg = ("Request from non-main thread.\n"
+                   "Requests from different threads should be wrapped "
+                   "with nvim.async_call(cb, ...) \n{}\n"
                    .format('\n'.join(format_stack(None, 5)[:-1])))
 
             self.async_call(self._err_cb, msg)
