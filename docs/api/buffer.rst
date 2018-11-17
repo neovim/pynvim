@@ -1,5 +1,5 @@
 Buffer Class
 ============
 
-.. autoclass:: neovim.api.Buffer
+.. autoclass:: pynvim.api.Buffer
    :members:

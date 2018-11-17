@@ -1,4 +1,4 @@
-from neovim.plugin.decorators import command
+from pynvim.plugin.decorators import command
 
 
 def test_command_count():
