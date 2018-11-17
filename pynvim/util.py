@@ -32,4 +32,4 @@ class Version:
         return self.__dict__ == other.__dict__
 
 
-VERSION = Version(major=0, minor=3, patch=0, prerelease='')
+VERSION = Version(major=0, minor=3, patch=1, prerelease='')
