@@ -64,7 +64,7 @@ connect a python REPL to Neovim (note that the API is similar to the one exposed
 
 .. code-block:: python
 
-    >>> from neovim import attach
+    >>> from pynvim import attach
     # Create a python API session attached to unix domain socket created above:
     >>> nvim = attach('socket', path='/tmp/nvim')
     # Now do some work. 
@@ -83,7 +83,7 @@ You can embed Neovim into your python application instead of binding to a runnin
 
 .. code-block:: python
 
-    >>> from neovim import attach
+    >>> from pynvim import attach
     >>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed"])
 
 The tests can be consulted for more examples.
