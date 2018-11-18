@@ -165,7 +165,7 @@ def decode(mode=unicode_errors_default):
 
 
 def encoding(encoding=True):
-    """DEPRECATED: use neovim.decode()."""
+    """DEPRECATED: use pynvim.decode()."""
     if isinstance(encoding, str):
         encoding = True
 

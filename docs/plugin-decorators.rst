@@ -1,7 +1,7 @@
 Plugin Decorators
 =================
 
-.. module:: neovim.plugin
+.. module:: pynvim.plugin
 
 Plugin decorators.
 

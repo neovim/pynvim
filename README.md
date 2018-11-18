@@ -13,19 +13,18 @@ connecting to and scripting Nvim processes through its msgpack-rpc API.
 Supports python 2.7, and 3.4 or later.
 
 ```sh
-pip2 install neovim
-pip3 install neovim
+pip2 install pynvim
+pip3 install pynvim
 ```
 
 If you only use one of python2 or python3, it is enough to install that
 version. You can install the package without being root by adding the `--user`
 flag.
 
-If you follow Neovim master, make sure to upgrade the python-client when you
-upgrade neovim:
+Anytime you upgrade Neovim, make sure to upgrade pynvim as well:
 ```sh
-pip2 install --upgrade neovim
-pip3 install --upgrade neovim
+pip2 install --upgrade pynvim
+pip3 install --upgrade pynvim
 ```
 
 Alternatively, the master version could be installed by executing the following
@@ -80,7 +79,7 @@ to the one exposed by the [python-vim
 bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim)):
 
 ```python
->>> from neovim import attach
+>>> from pynvim import attach
 # Create a python API session attached to unix domain socket created above:
 >>> nvim = attach('socket', path='/tmp/nvim')
 # Now do some work. 
@@ -98,7 +97,7 @@ You can embed neovim into your python application instead of binding to a
 running neovim instance.
 
 ```python
->>> from neovim import attach
+>>> from pynvim import attach
 >>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed"])
 ```
 

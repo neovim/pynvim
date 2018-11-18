@@ -2,10 +2,6 @@ sudo: false
 language: python
 env:
   global:
-    - NOSE_NOLOGCAPTURE=true
-    - NOSE_VERBOSE=2
-    - NOSE_WITH_COVERAGE=true
-    - NOSE_COVER_PACKAGE=neovim
     - PYTEST_ADDOPTS=-vv
   matrix:
     - CI_TARGET=tests
