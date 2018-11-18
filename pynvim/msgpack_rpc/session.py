@@ -193,8 +193,8 @@ class Session(object):
         def handler():
             try:
                 rv = self._request_cb(name, args)
-                debug('greenlet %s finished executing, ' +
-                      'sending %s as response', gr, rv)
+                debug('greenlet %s finished executing, '
+                      + 'sending %s as response', gr, rv)
                 response.send(rv)
             except ErrorResponse as err:
                 warn("error response from request '%s %s': %s", name,

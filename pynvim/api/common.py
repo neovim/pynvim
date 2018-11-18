@@ -39,8 +39,8 @@ class Remote(object):
 
     def __eq__(self, other):
         """Return True if `self` and `other` are the same object."""
-        return (hasattr(other, 'code_data') and
-                other.code_data == self.code_data)
+        return (hasattr(other, 'code_data')
+                and other.code_data == self.code_data)
 
     def __hash__(self):
         """Return hash based on remote object id."""
