@@ -152,7 +152,7 @@ class Host(object):
             kind = "rplugin"
         name = "python{}-{}-host".format(sys.version_info[0], kind)
         attributes = {"license": "Apache v2",
-                      "website": "github.com/neovim/python-client"}
+                      "website": "github.com/neovim/pynvim"}
         self.nvim.api.set_client_info(
             name, VERSION.__dict__, "host", host_method_spec,
             attributes, async_=True)

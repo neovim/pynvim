@@ -1,9 +1,9 @@
 ### Pynvim: Python client to [Neovim](https://github.com/neovim/neovim)
 
-[![Build Status](https://travis-ci.org/neovim/python-client.svg?branch=master)](https://travis-ci.org/neovim/python-client)
+[![Build Status](https://travis-ci.org/neovim/pynvim.svg?branch=master)](https://travis-ci.org/neovim/pynvim)
 [![Documentation Status](https://readthedocs.org/projects/pynvim/badge/?version=latest)](http://pynvim.readthedocs.io/en/latest/?badge=latest)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/neovim/python-client/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/neovim/python-client/?branch=master)
-[![Code Coverage](https://scrutinizer-ci.com/g/neovim/python-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/neovim/python-client/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/neovim/pynvim/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/neovim/pynvim/?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/neovim/pynvim/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/neovim/pynvim/?branch=master)
 
 Pynvim implements support for python plugins in Nvim. It also works as a library for
 connecting to and scripting Nvim processes through its msgpack-rpc API.

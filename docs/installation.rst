@@ -16,8 +16,8 @@ You can install the package without being root by adding the ``--user`` flag::
     If you only use one of python2 or python3,
     it is enough to install that version.
 
-If you follow Neovim HEAD,
-make sure to upgrade the ``python-client`` when you upgrade Neovim::
+If you follow Neovim HEAD, make sure to upgrade ``pynvim`` when you upgrade
+Neovim::
 
     pip2 install --upgrade pynvim
     pip3 install --upgrade pynvim
@@ -25,10 +25,10 @@ make sure to upgrade the ``python-client`` when you upgrade Neovim::
 Install from source
 -------------------
 
-Clone the repository somewhere on your disk and enter to the repository:: 
+Clone the repository somewhere on your disk and enter to the repository::
 
-    git clone https://github.com/neovim/python-client.git
-    cd python-client
+    git clone https://github.com/neovim/pynvim.git
+    cd pynvim
 
 Now you can install it on your system::
 

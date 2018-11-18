@@ -9,7 +9,7 @@ If you change the code, you need to run::
 for the changes to have effect.
 Alternatively you could execute Neovim with the ``$PYTHONPATH`` environment variable::
 
-    PYTHONPATH=/path/to/python-client nvim
+    PYTHONPATH=/path/to/pynvim nvim
 
 But note this is not completely reliable,
 as installed packages can appear before ``$PYTHONPATH`` in the python search path.

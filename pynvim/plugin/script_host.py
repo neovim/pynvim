@@ -50,7 +50,7 @@ class ScriptHost(object):
             'au DirChanged * call rpcnotify({}, "python_chdir", v:event.cwd)'
             .format(nvim.channel_id), async_=True)
         # XXX: Avoid race condition.
-        # https://github.com/neovim/python-client/pull/296#issuecomment-358970531
+        # https://github.com/neovim/pynvim/pull/296#issuecomment-358970531
         # TODO(bfredl): when host initialization has been refactored,
         # to make __init__ safe again, the following should work:
         # os.chdir(nvim.eval('getcwd()', async_=False))
