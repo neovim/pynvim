@@ -1,5 +1,6 @@
 """Legacy python/python3-vim emulation."""
 try:
+    import types
     import importlib
 except ImportError:
     import imp
@@ -41,7 +42,7 @@ class ScriptHost(object):
         self.setup(nvim)
         # context where all code will run
         if IS_PYTHON3_7:
-            self.module = importlib.util.module_from_spec('__main__')
+            self.module = types.ModuleType('__main__')
         else:
             self.module = imp.new_module('__main__')
         nvim.script_context = self.module
