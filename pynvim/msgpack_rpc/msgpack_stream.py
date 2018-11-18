@@ -20,8 +20,7 @@ class MsgpackStream(object):
     def __init__(self, event_loop):
         """Wrap `event_loop` on a msgpack-aware interface."""
         self.loop = event_loop
-        self._packer = Packer(encoding='utf-8',
-                              unicode_errors=unicode_errors_default)
+        self._packer = Packer(unicode_errors=unicode_errors_default)
         self._unpacker = Unpacker()
         self._message_cb = None
 
