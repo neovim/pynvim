@@ -1,9 +1,4 @@
 """Legacy python/python3-vim emulation."""
-try:
-    import types
-    import importlib
-except ImportError:
-    import imp
 import io
 import logging
 import os
@@ -11,7 +6,7 @@ import sys
 
 from .decorators import plugin, rpc_export
 from ..api import Nvim, walk
-from ..compat import IS_PYTHON3, IS_PYTHON3_7, find_module
+from ..compat import IS_PYTHON3, find_module, load_module, new_module
 from ..msgpack_rpc import ErrorResponse
 from ..util import format_exc_skip
 
@@ -41,10 +36,7 @@ class ScriptHost(object):
         """Initialize the legacy python-vim environment."""
         self.setup(nvim)
         # context where all code will run
-        if IS_PYTHON3_7:
-            self.module = types.ModuleType('__main__')
-        else:
-            self.module = imp.new_module('__main__')
+        self.module = new_module('__main__')
         nvim.script_context = self.module
         # it seems some plugins assume 'sys' is already imported, so do it now
         exec('import sys', self.module.__dict__)
@@ -239,10 +231,7 @@ def path_hook(nvim):
                 return sys.modules[fullname]
             except KeyError:
                 pass
-            if IS_PYTHON3_7:
-                return importlib.import_module(fullname, *self.module)
-            else:
-                return imp.load_module(fullname, *self.module)
+            return load_module(fullname, *self.module)
 
     class VimPathFinder(object):
         @staticmethod
