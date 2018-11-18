@@ -220,7 +220,7 @@ def split_call(lines, open_paren_line=0):
         if num_open == num_closed:
             return (lines[:i+1], lines[i+1:])
 
-    print ''.join(lines)
+    print(''.join(lines))
     raise Exception('parenthesis are mismatched (%d open, %d closed found)' % (num_open, num_closed))
 
 def modify_logging(input_fn, output_fn, min_level_value, max_level_value, restore, force):
