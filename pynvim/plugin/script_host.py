@@ -1,5 +1,4 @@
 """Legacy python/python3-vim emulation."""
-import imp
 import io
 import logging
 import os
@@ -7,6 +6,7 @@ import sys
 
 from .decorators import plugin, rpc_export
 from ..api import Nvim, walk
+from ..compat import IS_PYTHON3, find_module, load_module, new_module
 from ..msgpack_rpc import ErrorResponse
 from ..util import format_exc_skip
 
@@ -15,8 +15,6 @@ __all__ = ('ScriptHost',)
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
-
-IS_PYTHON3 = sys.version_info >= (3, 0)
 
 if IS_PYTHON3:
     basestring = str
@@ -38,7 +36,7 @@ class ScriptHost(object):
         """Initialize the legacy python-vim environment."""
         self.setup(nvim)
         # context where all code will run
-        self.module = imp.new_module('__main__')
+        self.module = new_module('__main__')
         nvim.script_context = self.module
         # it seems some plugins assume 'sys' is already imported, so do it now
         exec('import sys', self.module.__dict__)
@@ -205,7 +203,7 @@ class LegacyVim(Nvim):
         return walk(num_to_str, obj)
 
 
-# This was copied/adapted from nvim-python help
+# Copied/adapted from :help if_pyth.
 def path_hook(nvim):
     def _get_paths():
         if nvim._thread_invalid():
@@ -217,11 +215,11 @@ def path_hook(nvim):
         if idx > 0:
             name = oldtail[:idx]
             tail = oldtail[idx + 1:]
-            fmr = imp.find_module(name, path)
-            module = imp.find_module(fullname[:-len(oldtail)] + name, *fmr)
+            fmr = find_module(name, path)
+            module = find_module(fullname[:-len(oldtail)] + name, *fmr)
             return _find_module(fullname, tail, module.__path__)
         else:
-            return imp.find_module(fullname, path)
+            return find_module(fullname, path)
 
     class VimModuleLoader(object):
         def __init__(self, module):
@@ -233,7 +231,7 @@ def path_hook(nvim):
                 return sys.modules[fullname]
             except KeyError:
                 pass
-            return imp.load_module(fullname, *self.module)
+            return load_module(fullname, *self.module)
 
     class VimPathFinder(object):
         @staticmethod

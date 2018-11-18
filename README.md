@@ -56,13 +56,23 @@ See the [Python Plugin API](http://pynvim.readthedocs.io/en/latest/usage/python-
 
 #### Development
 
-If you change the code, you need to run
-```sh
-pip2 install .
-pip3 install .
-```
-for the changes to have effect. For instructions of testing and troubleshooting,
-see the [development](http://pynvim.readthedocs.io/en/latest/development.html) documentation.
+Use (and activate) a local virtualenv.
+
+    python3 -m venv env36
+    source env36/bin/activate
+
+If you change the code, you must reinstall for the changes to take effect:
+
+    pip install .
+
+Use `pytest` to run the tests. Invoking with `python -m` prepends the current
+directory to `sys.path` (otherwise `pytest` might find other versions!):
+
+    python -m pytest
+
+For details about testing and troubleshooting, see the
+[development](http://pynvim.readthedocs.io/en/latest/development.html)
+documentation.
 
 #### Usage through the python REPL
 
