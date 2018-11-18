@@ -166,8 +166,8 @@ class Nvim(object):
         present and True, a asynchronous notification is sent instead. This
         will never block, and the return value or error is ignored.
         """
-        if (self._session._loop_thread is not None and
-                threading.current_thread() != self._session._loop_thread):
+        if (self._session._loop_thread is not None
+                and threading.current_thread() != self._session._loop_thread):
 
             msg = ("Request from non-main thread.\n"
                    "Requests from different threads should be wrapped "
@@ -403,8 +403,8 @@ class Nvim(object):
         return self.request('nvim_err_write', msg, **kwargs)
 
     def _thread_invalid(self):
-        return (self._session._loop_thread is not None and
-                threading.current_thread() != self._session._loop_thread)
+        return (self._session._loop_thread is not None
+                and threading.current_thread() != self._session._loop_thread)
 
     def quit(self, quit_command='qa!'):
         """Send a quit command to Nvim.

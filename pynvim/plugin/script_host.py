@@ -143,8 +143,8 @@ class ScriptHost(object):
                 elif isinstance(result, basestring):
                     newlines.append(result)
                 else:
-                    exception = TypeError('pydo should return a string ' +
-                                          'or None, found %s instead'
+                    exception = TypeError('pydo should return a string '
+                                          + 'or None, found %s instead'
                                           % result.__class__.__name__)
                     break
                 linenr += 1

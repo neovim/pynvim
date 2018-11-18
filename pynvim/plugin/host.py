@@ -202,13 +202,13 @@ class Host(object):
             # register in the rpc handler dict
             if sync:
                 if method in self._request_handlers:
-                    raise Exception(('Request handler for "{}" is ' +
-                                    'already registered').format(method))
+                    raise Exception(('Request handler for "{}" is '
+                                    + 'already registered').format(method))
                 self._request_handlers[method] = fn_wrapped
             else:
                 if method in self._notification_handlers:
-                    raise Exception(('Notification handler for "{}" is ' +
-                                    'already registered').format(method))
+                    raise Exception(('Notification handler for "{}" is '
+                                    + 'already registered').format(method))
                 self._notification_handlers[method] = fn_wrapped
             if hasattr(fn, '_nvim_rpc_spec'):
                 specs.append(fn._nvim_rpc_spec)
