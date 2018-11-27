@@ -2,32 +2,18 @@
 
 import sys
 import warnings
-if sys.version_info >= (3, 7):
-    import types
-    import importlib
-else:
-    import imp  # Deprecated in Python 3.7+
-if sys.version_info >= (3, 4):
-    from importlib.machinery import PathFinder
-    original_find_module = PathFinder.find_spec
-else:
-    from imp import find_module as original_find_module
+from imp import find_module as original_find_module
 
 
 IS_PYTHON3 = sys.version_info >= (3, 0)
 
-if sys.version_info >= (3, 7):
-    load_module = importlib.import_module
-    new_module = types.ModuleType
-else:
-    load_module = imp.load_module
-    new_module = imp.new_module
 
 if IS_PYTHON3:
     def find_module(fullname, path):
-        """Compat wrapper for imp.find_module, or find_spec in Python 3.7+.
+        """Compatibility wrapper for imp.find_module.
 
-        Automatically decodes arguments (must be Unicode in Python3).
+        Automatically decodes arguments of find_module, in Python3
+        they must be Unicode
         """
         if isinstance(fullname, bytes):
             fullname = fullname.decode()
