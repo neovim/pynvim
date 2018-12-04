@@ -7,11 +7,11 @@ env:
     - CI_TARGET=tests
 matrix:
   include:
-    - python: 3.6
-      env: CI_TARGET=checkqa TOXENV=checkqa
     - python: pypy
       dist: trusty
       sudo: false
+    - python: 3.6
+      env: CI_TARGET=checkqa TOXENV=checkqa
 python:
   # If the build matrix gets bigger, also update the number of runs
   # at the bottom of .scrutinizer.yml.
