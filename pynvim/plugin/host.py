@@ -38,7 +38,9 @@ class Host(object):
         self._specs = {}
         self._loaded = {}
         self._load_errors = {}
-        self._notification_handlers = {}
+        self._notification_handlers = {
+            'nvim_error_event': self._on_error_event
+        }
         self._request_handlers = {
             'poll': lambda: 'ok',
             'specs': self._on_specs_request,
@@ -49,7 +51,15 @@ class Host(object):
         self._decode_default = IS_PYTHON3
 
     def _on_async_err(self, msg):
+        # uncaught python exception
         self.nvim.err_write(msg, async_=True)
+
+    def _on_error_event(self, kind, msg):
+        # error from nvim due to async request
+        # like nvim.command(..., async_=True)
+        errmsg = "{}: Async request caused an error:\n{}\n".format(
+            self.name, decode_if_bytes(msg))
+        self.nvim.err_write(errmsg, async_=True)
 
     def start(self, plugins):
         """Start listening for msgpack-rpc requests and notifications."""
@@ -153,6 +163,7 @@ class Host(object):
         name = "python{}-{}-host".format(sys.version_info[0], kind)
         attributes = {"license": "Apache v2",
                       "website": "github.com/neovim/pynvim"}
+        self.name = name
         self.nvim.api.set_client_info(
             name, VERSION.__dict__, "host", host_method_spec,
             attributes, async_=True)
