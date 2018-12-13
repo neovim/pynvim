@@ -74,6 +74,15 @@ def test_current_line(vim):
     assert vim.current.line == 'abc'
 
 
+def test_current_line_delete(vim):
+    vim.current.buffer[:] = ['one', 'two']
+    assert len(vim.current.buffer[:]) == 2
+    del vim.current.line
+    assert len(vim.current.buffer[:]) == 1 and vim.current.buffer[0] == 'two'
+    del vim.current.line
+    assert len(vim.current.buffer[:]) == 1 and not vim.current.buffer[0]
+
+
 def test_vars(vim):
     vim.vars['python'] = [1, 2, {'3': 1}]
     assert vim.vars['python'], [1, 2 == {'3': 1}]
