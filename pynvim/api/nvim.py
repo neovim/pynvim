@@ -507,6 +507,10 @@ class Current(object):
     def line(self, line):
         return self._session.request('nvim_set_current_line', line)
 
+    @line.deleter
+    def line(self):
+        return self._session.request('nvim_del_current_line')
+
     @property
     def buffer(self):
         return self._session.request('nvim_get_current_buf')
