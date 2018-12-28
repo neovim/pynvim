@@ -104,10 +104,15 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         self._loop.run_until_complete(coroutine)
         debug("native stdin connection successful")
 
+        # Make sure subprocesses don't clobber stdout,
+        # send the output to stderr instead.
+        rename_stdout = os.dup(sys.stdout.fileno())
+        os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
+
         if os.name == 'nt':
-            pipe = PipeHandle(msvcrt.get_osfhandle(sys.stdout.fileno()))
+            pipe = PipeHandle(msvcrt.get_osfhandle(rename_stdout))
         else:
-            pipe = sys.stdout
+            pipe = os.fdopen(rename_stdout, 'wb')
         coroutine = self._loop.connect_write_pipe(self._fact, pipe)
         self._loop.run_until_complete(coroutine)
         debug("native stdout connection successful")
