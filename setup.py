@@ -29,10 +29,10 @@ if platform.python_implementation() != 'PyPy':
     install_requires.append('greenlet')
 
 setup(name='pynvim',
-      version='0.3.1',
+      version='0.3.2',
       description='Python client to neovim',
       url='http://github.com/neovim/python-client',
-      download_url='https://github.com/neovim/python-client/archive/0.3.1.tar.gz',
+      download_url='https://github.com/neovim/python-client/archive/0.3.2.tar.gz',
       author='Thiago de Arruda',
       author_email='tpadilha84@gmail.com',
       license='Apache',
