@@ -46,12 +46,15 @@ but it can make asynchronous requests, i.e. passing ``async_=True``.
 
 .. note::
 
-    Plugins must not invoke API methods in ``__init__`` or global module scope
-    (or really do anything with non-trivial side-effects). A well-behaved rplugin
-    will not start executing until its functionality is requested by the user.
-    Initialize the plugin the first time the user invokes a command, or use an
-    appropriate autocommand, if it e.g. makes sense to automatically start the
-    plugin for a given filetype.
+    Plugin objects are constructed the first time any request of the class is
+    invoked. Any error in ``__init__`` will be reported as an error from this
+    first request. A well-behaved rplugin will not start executing until its
+    functionality is requested by the user. Initialize the plugin when user
+    invokes a command, or use an appropriate autocommand, e.g. FileType if it
+    makes sense to automatically start the plugin for a given filetype. Plugins
+    must not invoke API methods (or really do anything with non-trivial
+    side-effects) in global module scope, as the module might be loaded as part
+    of executing `UpdateRemotePlugins`.
 
 You need to run ``:UpdateRemotePlugins`` in Neovim for changes in the specifications to have effect.
 For details see ``:help remote-plugin`` in Neovim.

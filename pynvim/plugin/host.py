@@ -72,6 +72,26 @@ class Host(object):
         self._unload()
         self.nvim.stop_loop()
 
+    def _wrap_delayed_function(self, cls, delayed_handlers, name, sync,
+                               module_handlers, path, *args):
+        # delete the delayed handlers to be sure
+        for handler in delayed_handlers:
+            method_name = handler._nvim_registered_name
+            if handler._nvim_rpc_sync:
+                del self._request_handlers[method_name]
+            else:
+                del self._notification_handlers[method_name]
+        # create an instance of the plugin and pass the nvim object
+        plugin = cls(self._configure_nvim_for(cls))
+
+        # discover handlers in the plugin instance
+        self._discover_functions(plugin, module_handlers, path, False)
+
+        if sync:
+            self._request_handlers[name](*args)
+        else:
+            self._notification_handlers[name](*args)
+
     def _wrap_function(self, fn, sync, decode, nvim_bind, name, *args):
         if decode:
             args = walk(decode_if_bytes, args, decode)
@@ -144,7 +164,7 @@ class Host(object):
                     module = imp.load_module(name, file, pathname, descr)
                 handlers = []
                 self._discover_classes(module, handlers, path)
-                self._discover_functions(module, handlers, path)
+                self._discover_functions(module, handlers, path, False)
                 if not handlers:
                     error('{} exports no handlers'.format(path))
                     continue
@@ -165,7 +185,7 @@ class Host(object):
         for path, plugin in self._loaded.items():
             handlers = plugin['handlers']
             for handler in handlers:
-                method_name = handler._nvim_rpc_method_name
+                method_name = handler._nvim_registered_name
                 if hasattr(handler, '_nvim_shutdown_hook'):
                     handler()
                 elif handler._nvim_rpc_sync:
@@ -178,31 +198,35 @@ class Host(object):
     def _discover_classes(self, module, handlers, plugin_path):
         for _, cls in inspect.getmembers(module, inspect.isclass):
             if getattr(cls, '_nvim_plugin', False):
-                # create an instance of the plugin and pass the nvim object
-                plugin = cls(self._configure_nvim_for(cls))
                 # discover handlers in the plugin instance
-                self._discover_functions(plugin, handlers, plugin_path)
+                self._discover_functions(cls, handlers, plugin_path, True)
 
-    def _discover_functions(self, obj, handlers, plugin_path):
+    def _discover_functions(self, obj, handlers, plugin_path, delay):
         def predicate(o):
             return hasattr(o, '_nvim_rpc_method_name')
 
+        cls_handlers = []
         specs = []
         objdecode = getattr(obj, '_nvim_decode', self._decode_default)
         for _, fn in inspect.getmembers(obj, predicate):
-            sync = fn._nvim_rpc_sync
-            decode = getattr(fn, '_nvim_decode', objdecode)
-            nvim_bind = None
-            if fn._nvim_bind:
-                nvim_bind = self._configure_nvim_for(fn)
-
             method = fn._nvim_rpc_method_name
             if fn._nvim_prefix_plugin_path:
                 method = '{}:{}'.format(plugin_path, method)
+            sync = fn._nvim_rpc_sync
+            if delay:
+                fn_wrapped = partial(self._wrap_delayed_function, obj,
+                                     cls_handlers, method, sync,
+                                     handlers, plugin_path)
+            else:
+                decode = getattr(fn, '_nvim_decode', objdecode)
+                nvim_bind = None
+                if fn._nvim_bind:
+                    nvim_bind = self._configure_nvim_for(fn)
 
-            fn_wrapped = partial(self._wrap_function, fn,
-                                 sync, decode, nvim_bind, method)
+                fn_wrapped = partial(self._wrap_function, fn,
+                                     sync, decode, nvim_bind, method)
             self._copy_attributes(fn, fn_wrapped)
+            fn_wrapped._nvim_registered_name = method
             # register in the rpc handler dict
             if sync:
                 if method in self._request_handlers:
@@ -217,6 +241,7 @@ class Host(object):
             if hasattr(fn, '_nvim_rpc_spec'):
                 specs.append(fn._nvim_rpc_spec)
             handlers.append(fn_wrapped)
+            cls_handlers.append(fn_wrapped)
         if specs:
             self._specs[plugin_path] = specs
 
