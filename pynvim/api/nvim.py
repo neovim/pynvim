@@ -389,7 +389,10 @@ class Nvim(object):
                             from_part, do_lt, special)
 
     def out_write(self, msg, **kwargs):
-        """Print `msg` as a normal message."""
+        r"""Print `msg` as a normal message.
+
+        The message is buffered (won't display) until linefeed ("\n").
+        """
         return self.request('nvim_out_write', msg, **kwargs)
 
     def err_write(self, msg, **kwargs):

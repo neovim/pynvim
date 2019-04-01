@@ -103,12 +103,17 @@ bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim)):
 [1, 2, 3]
 ```
 
-You can embed neovim into your python application instead of binding to a
-running neovim instance.
+You can embed Neovim into your python application instead of connecting to
+a running Neovim instance.
 
 ```python
 >>> from pynvim import attach
->>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed"])
+>>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed", "--headless"])
 ```
 
-The tests can be consulted for more examples.
+- The ` --headless` argument tells `nvim` not to wait for a UI to connect.
+- Alternatively, use `--embed` _without_ `--headless` if your client is a UI
+  and you want `nvim` to wait for your client to `nvim_ui_attach` before
+  continuing startup.
+
+See the tests for more examples.
