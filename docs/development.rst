@@ -26,7 +26,7 @@ directory added to ``sys.path``.
 
 If you want to test a different version than ``nvim`` in ``$PATH`` use::
 
-    NVIM_CHILD_ARGV='["/path/to/nvim", "-u", "NONE", "--embed"]' pytest
+    NVIM_CHILD_ARGV='["/path/to/nvim", "-u", "NONE", "--embed", "--headless"]' pytest
 
 Alternatively, if you want to see the state of nvim, you could use::
 
@@ -86,6 +86,6 @@ You can embed Neovim into your python application instead of binding to a runnin
 .. code-block:: python
 
     >>> from pynvim import attach
-    >>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed"])
+    >>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed", "--headless"])
 
 The tests can be consulted for more examples.

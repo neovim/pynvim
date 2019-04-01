@@ -33,7 +33,7 @@ class BaseEventLoop(object):
       named pipe.
     - `_connect_stdio()`: Use stdin/stdout as the connection to Nvim
     - `_connect_child(argv)`: Use the argument vector `argv` to spawn an
-      embedded Nvim that has it's stdin/stdout connected to the event loop.
+      embedded Nvim that has its stdin/stdout connected to the event loop.
     - `_start_reading()`: Called after any of _connect_* methods. Can be used
       to perform any post-connection setup or validation.
     - `_send(data)`: Send `data`(byte array) to Nvim. The data is only
@@ -70,7 +70,8 @@ class BaseEventLoop(object):
         Traceback (most recent call last):
             ...
         AttributeError: 'BaseEventLoop' object has no attribute '_init'
-        >>> BaseEventLoop('child', ['nvim', '--embed', '-u', 'NONE'])
+        >>> BaseEventLoop('child',
+                ['nvim', '--embed', '--headless', '-u', 'NONE'])
         Traceback (most recent call last):
             ...
         AttributeError: 'BaseEventLoop' object has no attribute '_init'
