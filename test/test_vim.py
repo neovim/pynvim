@@ -90,9 +90,9 @@ def test_vars(vim):
 
 
 def test_options(vim):
-    assert vim.options['listchars'] == 'tab:> ,trail:-,nbsp:+'
-    vim.options['listchars'] = 'tab:xy'
-    assert vim.options['listchars'] == 'tab:xy'
+    assert vim.windows[0].options['listchars'] == 'tab:> ,trail:-,nbsp:+'
+    vim.windows[0].options['listchars'] = 'tab:xy'
+    assert vim.windows[0].options['listchars'] == 'tab:xy'
 
 
 def test_buffers(vim):
