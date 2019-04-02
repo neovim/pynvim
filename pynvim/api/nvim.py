@@ -396,7 +396,10 @@ class Nvim(object):
         return self.request('nvim_out_write', msg, **kwargs)
 
     def err_write(self, msg, **kwargs):
-        """Print `msg` as an error message."""
+        r"""Print `msg` as an error message.
+
+        The message is buffered (won't display) until linefeed ("\n").
+        """
         if self._thread_invalid():
             # special case: if a non-main thread writes to stderr
             # i.e. due to an uncaught exception, pass it through
