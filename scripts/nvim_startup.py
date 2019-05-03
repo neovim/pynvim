@@ -16,11 +16,13 @@ def __let_user_choose_instance(nvim_instances):
     for idx, inst in enumerate(nvim_instances):
         with pynvim.attach('socket', path=inst) as nvim_endpoint:
             nvim_endpoint.command(
-                f'echon "I am Instance Nr {idx}: " $NVIM_LISTEN_ADDRESS'
+                'echon "I am Instance Nr {}: " $NVIM_LISTEN_ADDRESS'.format(
+                    idx
+                )
             )
 
     for idx, inst in enumerate(nvim_instances):
-        print(f'Instance Nr {idx}: {inst}')
+        print('Instance Nr {}: {}'.format(idx, inst))
 
     while True:
         try:
@@ -36,11 +38,6 @@ def __let_user_choose_instance(nvim_instances):
             continue
 
     return chosen_inst
-
-
-def tell_nvim_that_python_exited():
-    'will inform Nvim about Python exit'
-    nvim.command('echo "IPython disconnected."')
 
 
 def autoattach_to_nvim(glob_expr='/tmp/nvim*/0'):
@@ -61,5 +58,5 @@ def autoattach_to_nvim(glob_expr='/tmp/nvim*/0'):
 
 
 nvim = autoattach_to_nvim()
-nvim.command('echo "Connected to IPython."')
-atexit.register(tell_nvim_that_python_exited)
+nvim.command('echo "Connected to Python REPL."')
+atexit.register(lambda: nvim.command('echo "Python REPL disconnected."'))
