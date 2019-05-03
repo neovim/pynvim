@@ -76,7 +76,7 @@ documentation.
 
 #### Autoconnect in Python/IPython REPL
 
-You can explore and use pynvim through IPython. For easy connection use the
+You can explore and use pynvim through Python/IPython REPL. For easy connection use the
 startup script in scripts/nvim_startup.py like so:
 ```bash
 $ ipython -i scripts/nvim_startup.py
