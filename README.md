@@ -87,7 +87,7 @@ $ python -i scripts/nvim_startup.py
 This will leave you with an Python/IPython Session that has a variable named "nvim" which 
 represents a connection to your current NVim instance.
 If you have more than one instance running, the script will ask at startup to which
-instance it shall connect to. Afterwards see [this section](README.md#usage-through-the-python-repl)
+instance it shall connect to. Afterwards see [the next section](README.md#manual-usage-through-the-python-repl)
 for examples on how to use the API.
 
 
