@@ -1,7 +1,7 @@
-""" Startup script for IPython that will connect to a running NeoVim instance
-automatically or ask the user which NeoVim instance to connect to.
-After connection there is a variable called "nvim" that gives acccess to the
-endpoint.
+""" Startup script for IPython an Python REPL that will connect to a running 
+NeoVim instance automatically or ask the user which NeoVim instance to connect 
+to. After connection there is a variable called "nvim" that gives acccess to 
+the endpoint.
 """
 import atexit
 from glob import glob
