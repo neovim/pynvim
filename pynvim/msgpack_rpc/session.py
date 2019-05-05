@@ -102,6 +102,25 @@ class Session(object):
             raise self.error_wrapper(err)
         return rv
 
+    def run_coroutine(self, coroutine):
+        if not self._is_running:
+            # TODO: can has return value?
+            return self.loop._loop.run_until_complete(coroutine)
+        gr = greenlet.getcurrent()
+        parent = gr.parent
+
+        def result_cb(future):
+            debug('coroutine result is available for greenlet %s, switching back', gr)
+            gr.switch(future)
+
+        task = self.loop._loop.create_task(coroutine)
+        task.add_done_callback(result_cb)
+
+        debug('yielding from greenlet %s to wait for coroutine', gr)
+        future = parent.switch()
+        return future.result() # should re-raise any exception
+
+
     def run(self, request_cb, notification_cb, setup_cb=None):
         """Run the event loop to receive requests and notifications from Nvim.
 

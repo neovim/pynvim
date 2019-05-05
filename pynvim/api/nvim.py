@@ -453,6 +453,56 @@ class Nvim(object):
                 raise
         self._session.threadsafe_call(handler)
 
+    if IS_PYTHON3:
+
+        def run_coroutine(self, coroutine):
+            """ Run a coroutine inside a response handler (or setup_cb)"""
+
+            return self._session.run_coroutine(coroutine)
+
+        def start_subprocess(self, cmd, on_data, on_exit, **args):
+             coro = self.loop.subprocess_exec(partial(NvimAsyncioProcess, self, on_data, on_exit),
+                                              *cmd, **args)
+             (transport, protocol) = self.run_coroutine(coro)
+             return transport
+
+if IS_PYTHON3:
+
+    import asyncio
+
+
+    class NvimAsyncioProcess(asyncio.SubprocessProtocol):
+
+        def __init__(self, session, on_data, on_exit):
+            self.session = session
+            self.on_data = on_data
+            self.on_exit = on_exit
+
+            self.call_point = ''.join(format_stack(None, 6)[:-2])
+
+        def _callback(self, cb, *args):
+
+            def handler():
+                try:
+                    cb(*args)
+                except Exception as err:
+                    msg = ("error caught while executing subprocess callback:\n"
+                           "{!r}\n{}\n \nthe process was created at\n{}"
+                           .format(err, format_exc_skip(1), self.call_point))
+                    self.session._err_cb(msg)
+                    raise
+
+            self.session._session.threadsafe_call(handler)
+
+
+        def connection_made(self, transport):
+            pass
+
+        def pipe_data_received(self, fd, data):
+            self._callback(self.on_data, fd, data)
+
+        def process_exited(self):
+            self._callback(self.on_exit)
 
 class Buffers(object):
 
