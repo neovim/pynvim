@@ -8,7 +8,7 @@ from glob import glob
 import pynvim
 
 
-class NVimAutoAttachException(Exception):
+class NvimAutoAttachException(Exception):
     '''Exception class that will be raised by this script'''
 
 
@@ -43,11 +43,11 @@ def __let_user_choose_instance(nvim_instances):
 def autoattach_to_nvim(glob_expr='/tmp/nvim*/0'):
     '''Returns a nvim endpoint if there is only one instance.
     If there are more instances, asks the user which one to pick.
-    Raises NVimAutoAttachException if there are no NVim instances.
+    Raises NvimAutoAttachException if there are no NVim instances.
     '''
     nvim_instances = glob(glob_expr)
     if not nvim_instances:
-        raise NVimAutoAttachException(
+        raise NvimAutoAttachException(
             'Could not find any running NVim instances.'
         )
     if len(nvim_instances) > 1:
