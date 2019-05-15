@@ -8,6 +8,10 @@ install_requires = [
     'msgpack>=0.5.0',
 ]
 
+setup_requires = [
+    'pytest-runner'
+]
+
 tests_require = [
     'pytest>=3.4.0',
 ]
@@ -40,6 +44,7 @@ setup(name='pynvim',
                 'pynvim.msgpack_rpc.event_loop', 'pynvim.plugin',
                 'neovim', 'neovim.api'],
       install_requires=install_requires,
+      setup_requires=setup_requires,
       tests_require=tests_require,
       extras_require=extras_require,
       zip_safe=False)
