@@ -90,9 +90,15 @@ def test_vars(vim):
 
 
 def test_options(vim):
-    assert vim.windows[0].options['listchars'] == 'tab:> ,trail:-,nbsp:+'
-    vim.windows[0].options['listchars'] = 'tab:xy'
-    assert vim.windows[0].options['listchars'] == 'tab:xy'
+    assert vim.options['background'] == 'dark'
+    vim.options['background'] = 'light'
+    assert vim.options['background'] == 'light'
+
+
+def test_local_options(vim):
+    assert vim.windows[0].options['foldmethod'] == 'manual'
+    vim.windows[0].options['foldmethod'] = 'syntax'
+    assert vim.windows[0].options['foldmethod'] == 'syntax'
 
 
 def test_buffers(vim):
