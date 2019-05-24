@@ -57,7 +57,7 @@ class AsyncSession(object):
     def run(self, request_cb, notification_cb):
         """Run the event loop to receive requests and notifications from Nvim.
 
-        While the event loop is running, `request_cb` and `_notification_cb`
+        While the event loop is running, `request_cb` and `notification_cb`
         will be called whenever requests or notifications are respectively
         available.
         """

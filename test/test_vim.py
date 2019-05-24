@@ -12,6 +12,10 @@ def source(vim, code):
     os.unlink(fname)
 
 
+def test_clientinfo(vim):
+    assert 'remote' == vim.api.get_chan_info(vim.channel_id)['client']['type']
+
+
 def test_command(vim):
     fname = tempfile.mkstemp()[1]
     vim.command('new')

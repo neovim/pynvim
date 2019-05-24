@@ -1,4 +1,5 @@
 """Synchronous msgpack-rpc session layer."""
+import sys
 import logging
 import threading
 from collections import deque
@@ -7,6 +8,7 @@ from traceback import format_exc
 import greenlet
 
 from ..compat import check_async
+from ..util import VERSION
 
 logger = logging.getLogger(__name__)
 error, debug, info, warn = (logger.error, logger.debug, logger.info,

@@ -14,7 +14,6 @@ def format_exc_skip(skip, limit=None):
 
 # Taken from SimpleNamespace in python 3
 class Version:
-
     """Helper class for version info."""
 
     def __init__(self, **kwargs):
@@ -30,6 +29,13 @@ class Version:
     def __eq__(self, other):
         """Check if version is same as other."""
         return self.__dict__ == other.__dict__
+
+
+def get_client_info(kind, type_, method_spec):
+    name = "python{}-{}".format(sys.version_info[0], kind)
+    attributes = {"license": "Apache v2",
+                  "website": "github.com/neovim/pynvim"}
+    return (name, VERSION.__dict__, type_, method_spec, attributes)
 
 
 VERSION = Version(major=0, minor=3, patch=2, prerelease='')

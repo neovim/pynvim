@@ -8,6 +8,7 @@ from .async_session import AsyncSession
 from .event_loop import EventLoop
 from .msgpack_stream import MsgpackStream
 from .session import ErrorResponse, Session
+from ..util import get_client_info
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
@@ -19,6 +20,8 @@ def session(transport_type='stdio', *args, **kwargs):
     msgpack_stream = MsgpackStream(loop)
     async_session = AsyncSession(msgpack_stream)
     session = Session(async_session)
+    session.request(b'nvim_set_client_info',
+        *get_client_info('client', 'remote', {}), async_=True)
     return session
 
 
