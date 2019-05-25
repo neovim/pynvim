@@ -21,7 +21,7 @@ def session(transport_type='stdio', *args, **kwargs):
     async_session = AsyncSession(msgpack_stream)
     session = Session(async_session)
     session.request(b'nvim_set_client_info',
-            *get_client_info('client', 'remote', {}), async_=True)
+                    *get_client_info('client', 'remote', {}), async_=True)
     return session
 
 
