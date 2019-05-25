@@ -32,6 +32,7 @@ class Version:
 
 
 def get_client_info(kind, type_, method_spec):
+    """Returns a tuple describing the client."""
     name = "python{}-{}".format(sys.version_info[0], kind)
     attributes = {"license": "Apache v2",
                   "website": "github.com/neovim/pynvim"}

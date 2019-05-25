@@ -156,7 +156,7 @@ class Host(object):
                 self._load_errors[path] = err
 
         kind = ("script-host" if len(plugins) == 1 and has_script
-            else "rplugin-host")
+                else "rplugin-host")
         self.nvim.api.set_client_info(
             *get_client_info(kind, 'host', host_method_spec),
             async_=True)
