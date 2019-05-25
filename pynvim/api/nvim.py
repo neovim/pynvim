@@ -77,7 +77,7 @@ class Nvim(object):
         creating specialized objects from Nvim remote handles.
         """
         session.error_wrapper = lambda e: NvimError(e[1])
-        channel_id, metadata = session.request(b'vim_get_api_info')
+        channel_id, metadata = session.request(b'nvim_get_api_info')
 
         if IS_PYTHON3:
             # decode all metadata strings for python3
