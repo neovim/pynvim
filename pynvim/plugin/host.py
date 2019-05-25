@@ -5,7 +5,6 @@ import logging
 import os
 import os.path
 import re
-import sys
 from functools import partial
 from traceback import format_exc
 
@@ -13,7 +12,7 @@ from . import script_host
 from ..api import decode_if_bytes, walk
 from ..compat import IS_PYTHON3, find_module
 from ..msgpack_rpc import ErrorResponse
-from ..util import get_client_info, format_exc_skip
+from ..util import format_exc_skip, get_client_info
 
 __all__ = ('Host')
 
@@ -156,10 +155,11 @@ class Host(object):
                 error(err)
                 self._load_errors[path] = err
 
-        kind = ("script-host" if len(plugins) == 1 and has_script else "rplugin-host")
+        kind = ("script-host" if len(plugins) == 1 and has_script
+            else "rplugin-host")
         self.nvim.api.set_client_info(
-                *get_client_info(kind, 'host', host_method_spec),
-                async_=True)
+            *get_client_info(kind, 'host', host_method_spec),
+            async_=True)
 
     def _unload(self):
         for path, plugin in self._loaded.items():
