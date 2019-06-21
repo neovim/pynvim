@@ -172,3 +172,9 @@ def test_update_highlights(vim):
     vim.current.buffer[:] = ['a', 'b', 'c']
     src_id = vim.new_highlight_source()
     vim.current.buffer.update_highlights(src_id, [["Comment", 0, 0, -1], ("String", 1, 0, 1)], clear=True, async_=False)
+
+
+def test_buffer_inequality(vim):
+    b = vim.current.buffer
+    assert not (b != vim.current.buffer)
+
