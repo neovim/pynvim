@@ -93,7 +93,7 @@ def test_options(vim):
     vim.current.buffer.options['define'] = 'test'
     assert vim.current.buffer.options['define'] == 'test'
     # Doesn't change the global value
-    assert vim.options['define'] == '^\s*#\s*define'
+    assert vim.options['define'] == r'^\s*#\s*define'
 
 
 def test_number(vim):
