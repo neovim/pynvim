@@ -3,6 +3,7 @@ import os
 import textwrap
 
 import pynvim
+
 import pytest
 
 pynvim.setup_logging("test")
