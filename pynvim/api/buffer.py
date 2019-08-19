@@ -84,9 +84,10 @@ class Buffer(Remote):
         self.__setitem__(idx, None)
 
     def __ne__(self, other):
-        """ Test inequality of Buffers.
+        """Test inequality of Buffers.
 
-        Necessary for Python 2 compatibility """
+        Necessary for Python 2 compatibility.
+        """
         return not self.__eq__(other)
 
     def append(self, lines, index=-1):
