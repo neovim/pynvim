@@ -154,11 +154,12 @@ def test_invalid_utf8(vim):
 
 
 def test_get_exceptions(vim):
-    try:
+    with pytest.raises(vim.error) as excinfo:
         vim.current.buffer.options['invalid-option']
-        assert False
-    except vim.error:
-        pass
+
+    assert isinstance(excinfo.value, KeyError)
+    assert excinfo.value.args == ("Invalid option name: 'invalid-option'",)
+
 
 
 def test_set_items_for_range(vim):
