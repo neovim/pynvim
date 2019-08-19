@@ -2,7 +2,7 @@ dist: xenial
 language: python
 env:
   global:
-    - PYTEST_ADDOPTS=-vv
+    - PYTEST_ADDOPTS="-vv --cov-append"
   matrix:
     - CI_TARGET=tests
 matrix:
@@ -31,5 +31,8 @@ script:
   - tox
 after_script:
   - if [ $CI_TARGET = tests ]; then
+      coverage report -m;
+      coverage xml;
+      bash <(curl --retry 5 --silent --fail https://codecov.io/bash) -f coverage.xml;
       ocular;
     fi
