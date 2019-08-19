@@ -27,8 +27,6 @@ before_install:
     else
       pip install -q tox;
     fi
-install:
-  - pip install .
 script:
   - tox
 after_script:
