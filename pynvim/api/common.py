@@ -5,6 +5,8 @@ from msgpack import unpackb
 
 from ..compat import unicode_errors_default
 
+__all__ = ()
+
 
 class NvimError(Exception):
     pass
@@ -88,6 +90,7 @@ class RemoteMap(object):
 
     It is used to provide a dict-like API to vim variables and options.
     """
+
     _set = None
     _del = None
 

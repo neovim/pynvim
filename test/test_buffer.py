@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from pynvim.api import NvimError
 from pynvim.compat import IS_PYTHON3
 
@@ -176,7 +177,6 @@ def test_get_exceptions(vim):
 
     assert not isinstance(excinfo.value, NvimError)
     assert excinfo.value.args == ("Invalid option name: 'invalid-option'",)
-
 
 
 def test_set_items_for_range(vim):
