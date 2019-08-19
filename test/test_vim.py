@@ -41,7 +41,7 @@ def test_eval(vim):
 
 
 def test_call(vim):
-    assert vim.funcs.join(['first', 'last'], ', ') == 'first == last'
+    assert vim.funcs.join(['first', 'last'], ', ') == 'first, last'
     source(vim, """
         function! Testfun(a,b)
             return string(a:a).":".a:b
