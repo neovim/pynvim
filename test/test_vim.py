@@ -37,11 +37,11 @@ def test_command_output(vim):
 def test_eval(vim):
     vim.command('let g:v1 = "a"')
     vim.command('let g:v2 = [1, 2, {"v3": 3}]')
-    assert vim.eval('g:'), {'v1': 'a', 'v2': [1, 2 == {'v3': 3}]}
+    assert vim.eval('g:') == {'v1': 'a', 'v2': [1, 2, {'v3': 3}]}
 
 
 def test_call(vim):
-    assert vim.funcs.join(['first', 'last'], ', '), 'first == last'
+    assert vim.funcs.join(['first', 'last'], ', ') == 'first == last'
     source(vim, """
         function! Testfun(a,b)
             return string(a:a).":".a:b
@@ -188,6 +188,7 @@ def test_cwd(vim, tmpdir):
     assert cwd_python == cwd_vim
     assert cwd_python != cwd_before
 
+
 lua_code = """
 local a = vim.api
 local y = ...
@@ -209,10 +210,11 @@ pynvimtest = {setbuf=setbuf,getbuf=getbuf}
 return "eggspam"
 """
 
+
 def test_lua(vim):
-  assert vim.exec_lua(lua_code, 7) == "eggspam"
-  assert vim.lua.pynvimtest_func(3) == 10
-  testmod = vim.lua.pynvimtest
-  buf = vim.current.buffer
-  testmod.setbuf(buf, ["a", "b", "c", "d"], async_=True)
-  assert testmod.getbuf(buf) == 4
+    assert vim.exec_lua(lua_code, 7) == "eggspam"
+    assert vim.lua.pynvimtest_func(3) == 10
+    testmod = vim.lua.pynvimtest
+    buf = vim.current.buffer
+    testmod.setbuf(buf, ["a", "b", "c", "d"], async_=True)
+    assert testmod.getbuf(buf) == 4
