@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_windows(vim):
     vim.command('tabnew')
     vim.command('vsplit')
@@ -12,6 +15,17 @@ def test_vars(vim):
     vim.current.tabpage.vars['python'] = [1, 2, {'3': 1}]
     assert vim.current.tabpage.vars['python'] == [1, 2, {'3': 1}]
     assert vim.eval('t:python') == [1, 2, {'3': 1}]
+    assert vim.current.tabpage.vars.get('python') == [1, 2, {'3': 1}]
+
+    del vim.current.tabpage.vars['python']
+    with pytest.raises(KeyError):
+        vim.current.tabpage.vars['python']
+    assert vim.eval('exists("t:python")') == 0
+
+    with pytest.raises(KeyError):
+        del vim.current.tabpage.vars['python']
+
+    assert vim.current.tabpage.vars.get('python', 'default') == 'default'
 
 
 def test_valid(vim):

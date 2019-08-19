@@ -8,7 +8,7 @@ from traceback import format_stack
 from msgpack import ExtType
 
 from .buffer import Buffer
-from .common import (Remote, RemoteApi, RemoteMap, RemoteSequence,
+from .common import (NvimError, Remote, RemoteApi, RemoteMap, RemoteSequence,
                      decode_if_bytes, walk)
 from .tabpage import Tabpage
 from .window import Window
@@ -107,8 +107,8 @@ class Nvim(object):
         self.version = Version(**version)
         self.types = types
         self.api = RemoteApi(self, 'nvim_')
-        self.vars = RemoteMap(self, 'nvim_get_var', 'nvim_set_var')
-        self.vvars = RemoteMap(self, 'nvim_get_vvar', None)
+        self.vars = RemoteMap(self, 'nvim_get_var', 'nvim_set_var', 'nvim_del_var')
+        self.vvars = RemoteMap(self, 'nvim_get_vvar', None, None)
         self.options = RemoteMap(self, 'nvim_get_option', 'nvim_set_option')
         self.buffers = Buffers(self)
         self.windows = RemoteSequence(self, 'nvim_list_wins')
@@ -575,7 +575,3 @@ class LuaFuncs(object):
         pattern = "return {}(...)" if not async_ else "{}(...)"
         code = pattern.format(self.name)
         return self._nvim.exec_lua(code, *args, **kwargs)
-
-
-class NvimError(Exception):
-    pass

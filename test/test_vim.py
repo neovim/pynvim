@@ -99,6 +99,17 @@ def test_vars(vim):
     vim.vars['python'] = [1, 2, {'3': 1}]
     assert vim.vars['python'], [1, 2 == {'3': 1}]
     assert vim.eval('g:python'), [1, 2 == {'3': 1}]
+    assert vim.vars.get('python') == [1, 2, {'3': 1}]
+
+    del vim.vars['python']
+    with pytest.raises(KeyError):
+        vim.vars['python']
+    assert vim.eval('exists("g:python")') == 0
+
+    with pytest.raises(KeyError):
+        del vim.vars['python']
+
+    assert vim.vars.get('python', 'default') == 'default'
 
 
 def test_options(vim):
