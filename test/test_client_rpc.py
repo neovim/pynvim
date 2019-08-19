@@ -4,6 +4,7 @@ import time
 
 def test_call_and_reply(vim):
     cid = vim.channel_id
+
     def setup_cb():
         cmd = 'let g:result = rpcrequest(%d, "client-call", 1, 2, 3)' % cid
         vim.command(cmd)
@@ -20,6 +21,7 @@ def test_call_and_reply(vim):
 
 def test_call_api_before_reply(vim):
     cid = vim.channel_id
+
     def setup_cb():
         cmd = 'let g:result = rpcrequest(%d, "client-call2", 1, 2, 3)' % cid
         vim.command(cmd)
@@ -31,6 +33,7 @@ def test_call_api_before_reply(vim):
         return vim.vars['result2']
 
     vim.run_loop(request_cb, None, setup_cb)
+
 
 def test_async_call(vim):
 
@@ -52,6 +55,7 @@ def test_async_call(vim):
 
 def test_recursion(vim):
     cid = vim.channel_id
+
     def setup_cb():
         vim.vars['result1'] = 0
         vim.vars['result2'] = 0

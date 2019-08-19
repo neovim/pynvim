@@ -3,7 +3,7 @@ from pynvim.plugin.decorators import command
 
 def test_command_count():
     def function():
-        "A dummy function to decorate."
+        """A dummy function to decorate."""
         return
 
     # ensure absence with default value of None
