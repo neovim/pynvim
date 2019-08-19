@@ -2,7 +2,7 @@ dist: xenial
 language: python
 env:
   global:
-    - PYTEST_ADDOPTS="-vv --cov-append"
+    - PYTEST_ADDOPTS=-vv
   matrix:
     - CI_TARGET=tests
 matrix:
