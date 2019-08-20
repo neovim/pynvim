@@ -194,7 +194,6 @@ def test_key_error(vim):
     with pytest.raises(KeyError):
         vim.current.buffer.vars['doesnotexist']
 
-
 lua_code = """
 local a = vim.api
 local y = ...

@@ -88,7 +88,7 @@ class RemoteMap(object):
         try:
             return self._get(key)
         except Exception:
-            raise KeyError
+            raise NvimAPIKeyError
 
     def __setitem__(self, key, value):
         """Set a map value by key(if the setter was provided)."""
@@ -181,3 +181,7 @@ def walk(fn, obj, *args, **kwargs):
         return dict((walk(fn, k, *args), walk(fn, v, *args)) for k, v in
                     obj.items())
     return fn(obj, *args, **kwargs)
+
+
+class NvimAPIKeyError(KeyError):
+    pass

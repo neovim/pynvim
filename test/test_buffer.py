@@ -2,6 +2,7 @@ import os
 import pytest
 
 from pynvim.compat import IS_PYTHON3
+from pynvim.api.common import NvimAPIKeyError
 
 
 def test_repr(vim):
@@ -155,7 +156,7 @@ def test_invalid_utf8(vim):
 
 
 def test_get_exceptions(vim):
-    with pytest.raises(KeyError):
+    with pytest.raises(NvimAPIKeyError):
         vim.current.buffer.options['invalid-option']
 
 
