@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import pytest
 import sys
 import tempfile
 
@@ -187,6 +188,11 @@ def test_cwd(vim, tmpdir):
     cwd_python = vim.command_output('{} print(os.getcwd())'.format(pycmd))
     assert cwd_python == cwd_vim
     assert cwd_python != cwd_before
+
+
+def test_key_error(vim):
+    with pytest.raises(KeyError):
+        vim.current.buffer.vars['doesnotexist']
 
 
 lua_code = """

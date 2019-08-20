@@ -85,7 +85,10 @@ class RemoteMap(object):
 
     def __getitem__(self, key):
         """Return a map value by key."""
-        return self._get(key)
+        try:
+            return self._get(key)
+        except Exception:
+            raise KeyError
 
     def __setitem__(self, key, value):
         """Set a map value by key(if the setter was provided)."""

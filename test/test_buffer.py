@@ -1,4 +1,5 @@
 import os
+import pytest
 
 from pynvim.compat import IS_PYTHON3
 
@@ -154,11 +155,8 @@ def test_invalid_utf8(vim):
 
 
 def test_get_exceptions(vim):
-    try:
+    with pytest.raises(KeyError):
         vim.current.buffer.options['invalid-option']
-        assert False
-    except vim.error:
-        pass
 
 
 def test_set_items_for_range(vim):
