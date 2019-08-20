@@ -1,0 +1,7 @@
+[run]
+source = .
+branch = true
+
+[report]
+show_missing = true
+include = pynvim/*,test/*
