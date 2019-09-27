@@ -76,7 +76,7 @@ class Nvim(object):
         queries Nvim metadata for type information and sets a SessionHook for
         creating specialized objects from Nvim remote handles.
         """
-        session.error_wrapper = lambda e: NvimError(e[1])
+        session.error_wrapper = lambda e: NvimError(decode_if_bytes(e[1]))
         channel_id, metadata = session.request(b'nvim_get_api_info')
 
         if IS_PYTHON3:

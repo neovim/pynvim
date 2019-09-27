@@ -3,6 +3,8 @@ import os
 import sys
 import tempfile
 
+import pytest
+
 
 def source(vim, code):
     fd, fname = tempfile.mkstemp()
@@ -32,6 +34,12 @@ def test_command(vim):
 
 def test_command_output(vim):
     assert vim.command_output('echo "test"') == 'test'
+
+
+def test_command_error(vim):
+    with pytest.raises(vim.error) as excinfo:
+        vim.current.window.cursor = -1, -1
+    assert excinfo.value.args == ('Cursor position outside buffer',)
 
 
 def test_eval(vim):
