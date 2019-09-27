@@ -5,6 +5,12 @@ from msgpack import unpackb
 
 from ..compat import unicode_errors_default
 
+__all__ = ()
+
+
+class NvimError(Exception):
+    pass
+
 
 class Remote(object):
 
@@ -26,7 +32,8 @@ class Remote(object):
         self.handle = unpackb(code_data[1])
         self.api = RemoteApi(self, self._api_prefix)
         self.vars = RemoteMap(self, self._api_prefix + 'get_var',
-                              self._api_prefix + 'set_var')
+                              self._api_prefix + 'set_var',
+                              self._api_prefix + 'del_var')
         self.options = RemoteMap(self, self._api_prefix + 'get_option',
                                  self._api_prefix + 'set_option')
 
@@ -65,8 +72,16 @@ class RemoteApi(object):
         return functools.partial(self._obj.request, self._api_prefix + name)
 
 
-class RemoteMap(object):
+def transform_keyerror(exc):
+    if isinstance(exc, NvimError):
+        if exc.args[0].startswith('Key not found:'):
+            return KeyError(exc.args[0])
+        if exc.args[0].startswith('Invalid option name:'):
+            return KeyError(exc.args[0])
+    return exc
 
+
+class RemoteMap(object):
     """Represents a string->object map stored in Nvim.
 
     This is the dict counterpart to the `RemoteSequence` class, but it is used
@@ -76,16 +91,23 @@ class RemoteMap(object):
     It is used to provide a dict-like API to vim variables and options.
     """
 
-    def __init__(self, obj, get_method, set_method=None):
+    _set = None
+    _del = None
+
+    def __init__(self, obj, get_method, set_method=None, del_method=None):
         """Initialize a RemoteMap with session, getter/setter."""
         self._get = functools.partial(obj.request, get_method)
-        self._set = None
         if set_method:
             self._set = functools.partial(obj.request, set_method)
+        if del_method:
+            self._del = functools.partial(obj.request, del_method)
 
     def __getitem__(self, key):
         """Return a map value by key."""
-        return self._get(key)
+        try:
+            return self._get(key)
+        except NvimError as exc:
+            raise transform_keyerror(exc)
 
     def __setitem__(self, key, value):
         """Set a map value by key(if the setter was provided)."""
@@ -95,9 +117,12 @@ class RemoteMap(object):
 
     def __delitem__(self, key):
         """Delete a map value by associating None with the key."""
-        if not self._set:
+        if not self._del:
             raise TypeError('This dict is read-only')
-        return self._set(key, None)
+        try:
+            return self._del(key)
+        except NvimError as exc:
+            raise transform_keyerror(exc)
 
     def __contains__(self, key):
         """Check if key is present in the map."""
@@ -110,8 +135,8 @@ class RemoteMap(object):
     def get(self, key, default=None):
         """Return value for key if present, else a default value."""
         try:
-            return self._get(key)
-        except Exception:
+            return self.__getitem__(key)
+        except KeyError:
             return default
 
 

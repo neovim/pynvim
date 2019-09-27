@@ -1,5 +1,8 @@
 import os
 
+import pytest
+
+from pynvim.api import NvimError
 from pynvim.compat import IS_PYTHON3
 
 
@@ -74,6 +77,17 @@ def test_vars(vim):
     vim.current.buffer.vars['python'] = [1, 2, {'3': 1}]
     assert vim.current.buffer.vars['python'] == [1, 2, {'3': 1}]
     assert vim.eval('b:python') == [1, 2, {'3': 1}]
+    assert vim.current.buffer.vars.get('python') == [1, 2, {'3': 1}]
+
+    del vim.current.buffer.vars['python']
+    with pytest.raises(KeyError):
+        vim.current.buffer.vars['python']
+    assert vim.eval('exists("b:python")') == 0
+
+    with pytest.raises(KeyError):
+        del vim.current.buffer.vars['python']
+
+    assert vim.current.buffer.vars.get('python', 'default') == 'default'
 
 
 def test_api(vim):
@@ -94,6 +108,10 @@ def test_options(vim):
     assert vim.current.buffer.options['define'] == 'test'
     # Doesn't change the global value
     assert vim.options['define'] == r'^\s*#\s*define'
+
+    with pytest.raises(KeyError) as excinfo:
+        vim.current.buffer.options['doesnotexist']
+    assert excinfo.value.args == ("Invalid option name: 'doesnotexist'",)
 
 
 def test_number(vim):
@@ -154,11 +172,11 @@ def test_invalid_utf8(vim):
 
 
 def test_get_exceptions(vim):
-    try:
+    with pytest.raises(KeyError) as excinfo:
         vim.current.buffer.options['invalid-option']
-        assert False
-    except vim.error:
-        pass
+
+    assert not isinstance(excinfo.value, NvimError)
+    assert excinfo.value.args == ("Invalid option name: 'invalid-option'",)
 
 
 def test_set_items_for_range(vim):

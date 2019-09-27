@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_buffer(vim):
     assert vim.current.buffer == vim.windows[0].buffer
     vim.command('new')
@@ -40,6 +43,17 @@ def test_vars(vim):
     vim.current.window.vars['python'] = [1, 2, {'3': 1}]
     assert vim.current.window.vars['python'] == [1, 2, {'3': 1}]
     assert vim.eval('w:python') == [1, 2, {'3': 1}]
+    assert vim.current.window.vars.get('python') == [1, 2, {'3': 1}]
+
+    del vim.current.window.vars['python']
+    with pytest.raises(KeyError):
+        vim.current.window.vars['python']
+    assert vim.eval('exists("w:python")') == 0
+
+    with pytest.raises(KeyError):
+        del vim.current.window.vars['python']
+
+    assert vim.current.window.vars.get('python', 'default') == 'default'
 
 
 def test_options(vim):
@@ -49,6 +63,10 @@ def test_options(vim):
     vim.current.window.options['statusline'] = 'window-status'
     assert vim.current.window.options['statusline'] == 'window-status'
     assert vim.options['statusline'] == ''
+
+    with pytest.raises(KeyError) as excinfo:
+        vim.current.window.options['doesnotexist']
+    assert excinfo.value.args == ("Invalid option name: 'doesnotexist'",)
 
 
 def test_position(vim):

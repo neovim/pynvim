@@ -2,9 +2,9 @@ import json
 import os
 import textwrap
 
-import pynvim
-
 import pytest
+
+import pynvim
 
 pynvim.setup_logging("test")
 
