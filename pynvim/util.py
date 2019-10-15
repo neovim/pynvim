@@ -33,7 +33,7 @@ def format_exc_msg(skip=1, limit=None):
         exc_msg = repr(value)
     else:
         exc_msg = format_exception_only(etype, value)[-1].rstrip('\n')
-    return "{!s}\n{}\n\n".format(exc_msg, format_exc_skip(skip))
+    return "{!s}\n{}".format(exc_msg, format_exc_skip(skip))
 
 
 # Taken from SimpleNamespace in python 3
