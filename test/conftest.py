@@ -1,6 +1,5 @@
 import json
 import os
-import textwrap
 
 import pytest
 
