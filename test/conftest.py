@@ -9,50 +9,6 @@ import pynvim
 pynvim.setup_logging("test")
 
 
-@pytest.fixture(autouse=True)
-def cleanup_func(vim):
-    fun = textwrap.dedent('''function! BeforeEachTest()
-        set all&
-        redir => groups
-        silent augroup
-        redir END
-        for group in split(groups)
-            exe 'augroup '.group
-            autocmd!
-            augroup END
-        endfor
-        autocmd!
-        tabnew
-        let curbufnum = eval(bufnr('%'))
-        redir => buflist
-        silent ls!
-        redir END
-        let bufnums = []
-        for buf in split(buflist, '\\n')
-            let bufnum = eval(split(buf, '[ u]')[0])
-            if bufnum != curbufnum
-            call add(bufnums, bufnum)
-            endif
-        endfor
-        if len(bufnums) > 0
-            exe 'silent bwipeout! '.join(bufnums, ' ')
-        endif
-        silent tabonly
-        for k in keys(g:)
-            exe 'unlet g:'.k
-        endfor
-        filetype plugin indent off
-        mapclear
-        mapclear!
-        abclear
-        comclear
-        endfunction
-    ''')
-    vim.command(fun)
-    vim.command('call BeforeEachTest()')
-    assert len(vim.tabpages) == len(vim.windows) == len(vim.buffers) == 1
-
-
 @pytest.fixture
 def vim():
     child_argv = os.environ.get('NVIM_CHILD_ARGV')

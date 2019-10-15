@@ -121,4 +121,4 @@ def test_handle(vim):
 
 
 def test_repr(vim):
-    assert repr(vim.current.window) == "<Window(handle=1001)>"
+    assert repr(vim.current.window) == "<Window(handle=1000)>"

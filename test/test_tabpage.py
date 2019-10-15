@@ -45,4 +45,4 @@ def test_number(vim):
 
 
 def test_repr(vim):
-    assert repr(vim.current.tabpage) == "<Tabpage(handle=2)>"
+    assert repr(vim.current.tabpage) == "<Tabpage(handle=1)>"

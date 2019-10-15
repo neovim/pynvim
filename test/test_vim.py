@@ -45,7 +45,9 @@ def test_command_error(vim):
 def test_eval(vim):
     vim.command('let g:v1 = "a"')
     vim.command('let g:v2 = [1, 2, {"v3": 3}]')
-    assert vim.eval('g:') == {'v1': 'a', 'v2': [1, 2, {'v3': 3}]}
+    g = vim.eval('g:')
+    assert g['v1'] == 'a'
+    assert g['v2'] == [1, 2, {'v3': 3}]
 
 
 def test_call(vim):
