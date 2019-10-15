@@ -135,12 +135,14 @@ def setup_logging(name):
             '%(filename)s:%(funcName)s:%(lineno)s] %(process)s - %(message)s')
         logging.root.addHandler(handler)
         level = logging.INFO
-        if 'NVIM_PYTHON_LOG_LEVEL' in os.environ:
-            lvl = getattr(logging,
-                          os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
-                          level)
+        env_log_level = os.environ.get('NVIM_PYTHON_LOG_LEVEL', None)
+        if env_log_level is not None:
+            lvl = getattr(logging, env_log_level.strip(), None)
             if isinstance(lvl, int):
                 level = lvl
+            else:
+                logger.warning('Invalid NVIM_PYTHON_LOG_LEVEL: %r, using INFO.',
+                               env_log_level)
         logger.setLevel(level)
 
 
