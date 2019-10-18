@@ -7,7 +7,7 @@ from pynvim.compat import IS_PYTHON3
 
 
 def test_repr(vim):
-    assert repr(vim.current.buffer) == "<Buffer(handle=2)>"
+    assert repr(vim.current.buffer) == "<Buffer(handle=1)>"
 
 
 def test_get_length(vim):
