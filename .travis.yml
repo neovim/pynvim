@@ -31,9 +31,11 @@ script:
   - tox
 after_script:
   - if [ $CI_TARGET = tests ]; then
+      set -x;
       coverage combine;
       coverage report -m;
       coverage xml;
       bash <(curl --retry 5 --silent --fail https://codecov.io/bash) -f coverage.xml;
       ocular;
+      set +x;
     fi
