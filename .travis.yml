@@ -13,8 +13,6 @@ matrix:
     - python: 3.6
       env: CI_TARGET=checkqa TOXENV=checkqa,docs
 python:
-  # If the build matrix gets bigger, also update the number of runs
-  # at the bottom of .scrutinizer.yml.
   - 2.7
   - 3.4
   - 3.5
@@ -23,7 +21,7 @@ python:
 install:
   - if [ $CI_TARGET = tests ]; then
       eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64";
-      pip install -q scrutinizer-ocular tox-travis;
+      pip install -q tox-travis;
     else
       pip install -q tox;
     fi
@@ -36,6 +34,5 @@ after_script:
       coverage report -m;
       coverage xml;
       bash <(curl --retry 5 --silent --fail https://codecov.io/bash) -f coverage.xml;
-      ocular;
       set +x;
     fi
