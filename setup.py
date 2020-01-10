@@ -8,9 +8,11 @@ install_requires = [
     'msgpack>=0.5.0',
 ]
 
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
+pytest_runner = ['pytest-runner'] if needs_pytest else []
+
 setup_requires = [
-    'pytest-runner'
-]
+] + pytest_runner,
 
 tests_require = [
     'pytest>=3.4.0',
