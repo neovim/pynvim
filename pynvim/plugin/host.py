@@ -99,7 +99,7 @@ class Host(object):
             args.insert(0, nvim_bind)
         try:
             return fn(*args)
-        except Exception as exc:
+        except Exception:
             if sync:
                 # NOTE: v:exception only contains the first line.
                 raise ErrorResponse(
