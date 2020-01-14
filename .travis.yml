@@ -30,6 +30,7 @@ script:
 after_script:
   - if [ $CI_TARGET = tests ]; then
       set -x;
+      pip install coverage;
       coverage combine;
       coverage report -m;
       coverage xml;
