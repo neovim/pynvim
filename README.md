@@ -73,7 +73,24 @@ For details about testing and troubleshooting, see the
 [development](http://pynvim.readthedocs.io/en/latest/development.html)
 documentation.
 
-#### Usage through the python REPL
+#### Autoconnect in Python/IPython REPL
+
+You can explore and use pynvim through Python/IPython REPL. For easy connection use the
+startup script in scripts/nvim_startup.py like so:
+```bash
+$ ipython -i scripts/nvim_startup.py
+# or if you prefer the Python REPL instead of IPython
+$ python -i scripts/nvim_startup.py
+```
+
+This will leave you with an Python/IPython Session that has a variable named "nvim" which 
+represents a connection to your current NVim instance.
+If you have more than one instance running, the script will ask at startup to which
+instance it shall connect to. Afterwards see [the next section](README.md#manual-usage-through-the-python-repl)
+for examples on how to use the API.
+
+
+#### Manual usage through the python REPL
 
 A number of different transports are supported, but the simplest way to get
 started is with the python REPL. First, start Nvim with a known address (or use
