@@ -18,6 +18,7 @@ def vim():
     if child_argv is not None:
         editor = pynvim.attach('child', argv=json.loads(child_argv))
     else:
+        assert listen_address is None or listen_address != ''
         editor = pynvim.attach('socket', path=listen_address)
 
     return editor
