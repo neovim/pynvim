@@ -9,3 +9,15 @@ def test_host_clientinfo(vim):
     assert 'remote' == vim.api.get_chan_info(vim.channel_id)['client']['type']
     h._load([])
     assert 'host' == vim.api.get_chan_info(vim.channel_id)['client']['type']
+
+
+# Smoke test for Host._on_error_event(). #425
+def test_host_async_error(vim):
+    h = Host(vim)
+    h._load([])
+    # Invoke a bogus Ex command via notify (async).
+    vim.command("lolwut", async_=True)
+    event = vim.next_message()
+    assert event[1] == 'nvim_error_event'
+    assert 'rplugin-host: Async request caused an error:\nboom\n' \
+           in h._on_error_event(None, 'boom')

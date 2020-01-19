@@ -59,6 +59,7 @@ class Host(object):
         errmsg = "{}: Async request caused an error:\n{}\n".format(
             self.name, decode_if_bytes(msg))
         self.nvim.err_write(errmsg, async_=True)
+        return errmsg
 
     def start(self, plugins):
         """Start listening for msgpack-rpc requests and notifications."""
@@ -177,9 +178,9 @@ class Host(object):
 
         kind = ("script-host" if len(plugins) == 1 and has_script
                 else "rplugin-host")
-        self.nvim.api.set_client_info(
-            *get_client_info(kind, 'host', host_method_spec),
-            async_=True)
+        info = get_client_info(kind, 'host', host_method_spec)
+        self.name = info[0]
+        self.nvim.api.set_client_info(*info, async_=True)
 
     def _unload(self):
         for path, plugin in self._loaded.items():
