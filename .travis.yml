@@ -18,6 +18,7 @@ python:
   - 3.5
   - 3.6
   - 3.7
+  - 3.8
 install:
   - if [ $CI_TARGET = tests ]; then
       eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64";
