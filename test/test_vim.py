@@ -226,7 +226,7 @@ local function getbuf(buf)
    return a.nvim_buf_line_count(buf)
 end
 
-pynvimtest = {setbuf=setbuf,getbuf=getbuf}
+pynvimtest = {setbuf=setbuf, getbuf=getbuf}
 
 return "eggspam"
 """
@@ -235,7 +235,7 @@ return "eggspam"
 def test_lua(vim):
     assert vim.exec_lua(lua_code, 7) == "eggspam"
     assert vim.lua.pynvimtest_func(3) == 10
-    testmod = vim.lua.pynvimtest
+    lua_module = vim.lua.pynvimtest
     buf = vim.current.buffer
-    testmod.setbuf(buf, ["a", "b", "c", "d"], async_=True)
-    assert testmod.getbuf(buf) == 4
+    lua_module.setbuf(buf, ["a", "b", "c", "d"], async_=True)
+    assert lua_module.getbuf(buf) == 4

@@ -28,6 +28,13 @@ def test_sending_notify(vim):
     assert vim.eval('g:data') == 'xyz'
 
 
+def test_async_error(vim):
+    # Invoke a bogus Ex command via notify (async).
+    vim.command("lolwut", async_=True)
+    event = vim.next_message()
+    assert event[1] == 'nvim_error_event'
+
+
 def test_broadcast(vim):
     vim.subscribe('event2')
     vim.command('call rpcnotify(0, "event1", 1, 2, 3)')
