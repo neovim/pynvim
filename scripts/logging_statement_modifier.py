@@ -105,7 +105,7 @@ def main(argv=sys.argv[1:]):
     min_level_value = 0 if options.min_level == 'NONE' else get_level_value(options.min_level)
     if options.min_level is None:
         parser.error("min level must be an integer or one of these values: %s" % ', '.join(LEVEL_CHOICES))
-    max_level_value = sys.maxint if options.max_level == 'NONE' else get_level_value(options.max_level)
+    max_level_value = 9000 if options.max_level == 'NONE' else get_level_value(options.max_level)
     if options.max_level is None:
         parser.error("max level must be an integer or one of these values: %s" % ', '.join(LEVEL_CHOICES))
 
