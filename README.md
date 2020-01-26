@@ -1,4 +1,5 @@
-### Pynvim: Python client to [Neovim](https://github.com/neovim/neovim)
+Pynvim: Python client to [Neovim](https://github.com/neovim/neovim)
+===================================================================
 
 [![Build Status](https://travis-ci.org/neovim/pynvim.svg?branch=master)](https://travis-ci.org/neovim/pynvim)
 [![Documentation Status](https://readthedocs.org/projects/pynvim/badge/?version=latest)](http://pynvim.readthedocs.io/en/latest/?badge=latest)
@@ -7,7 +8,8 @@
 Pynvim implements support for python plugins in Nvim. It also works as a library for
 connecting to and scripting Nvim processes through its msgpack-rpc API.
 
-#### Installation
+Install
+-------
 
 Supports python 2.7, and 3.4 or later.
 
@@ -33,7 +35,8 @@ pip2 install .
 pip3 install .
 ```
 
-#### Python Plugin API
+Python Plugin API
+-----------------
 
 Pynvim supports python _remote plugins_ (via the language-agnostic Nvim rplugin
 interface), as well as _Vim plugins_ (via the `:python[3]` interface). Thus when
@@ -53,7 +56,8 @@ Pynvim defines some extensions over the vim python API:
 
 See the [Python Plugin API](http://pynvim.readthedocs.io/en/latest/usage/python-plugin-api.html) documentation for usage of this new functionality.
 
-#### Development
+Development
+-----------
 
 Use (and activate) a local virtualenv.
 
@@ -73,7 +77,7 @@ For details about testing and troubleshooting, see the
 [development](http://pynvim.readthedocs.io/en/latest/development.html)
 documentation.
 
-#### Usage through the python REPL
+### Usage from the Python REPL
 
 A number of different transports are supported, but the simplest way to get
 started is with the python REPL. First, start Nvim with a known address (or use
@@ -116,3 +120,17 @@ a running Neovim instance.
   continuing startup.
 
 See the tests for more examples.
+
+Release
+-------
+
+1. Create a release commit with title `Pynvim x.y.z`
+   - list significant changes in the commit message
+   - bump the version in `pynvim/util.py` and `setup.py` (3 places in total)
+2. Make a release on GitHub with the same commit/version tag and copy the message.
+3. Run `scripts/disable_log_statements.sh`
+4. Run `python setup.py sdist`
+    - diff the release tarball `dist/pynvim-x.y.z.tar.gz` against the previous one.
+5. Run `twine upload -r pypi dist/pynvim-x.y.z.tar.gz`
+    - Assumes you have a pypi account with permissions.
+6. Run `scripts/enable_log_statements.sh` or `git reset --hard` to restore the working dir.
