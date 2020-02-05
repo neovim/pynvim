@@ -43,7 +43,8 @@ class ScriptHost(object):
         exec('import sys', self.module.__dict__)
         self.legacy_vim = LegacyVim.from_nvim(nvim)
         sys.modules['vim'] = self.legacy_vim
-
+        # mimic Vim by importing vim module by default.
+        exec('import vim', self.module.__dict__)
         # Handle DirChanged. #296
         nvim.command(
             'au DirChanged * call rpcnotify({}, "python_chdir", v:event.cwd)'
