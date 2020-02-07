@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
-
 from pynvim.plugin.host import Host, host_method_spec
+from pynvim.plugin.script_host import ScriptHost
+
+
+def test_host_imports(vim):
+    h = ScriptHost(vim)
+    assert h.module.__dict__['vim']
+    assert h.module.__dict__['vim'] == h.legacy_vim
+    assert h.module.__dict__['sys']
 
 
 def test_host_clientinfo(vim):
