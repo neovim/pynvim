@@ -164,10 +164,10 @@ def test_mark(vim):
 def test_invalid_utf8(vim):
     vim.command('normal "=printf("%c", 0xFF)\np')
     assert vim.eval("char2nr(getline(1))") == 0xFF
-
     assert vim.current.buffer[:] == ['\udcff'] if IS_PYTHON3 else ['\xff']
+
     vim.current.line += 'x'
-    assert vim.eval("getline(1)", decode=False) == b'\xFFx'
+    assert vim.eval("getline(1)", decode=False) == '\udcffx' if IS_PYTHON3 else '\xffx'
     assert vim.current.buffer[:] == ['\udcffx'] if IS_PYTHON3 else ['\xffx']
 
 
