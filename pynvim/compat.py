@@ -34,7 +34,7 @@ if IS_PYTHON3:
     unicode_errors_default = 'surrogateescape'
 else:
     find_module = original_find_module
-    unicode_errors_default = 'strict'
+    unicode_errors_default = 'ignore'
 
 NUM_TYPES = (int, long, float)
 
