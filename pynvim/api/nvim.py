@@ -7,13 +7,13 @@ from traceback import format_stack
 
 from msgpack import ExtType
 
-from .buffer import Buffer
-from .common import (NvimError, Remote, RemoteApi, RemoteMap, RemoteSequence,
+from pynvim.api.buffer import Buffer
+from pynvim.api.common import (NvimError, Remote, RemoteApi, RemoteMap, RemoteSequence,
                      decode_if_bytes, walk)
-from .tabpage import Tabpage
-from .window import Window
-from ..compat import IS_PYTHON3
-from ..util import Version, format_exc_skip
+from pynvim.api.tabpage import Tabpage
+from pynvim.api.window import Window
+from pynvim.compat import IS_PYTHON3
+from pynvim.util import Version, format_exc_skip
 
 __all__ = ('Nvim')
 

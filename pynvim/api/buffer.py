@@ -1,6 +1,6 @@
 """API for working with a Nvim Buffer."""
-from .common import Remote
-from ..compat import IS_PYTHON3, check_async
+from pynvim.api.common import Remote
+from pynvim.compat import IS_PYTHON3, check_async
 
 
 __all__ = ('Buffer')

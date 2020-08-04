@@ -5,11 +5,11 @@ import logging
 import os
 import sys
 
-from .decorators import plugin, rpc_export
-from ..api import Nvim, walk
-from ..compat import IS_PYTHON3
-from ..msgpack_rpc import ErrorResponse
-from ..util import format_exc_skip
+from pynvim.plugin.decorators import plugin, rpc_export
+from pynvim.api import Nvim, walk
+from pynvim.compat import IS_PYTHON3
+from pynvim.msgpack_rpc import ErrorResponse
+from pynvim.util import format_exc_skip
 
 __all__ = ('ScriptHost',)
 

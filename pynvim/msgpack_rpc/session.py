@@ -6,7 +6,7 @@ from traceback import format_exc
 
 import greenlet
 
-from ..compat import check_async
+from pynvim.compat import check_async
 
 logger = logging.getLogger(__name__)
 error, debug, info, warn = (logger.error, logger.debug, logger.info,

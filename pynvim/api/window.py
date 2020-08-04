@@ -1,5 +1,5 @@
 """API for working with Nvim windows."""
-from .common import Remote
+from pynvim.api.common import Remote
 
 
 __all__ = ('Window')

@@ -1,8 +1,8 @@
 """Nvim plugin/host subpackage."""
 
-from .decorators import (autocmd, command, decode, encoding, function,
-                         plugin, rpc_export, shutdown_hook)
-from .host import Host
+from pynvim.plugin.decorators import (autocmd, command, decode, encoding, function,
+                                      plugin, rpc_export, shutdown_hook)
+from pynvim.plugin.host import Host
 
 
 __all__ = ('Host', 'plugin', 'rpc_export', 'command', 'autocmd',

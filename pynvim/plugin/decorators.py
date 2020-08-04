@@ -3,7 +3,7 @@
 import inspect
 import logging
 
-from ..compat import IS_PYTHON3, unicode_errors_default
+from pynvim.compat import IS_PYTHON3, unicode_errors_default
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)

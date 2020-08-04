@@ -4,7 +4,7 @@ from collections import deque
 
 import pyuv
 
-from .base import BaseEventLoop
+from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop
 
 
 class UvEventLoop(BaseEventLoop):

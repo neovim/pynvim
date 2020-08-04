@@ -8,11 +8,11 @@ import re
 from functools import partial
 from traceback import format_exc
 
-from . import script_host
-from ..api import decode_if_bytes, walk
-from ..compat import IS_PYTHON3, find_module
-from ..msgpack_rpc import ErrorResponse
-from ..util import format_exc_skip, get_client_info
+from pynvim.plugin import script_host
+from pynvim.api import decode_if_bytes, walk
+from pynvim.compat import IS_PYTHON3, find_module
+from pynvim.msgpack_rpc import ErrorResponse
+from pynvim.util import format_exc_skip, get_client_info
 
 __all__ = ('Host')
 
