@@ -9,7 +9,7 @@ from msgpack import ExtType
 
 from pynvim.api.buffer import Buffer
 from pynvim.api.common import (NvimError, Remote, RemoteApi, RemoteMap, RemoteSequence,
-                     decode_if_bytes, walk)
+                               decode_if_bytes, walk)
 from pynvim.api.tabpage import Tabpage
 from pynvim.api.window import Window
 from pynvim.compat import IS_PYTHON3
