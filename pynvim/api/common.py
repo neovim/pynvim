@@ -3,7 +3,7 @@ import functools
 
 from msgpack import unpackb
 
-from ..compat import unicode_errors_default
+from pynvim.compat import unicode_errors_default
 
 __all__ = ()
 

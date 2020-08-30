@@ -3,7 +3,7 @@ import logging
 
 from msgpack import Packer, Unpacker
 
-from ..compat import unicode_errors_default
+from pynvim.compat import unicode_errors_default
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)

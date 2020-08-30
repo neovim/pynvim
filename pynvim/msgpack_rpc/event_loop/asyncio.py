@@ -22,7 +22,7 @@ except (ImportError, SyntaxError):
     # Fallback to trollius
     import trollius as asyncio
 
-from .base import BaseEventLoop
+from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)

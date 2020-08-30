@@ -6,13 +6,13 @@ import logging
 import os
 import sys
 
-from .api import Nvim, NvimError
-from .compat import IS_PYTHON3
-from .msgpack_rpc import (ErrorResponse, child_session, socket_session,
-                          stdio_session, tcp_session)
-from .plugin import (Host, autocmd, command, decode, encoding, function,
-                     plugin, rpc_export, shutdown_hook)
-from .util import VERSION, Version
+from pynvim.api import Nvim, NvimError
+from pynvim.compat import IS_PYTHON3
+from pynvim.msgpack_rpc import (ErrorResponse, child_session, socket_session,
+                                stdio_session, tcp_session)
+from pynvim.plugin import (Host, autocmd, command, decode, encoding, function,
+                           plugin, rpc_export, shutdown_hook)
+from pynvim.util import VERSION, Version
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
