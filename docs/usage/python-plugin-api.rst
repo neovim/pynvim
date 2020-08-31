@@ -7,7 +7,7 @@ The API extensions are accessible no matter if the traditional ``:python`` inter
 as discussed on :doc:`remote-plugins`.
 
 Nvim API methods: ``vim.api``
------------
+-----------------------------
 
 Exposes Neovim API methods.
 For instance to call ``nvim_strwidth``:
@@ -38,7 +38,7 @@ same way, but python will not wait for it to finish, so the return value is
 unavailable.
 
 Vimscript functions: ``vim.funcs``
--------------
+----------------------------------
 
 Exposes vimscript functions (both builtin and global user defined functions) as a python namespace.
 For instance to set the value of a register:
@@ -51,7 +51,7 @@ These functions can also take the ``async_=True`` keyword argument, just like AP
 methods.
 
 Lua integration
------------
+---------------
 
 Python plugins can define and invoke lua code in Nvim's in-process lua
 interpreter. This is especially useful in asynchronous contexts, where an async
