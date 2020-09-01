@@ -75,23 +75,25 @@ find your plugin. You can now invoke Neovim:
 
 Then run ``:UpdateRemotePlugins`` and your plugin should be activated.
 
-In case you run into some issues, you can list loaded plugins:
+In case you run into some issues, you can list your loaded plugins from inside
+Neovim by running ``:scriptnames`` like so.:
 
-.. code-block:: console
+.. code-block:: vim
 
     :scriptnames
-      1: ~/path/to/your/plugin-git-repo/vimrc
-      2: /usr/share/nvim/runtime/filetype.vim
-      ...
-     25: /usr/share/nvim/runtime/plugin/zipPlugin.vim
-     26: ~/path/to/your/plugin-git-repo/plugin/lucid.vim
+    1: ~/path/to/your/plugin-git-repo/vimrc
+    2: /usr/share/nvim/runtime/filetype.vim
+    ...
+    25: /usr/share/nvim/runtime/plugin/zipPlugin.vim
+    26: ~/path/to/your/plugin-git-repo/plugin/lucid.vim
 
-You can also inspect the ``runtimepath`` like this:
+You can also inspect the ``&runtimepath`` like this:
 
-.. code-block:: console
+.. code-block:: vim
 
     :set runtimepath
-      runtimepath=~/.config/nvim,/etc/xdg/nvim,~/.local/share/nvim/site,...,
+    runtimepath=~/.config/nvim,/etc/xdg/nvim,~/.local/share/nvim/site,...,
     ,~/g/path/to/your/plugin-git-repo
 
-
+    " Or alternatively
+    :echo &rtp
