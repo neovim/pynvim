@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import sys
+from types import ModuleType
 
 from pynvim.api import Nvim, walk
 from pynvim.compat import IS_PYTHON3
@@ -37,7 +38,7 @@ class ScriptHost(object):
         """Initialize the legacy python-vim environment."""
         self.setup(nvim)
         # context where all code will run
-        self.module = imp.new_module('__main__')
+        self.module = ModuleType('__main__')
         nvim.script_context = self.module
         # it seems some plugins assume 'sys' is already imported, so do it now
         exec('import sys', self.module.__dict__)
