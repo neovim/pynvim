@@ -96,5 +96,4 @@ You can also inspect the ``&runtimepath`` like this:
     ,~/g/path/to/your/plugin-git-repo
 
     " Or alternatively
-    echo &rtp
-
+    :echo &rtp
