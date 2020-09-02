@@ -116,7 +116,7 @@ def main(argv=sys.argv[1:]):
         return modify_logging(input_fn, options.output_file,
                               min_level_value, max_level_value,
                               options.restore, options.force)
-    except IOError as e:
+    except OSError as e:
         logging.error(str(e))
         return -1
 

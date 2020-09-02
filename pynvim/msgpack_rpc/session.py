@@ -95,7 +95,7 @@ class Session(object):
             v = self._blocking_request(method, args)
         if not v:
             # EOF
-            raise IOError('EOF')
+            raise OSError('EOF')
         err, rv = v
         if err:
             info("'Received error: %s", err)

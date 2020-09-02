@@ -174,7 +174,7 @@ class BaseEventLoop(object):
 
     def _on_error(self, error):
         debug(error)
-        self._error = IOError(error)
+        self._error = OSError(error)
         self.stop()
 
     def _on_interrupt(self):

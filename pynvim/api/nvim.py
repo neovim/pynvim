@@ -420,7 +420,7 @@ class Nvim(object):
         """
         try:
             self.command(quit_command)
-        except IOError:
+        except OSError:
             # sending a quit command will raise an IOError because the
             # connection is closed before a response is received. Safe to
             # ignore it.
