@@ -23,7 +23,7 @@ class UvEventLoop(BaseEventLoop):
         if error:
             msg = 'Cannot connect to {}: {}'.format(
                 self._connect_address, pyuv.errno.strerror(error))
-            self._connection_error = IOError(msg)
+            self._connection_error = OSError(msg)
             return
         self._read_stream = self._write_stream = stream
 
@@ -45,7 +45,7 @@ class UvEventLoop(BaseEventLoop):
         self._on_error('EOF')
 
     def _disconnected(self, *args):
-        raise IOError('Not connected to Nvim')
+        raise OSError('Not connected to Nvim')
 
     def _connect_tcp(self, address, port):
         stream = pyuv.TCP(self._loop)
