@@ -354,10 +354,14 @@ class Nvim(object):
         """Push `keys` to Nvim user input buffer.
 
         Options can be a string with the following character flags:
+
         - 'm': Remap keys. This is default.
+
         - 'n': Do not remap keys.
+
         - 't': Handle keys as if typed; otherwise they are handled as if coming
                from a mapping. This matters for undo, opening folds, etc.
+
         """
         return self.request('nvim_feedkeys', keys, options, escape_csi)
 
