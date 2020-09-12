@@ -1,3 +1,7 @@
+tags
+.venv
+.pytest_cache/*
+.coverage*
 *.egg-info/
 __pycache__
 neovim/ui/screen.c
