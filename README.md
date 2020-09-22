@@ -14,8 +14,8 @@ Install
 Supports python 2.7, and 3.4 or later.
 
 ```sh
-pip2 install pynvim
-pip3 install pynvim
+python2 -m pip install pynvim
+python3 -m pip install pynvim
 ```
 
 If you only use one of python2 or python3, it is enough to install that
@@ -24,15 +24,15 @@ flag.
 
 Anytime you upgrade Neovim, make sure to upgrade pynvim as well:
 ```sh
-pip2 install --upgrade pynvim
-pip3 install --upgrade pynvim
+python2 -m pip install --upgrade pynvim
+python3 -m pip install --upgrade pynvim
 ```
 
 Alternatively, the master version could be installed by executing the following
 in the root of this repository:
 ```sh
-pip2 install .
-pip3 install .
+python2 -m pip install .
+python3 -m pip install .
 ```
 
 Python Plugin API
@@ -44,7 +44,7 @@ pynvim is installed Neovim will report support for the `+python[3]` Vim feature.
 
 The rplugin interface allows plugins to handle vimL function calls as well as
 defining commands and autocommands, and such plugins can operate asynchronously
-without blocking nvim.  For details on the new rplugin interface, 
+without blocking nvim.  For details on the new rplugin interface,
 see the [Remote Plugin](http://pynvim.readthedocs.io/en/latest/usage/remote-plugins.html) documentation.
 
 Pynvim defines some extensions over the vim python API:
@@ -61,17 +61,23 @@ Development
 
 Use (and activate) a local virtualenv.
 
-    python3 -m venv env36
-    source env36/bin/activate
+```sh
+python3 -m venv env36
+source env36/bin/activate
+```
 
 If you change the code, you must reinstall for the changes to take effect:
 
-    pip install .
+```sh
+python3 -m pip install .
+```
 
-Use `pytest` to run the tests. Invoking with `python -m` prepends the current
+Use `pytest` to run the tests. Invoking with `python3 -m` prepends the current
 directory to `sys.path` (otherwise `pytest` might find other versions!):
 
-    python -m pytest
+```sh
+python3 -m pytest
+```
 
 For details about testing and troubleshooting, see the
 [development](http://pynvim.readthedocs.io/en/latest/development.html)
@@ -81,7 +87,7 @@ documentation.
 
 A number of different transports are supported, but the simplest way to get
 started is with the python REPL. First, start Nvim with a known address (or use
-the `$NVIM_LISTEN_ADDRESS` of a running instance): 
+the `$NVIM_LISTEN_ADDRESS` of a running instance):
 
 ```sh
 $ NVIM_LISTEN_ADDRESS=/tmp/nvim nvim

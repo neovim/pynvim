@@ -3,8 +3,8 @@ Development
 
 If you change the code, you need to run::
 
-    pip2 install .
-    pip3 install .
+    python2 -m pip install .
+    python3 -m pip install .
 
 for the changes to have effect.
 Alternatively you could execute Neovim with the ``$PYTHONPATH`` environment variable::
