@@ -100,7 +100,7 @@ class ScriptHost(object):
     def python_execute_file(self, file_path, range_start, range_stop):
         """Handle the `pyfile` ex command."""
         self._set_current_range(range_start, range_stop)
-        with open(file_path) as f:
+        with open(file_path, 'rb') as f:
             script = compile(f.read(), file_path, 'exec')
             try:
                 exec(script, self.module.__dict__)
