@@ -1,4 +1,4 @@
-name: test
+name: ci
 on:
   push:
   pull_request:
@@ -10,9 +10,24 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PYTEST_ADDOPTS: '-vv'
+  PYTEST_ADDOPTS: '-vv --cov-append'
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        cache: 'pip'
+        python-version: 3.11
+    - name: install dependencies
+      run: pip install tox tox-gh-actions
+    - name: checkqa
+      env:
+        TOXENV: 'checkqa,docs'
+      run: tox
+
   test:
     strategy:
       fail-fast: false
@@ -34,8 +49,6 @@ jobs:
           EXTRACT: unzip
 
     runs-on: ${{ matrix.os }}
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -58,21 +71,27 @@ jobs:
       run: echo "$(pwd)/${{ matrix.NVIM_BIN_PATH }}" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: install dependencies
-      run: |
-        pip install .  # Install from setup.py
-        pip install -q pytest
+      run: pip install tox tox-gh-actions
 
     - name: test
       run: |
         echo $PATH
         which nvim
         nvim --version
-        python -m pytest
+        tox
 
-    - uses: codecov/codecov-action@v3
-      if: runner.os == 'macOS'
+    - if: matrix.target == 'tests'
+      name: Run coverage report
+      run: |
+        pip install coverage
+        coverage report -m
+        coverage xml
+
+    - if: matrix.target == 'tests'
+      uses: codecov/codecov-action@v3
       with:
-        verbose: true # optional (default = false)
+        file: coverage.xml
+        verbose: true
 
 # TODO: tox, codecov steps from old travis workflow
 #
