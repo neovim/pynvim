@@ -3,7 +3,7 @@ from pynvim.api.common import Remote
 from pynvim.compat import IS_PYTHON3, check_async
 
 
-__all__ = ('Buffer')
+__all__ = ['Buffer']
 
 
 if IS_PYTHON3:
