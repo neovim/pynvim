@@ -371,6 +371,12 @@ class Nvim(object):
         """
         return self.request('nvim_input', bytes)
 
+    def input_mouse(self, button, action, modifier, grid, row, col):
+        """Perform a call to nvim_input_mouse.
+
+        """
+        return self.request('nvim_input_mouse', button, action, modifier, grid, row, col)
+
     def replace_termcodes(self, string, from_part=False, do_lt=True,
                           special=True):
         r"""Replace any terminal code strings by byte sequences.
