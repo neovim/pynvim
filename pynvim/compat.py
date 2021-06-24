@@ -1,6 +1,5 @@
 """Code for compatibility across Python versions."""
 import warnings
-from imp import find_module as original_find_module
 from typing import Any, Dict, Optional
 
 
