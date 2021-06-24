@@ -1,5 +1,4 @@
 """Legacy python/python3-vim emulation."""
-import imp
 import io
 import logging
 import os
@@ -214,6 +213,7 @@ def path_hook(nvim):
         return discover_runtime_directories(nvim)
 
     def _find_module(fullname, oldtail, path):
+        import imp
         idx = oldtail.find('.')
         if idx > 0:
             name = oldtail[:idx]
@@ -234,6 +234,7 @@ def path_hook(nvim):
                 return sys.modules[fullname]
             except KeyError:
                 pass
+            import imp
             return imp.load_module(fullname, *self.module)
 
     class VimPathFinder(object):
