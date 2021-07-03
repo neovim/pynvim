@@ -50,7 +50,7 @@ class AsyncSession(object):
 
         A msgpack-rpc with method `method` and argument `args` is sent to
         Nvim. This will have the same effect as a request, but no response
-        will be recieved
+        will be received
         """
         self._msgpack_stream.send([2, method, args])
 

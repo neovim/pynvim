@@ -264,7 +264,7 @@ def modify_logging(input_fn, output_fn, min_level_value, max_level_value, restor
 
 def check_level(logging_stmt, logging_stmt_is_commented_out, min_level_value, max_level_value):
     """Extracts the level of the logging statement and returns True if the
-    level falls betwen min and max_level_value.  If the level cannot be
+    level falls between min and max_level_value.  If the level cannot be
     extracted, then a warning is logged."""
     level = get_logging_level(logging_stmt, logging_stmt_is_commented_out)
     if level is None:

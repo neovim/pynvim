@@ -37,7 +37,7 @@ class Buffer(Remote):
         buffer. For example, -1 is the last line, -2 is the line before that
         and so on.
 
-        When retrieving slices, omiting indexes(eg: `buffer[:]`) will bring
+        When retrieving slices, omitting indexes(eg: `buffer[:]`) will bring
         the whole buffer.
         """
         if not isinstance(idx, slice):
@@ -52,7 +52,7 @@ class Buffer(Remote):
 
         Like with `__getitem__`, indexes may be negative.
 
-        When replacing slices, omiting indexes(eg: `buffer[:]`) will replace
+        When replacing slices, omitting indexes(eg: `buffer[:]`) will replace
         the whole buffer.
         """
         if not isinstance(idx, slice):
@@ -69,7 +69,7 @@ class Buffer(Remote):
 
         This will retrieve all lines locally before iteration starts. This
         approach is used because for most cases, the gain is much greater by
-        minimizing the number of API calls by transfering all data needed to
+        minimizing the number of API calls by transferring all data needed to
         work.
         """
         lines = self[:]

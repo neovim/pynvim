@@ -15,7 +15,7 @@ def test_command_count():
     decorated = command('test', count=count_value)(function)
     assert 'count' not in decorated._nvim_rpc_spec['opts']
 
-    # Test presesence with value of 0
+    # Test precedence with value of 0
     count_value = 0
     decorated = command('test', count=count_value)(function)
     assert 'count' in decorated._nvim_rpc_spec['opts']

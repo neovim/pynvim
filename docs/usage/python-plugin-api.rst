@@ -86,7 +86,7 @@ root, and use ``vim.exec_lua("_testplugin = require('testplugin')")``.
 In both cases, replace ``testplugin`` with a unique string based on your plugin
 name.
 
-Then, the module can be acessed as ``vim.lua._testplugin``.
+Then, the module can be accessed as ``vim.lua._testplugin``.
 
 .. code-block:: python
 
