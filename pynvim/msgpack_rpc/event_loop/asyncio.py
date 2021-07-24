@@ -10,17 +10,11 @@ is a backport of `asyncio` that works on Python 2.6+.
 """
 from __future__ import absolute_import
 
+import asyncio
 import logging
 import os
 import sys
 from collections import deque
-
-try:
-    # For python 3.4+, use the standard library module
-    import asyncio
-except (ImportError, SyntaxError):
-    # Fallback to trollius
-    import trollius as asyncio
 
 from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop
 

@@ -1,13 +1,9 @@
 """API for working with a Nvim Buffer."""
 from pynvim.api.common import Remote
-from pynvim.compat import IS_PYTHON3, check_async
+from pynvim.compat import check_async
 
 
 __all__ = ('Buffer')
-
-
-if IS_PYTHON3:
-    basestring = str
 
 
 def adjust_index(idx, default=None):
@@ -92,7 +88,7 @@ class Buffer(Remote):
 
     def append(self, lines, index=-1):
         """Append a string or list of lines to the buffer."""
-        if isinstance(lines, (basestring, bytes)):
+        if isinstance(lines, (str, bytes)):
             lines = [lines]
         return self.request('nvim_buf_set_lines', index, index, True, lines)
 

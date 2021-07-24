@@ -3,7 +3,7 @@
 import inspect
 import logging
 
-from pynvim.compat import IS_PYTHON3, unicode_errors_default
+from pynvim.compat import unicode_errors_default
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)
@@ -24,10 +24,7 @@ def plugin(cls):
     # the class initializer will already receive the nvim object.
     predicate = lambda fn: hasattr(fn, '_nvim_bind')
     for _, fn in inspect.getmembers(cls, predicate):
-        if IS_PYTHON3:
-            fn._nvim_bind = False
-        else:
-            fn.im_func._nvim_bind = False
+        fn._nvim_bind = False
     return cls
 
 

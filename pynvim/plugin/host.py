@@ -8,7 +8,7 @@ from functools import partial
 from traceback import format_exc
 
 from pynvim.api import decode_if_bytes, walk
-from pynvim.compat import IS_PYTHON3
+from pynvim.compat import find_module
 from pynvim.msgpack_rpc import ErrorResponse
 from pynvim.plugin import script_host
 from pynvim.util import format_exc_skip, get_client_info
@@ -66,8 +66,7 @@ class Host(object):
             'shutdown': self.shutdown
         }
 
-        # Decode per default for Python3
-        self._decode_default = IS_PYTHON3
+        self._decode_default = True
 
     def _on_async_err(self, msg):
         # uncaught python exception
@@ -132,8 +131,7 @@ class Host(object):
 
     def _on_request(self, name, args):
         """Handle a msgpack-rpc request."""
-        if IS_PYTHON3:
-            name = decode_if_bytes(name)
+        name = decode_if_bytes(name)
         handler = self._request_handlers.get(name, None)
         if not handler:
             msg = self._missing_handler_error(name, 'request')
@@ -147,8 +145,7 @@ class Host(object):
 
     def _on_notification(self, name, args):
         """Handle a msgpack-rpc notification."""
-        if IS_PYTHON3:
-            name = decode_if_bytes(name)
+        name = decode_if_bytes(name)
         handler = self._notification_handlers.get(name, None)
         if not handler:
             msg = self._missing_handler_error(name, 'notification')
@@ -275,8 +272,7 @@ class Host(object):
                 setattr(fn2, attr, getattr(fn, attr))
 
     def _on_specs_request(self, path):
-        if IS_PYTHON3:
-            path = decode_if_bytes(path)
+        path = decode_if_bytes(path)
         if path in self._load_errors:
             self.nvim.out_write(self._load_errors[path] + '\n')
         return self._specs.get(path, 0)

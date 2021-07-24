@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
 import tempfile
 
 import pytest
@@ -196,16 +195,12 @@ def test_hash(vim):
 
 
 def test_cwd(vim, tmpdir):
-    pycmd = 'python'
-    if sys.version_info >= (3, 0):
-        pycmd = 'python3'
-
-    vim.command('{} import os'.format(pycmd))
-    cwd_before = vim.command_output('{} print(os.getcwd())'.format(pycmd))
+    vim.command('python3 import os')
+    cwd_before = vim.command_output('python3 print(os.getcwd())')
 
     vim.command('cd {}'.format(tmpdir.strpath))
     cwd_vim = vim.command_output('pwd')
-    cwd_python = vim.command_output('{} print(os.getcwd())'.format(pycmd))
+    cwd_python = vim.command_output('python3 print(os.getcwd())')
     assert cwd_python == cwd_vim
     assert cwd_python != cwd_before
 

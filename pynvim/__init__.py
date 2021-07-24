@@ -7,7 +7,6 @@ import os
 import sys
 
 from pynvim.api import Nvim, NvimError
-from pynvim.compat import IS_PYTHON3
 from pynvim.msgpack_rpc import (ErrorResponse, child_session, socket_session,
                                 stdio_session, tcp_session)
 from pynvim.plugin import (Host, autocmd, command, decode, encoding, function,
@@ -78,7 +77,7 @@ def start_host(session=None):
 
 
 def attach(session_type, address=None, port=None,
-           path=None, argv=None, decode=None):
+           path=None, argv=None, decode=True):
     """Provide a nicer interface to create python api sessions.
 
     Previous machinery to create python api sessions is still there. This only
@@ -115,9 +114,6 @@ def attach(session_type, address=None, port=None,
 
     if not session:
         raise Exception('Unknown session type "%s"' % session_type)
-
-    if decode is None:
-        decode = IS_PYTHON3
 
     return Nvim.from_session(session).with_decode(decode)
 

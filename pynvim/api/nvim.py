@@ -12,7 +12,6 @@ from pynvim.api.common import (NvimError, Remote, RemoteApi, RemoteMap, RemoteSe
                                decode_if_bytes, walk)
 from pynvim.api.tabpage import Tabpage
 from pynvim.api.window import Window
-from pynvim.compat import IS_PYTHON3
 from pynvim.util import Version, format_exc_skip
 
 __all__ = ('Nvim')
@@ -79,9 +78,7 @@ class Nvim(object):
         session.error_wrapper = lambda e: NvimError(decode_if_bytes(e[1]))
         channel_id, metadata = session.request(b'nvim_get_api_info')
 
-        if IS_PYTHON3:
-            # decode all metadata strings for python3
-            metadata = walk(decode_if_bytes, metadata)
+        metadata = walk(decode_if_bytes, metadata)
 
         types = {
             metadata['types']['Buffer']['id']: Buffer,
@@ -120,10 +117,7 @@ class Nvim(object):
         self.error = NvimError
         self._decode = decode
         self._err_cb = err_cb
-
-        # only on python3.4+ we expose asyncio
-        if IS_PYTHON3:
-            self.loop = self._session.loop._loop
+        self.loop = self._session.loop._loop
 
     def _from_nvim(self, obj, decode=None):
         if decode is None:
