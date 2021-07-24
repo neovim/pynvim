@@ -5,13 +5,14 @@ Client library for talking with Nvim processes via its msgpack-rpc API.
 import logging
 import os
 import sys
+from types import SimpleNamespace as Version
 
 from pynvim.api import Nvim, NvimError
 from pynvim.msgpack_rpc import (ErrorResponse, child_session, socket_session,
                                 stdio_session, tcp_session)
 from pynvim.plugin import (Host, autocmd, command, decode, encoding, function,
                            plugin, rpc_export, shutdown_hook)
-from pynvim.util import VERSION, Version
+from pynvim.util import VERSION
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',

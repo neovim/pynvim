@@ -4,6 +4,7 @@ import sys
 import threading
 from functools import partial
 from traceback import format_stack
+from types import SimpleNamespace
 
 from msgpack import ExtType
 
@@ -12,7 +13,7 @@ from pynvim.api.common import (NvimError, Remote, RemoteApi, RemoteMap, RemoteSe
                                decode_if_bytes, walk)
 from pynvim.api.tabpage import Tabpage
 from pynvim.api.window import Window
-from pynvim.util import Version, format_exc_skip
+from pynvim.util import format_exc_skip
 
 __all__ = ('Nvim')
 
@@ -101,7 +102,7 @@ class Nvim(object):
         self.channel_id = channel_id
         self.metadata = metadata
         version = metadata.get("version", {"api_level": 0})
-        self.version = Version(**version)
+        self.version = SimpleNamespace(**version)
         self.types = types
         self.api = RemoteApi(self, 'nvim_')
         self.vars = RemoteMap(self, 'nvim_get_var', 'nvim_set_var', 'nvim_del_var')
