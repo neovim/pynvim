@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# type: ignore
 from pynvim.plugin.host import Host, host_method_spec
 from pynvim.plugin.script_host import ScriptHost
 

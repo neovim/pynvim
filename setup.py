@@ -26,6 +26,9 @@ if platform.python_implementation() != 'PyPy':
     # pypy already includes an implementation of the greenlet module
     install_requires.append('greenlet')
 
+if sys.version_info < (3, 8):
+    install_requires.append('typing-extensions')
+
 setup(name='pynvim',
       version='0.4.3',
       description='Python client for Neovim',

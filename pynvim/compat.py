@@ -1,10 +1,10 @@
 """Code for compatibility across Python versions."""
-
 import warnings
 from imp import find_module as original_find_module
+from typing import Any, Dict, Optional
 
 
-def find_module(fullname, path):
+def find_module(fullname, path):  # type: ignore
     """Compatibility wrapper for imp.find_module.
 
     Automatically decodes arguments of find_module, in Python3
@@ -30,7 +30,7 @@ unicode_errors_default = 'surrogateescape'
 NUM_TYPES = (int, float)
 
 
-def check_async(async_, kwargs, default):
+def check_async(async_: Optional[bool], kwargs: Dict[str, Any], default: bool) -> bool:
     """Return a value of 'async' in kwargs or default when async_ is None.
 
     This helper function exists for backward compatibility (See #274).

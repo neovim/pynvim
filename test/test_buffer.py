@@ -2,14 +2,14 @@ import os
 
 import pytest
 
-from pynvim.api import NvimError
+from pynvim.api import Nvim, NvimError
 
 
-def test_repr(vim):
+def test_repr(vim: Nvim) -> None:
     assert repr(vim.current.buffer) == "<Buffer(handle=1)>"
 
 
-def test_get_length(vim):
+def test_get_length(vim: Nvim) -> None:
     assert len(vim.current.buffer) == 1
     vim.current.buffer.append('line')
     assert len(vim.current.buffer) == 2
@@ -23,7 +23,7 @@ def test_get_length(vim):
     assert len(vim.current.buffer) == 1
 
 
-def test_get_set_del_line(vim):
+def test_get_set_del_line(vim: Nvim) -> None:
     assert vim.current.buffer[0] == ''
     vim.current.buffer[0] = 'line1'
     assert vim.current.buffer[0] == 'line1'
@@ -42,7 +42,7 @@ def test_get_set_del_line(vim):
     assert len(vim.current.buffer) == 1
 
 
-def test_get_set_del_slice(vim):
+def test_get_set_del_slice(vim: Nvim) -> None:
     assert vim.current.buffer[:] == ['']
     # Replace buffer
     vim.current.buffer[:] = ['a', 'b', 'c']
@@ -72,7 +72,7 @@ def test_get_set_del_slice(vim):
     assert vim.current.buffer[:] == ['c']
 
 
-def test_vars(vim):
+def test_vars(vim: Nvim) -> None:
     vim.current.buffer.vars['python'] = [1, 2, {'3': 1}]
     assert vim.current.buffer.vars['python'] == [1, 2, {'3': 1}]
     assert vim.eval('b:python') == [1, 2, {'3': 1}]
@@ -89,7 +89,7 @@ def test_vars(vim):
     assert vim.current.buffer.vars.get('python', 'default') == 'default'
 
 
-def test_api(vim):
+def test_api(vim: Nvim) -> None:
     vim.current.buffer.api.set_var('myvar', 'thetext')
     assert vim.current.buffer.api.get_var('myvar') == 'thetext'
     assert vim.eval('b:myvar') == 'thetext'
@@ -98,7 +98,7 @@ def test_api(vim):
     assert vim.current.buffer[:] == ['alpha', 'beta']
 
 
-def test_options(vim):
+def test_options(vim: Nvim) -> None:
     assert vim.current.buffer.options['shiftwidth'] == 8
     vim.current.buffer.options['shiftwidth'] = 4
     assert vim.current.buffer.options['shiftwidth'] == 4
@@ -113,7 +113,7 @@ def test_options(vim):
     assert excinfo.value.args == ("Invalid option name: 'doesnotexist'",)
 
 
-def test_number(vim):
+def test_number(vim: Nvim) -> None:
     curnum = vim.current.buffer.number
     vim.command('new')
     assert vim.current.buffer.number == curnum + 1
@@ -121,7 +121,7 @@ def test_number(vim):
     assert vim.current.buffer.number == curnum + 2
 
 
-def test_name(vim):
+def test_name(vim: Nvim) -> None:
     vim.command('new')
     assert vim.current.buffer.name == ''
     new_name = vim.eval('resolve(tempname())')
@@ -132,7 +132,7 @@ def test_name(vim):
     os.unlink(new_name)
 
 
-def test_valid(vim):
+def test_valid(vim: Nvim) -> None:
     vim.command('new')
     buffer = vim.current.buffer
     assert buffer.valid
@@ -140,7 +140,7 @@ def test_valid(vim):
     assert not buffer.valid
 
 
-def test_append(vim):
+def test_append(vim: Nvim) -> None:
     vim.current.buffer.append('a')
     assert vim.current.buffer[:] == ['', 'a']
     vim.current.buffer.append('b', 0)
@@ -153,14 +153,14 @@ def test_append(vim):
     assert vim.current.buffer[:] == ['b', '', 'c', 'd', 'a', 'c', 'd', 'bytes']
 
 
-def test_mark(vim):
+def test_mark(vim: Nvim) -> None:
     vim.current.buffer.append(['a', 'bit of', 'text'])
-    vim.current.window.cursor = [3, 4]
+    vim.current.window.cursor = (3, 4)
     vim.command('mark V')
-    assert vim.current.buffer.mark('V') == [3, 0]
+    assert vim.current.buffer.mark('V') == (3, 0)
 
 
-def test_invalid_utf8(vim):
+def test_invalid_utf8(vim: Nvim) -> None:
     vim.command('normal "=printf("%c", 0xFF)\np')
     assert vim.eval("char2nr(getline(1))") == 0xFF
     assert vim.current.buffer[:] == ['\udcff']
@@ -170,7 +170,7 @@ def test_invalid_utf8(vim):
     assert vim.current.buffer[:] == ['\udcffx']
 
 
-def test_get_exceptions(vim):
+def test_get_exceptions(vim: Nvim) -> None:
     with pytest.raises(KeyError) as excinfo:
         vim.current.buffer.options['invalid-option']
 
@@ -178,7 +178,7 @@ def test_get_exceptions(vim):
     assert excinfo.value.args == ("Invalid option name: 'invalid-option'",)
 
 
-def test_set_items_for_range(vim):
+def test_set_items_for_range(vim: Nvim) -> None:
     vim.current.buffer[:] = ['a', 'b', 'c', 'd', 'e']
     r = vim.current.buffer.range(1, 3)
     r[1:3] = ['foo'] * 3
@@ -187,14 +187,14 @@ def test_set_items_for_range(vim):
 
 # NB: we can't easily test the effect of this. But at least run the lua
 # function sync, so we know it runs without runtime error with simple args.
-def test_update_highlights(vim):
+def test_update_highlights(vim: Nvim) -> None:
     vim.current.buffer[:] = ['a', 'b', 'c']
     src_id = vim.new_highlight_source()
     vim.current.buffer.update_highlights(
-        src_id, [["Comment", 0, 0, -1], ("String", 1, 0, 1)], clear=True, async_=False
+        src_id, [("Comment", 0, 0, -1), ("String", 1, 0, 1)], clear=True, async_=False
     )
 
 
-def test_buffer_inequality(vim):
+def test_buffer_inequality(vim: Nvim) -> None:
     b = vim.current.buffer
     assert not (b != vim.current.buffer)

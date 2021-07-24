@@ -1,8 +1,9 @@
+# type: ignore[attr-defined]
 from pynvim.plugin.decorators import command
 
 
-def test_command_count():
-    def function():
+def test_command_count() -> None:
+    def function() -> None:
         """A dummy function to decorate."""
         return
 

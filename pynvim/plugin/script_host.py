@@ -1,3 +1,4 @@
+# type: ignore
 """Legacy python/python3-vim emulation."""
 import imp
 import io

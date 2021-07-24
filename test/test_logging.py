@@ -1,8 +1,9 @@
 import os
 import sys
+from typing import Any
 
 
-def test_setup_logging(monkeypatch, tmpdir, caplog):
+def test_setup_logging(monkeypatch: Any, tmpdir: str, caplog: Any) -> None:
     from pynvim import setup_logging
 
     major_version = sys.version_info[0]
@@ -10,7 +11,7 @@ def test_setup_logging(monkeypatch, tmpdir, caplog):
     setup_logging('name1')
     assert caplog.messages == []
 
-    def get_expected_logfile(prefix, name):
+    def get_expected_logfile(prefix: str, name: str) -> str:
         return '{}_py{}_{}'.format(prefix, major_version, name)
 
     prefix = tmpdir.join('testlog1')

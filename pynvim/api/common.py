@@ -1,18 +1,35 @@
 """Code shared between the API classes."""
 import functools
+import sys
+from abc import ABC, abstractmethod
+from typing import (Any, Callable, Generic, Iterator, List, Optional, Tuple, TypeVar,
+                    Union, overload)
 
 from msgpack import unpackb
+if sys.version_info < (3, 8):
+    from typing_extensions import Literal, Protocol
+else:
+    from typing import Literal, Protocol
 
 from pynvim.compat import unicode_errors_default
 
 __all__ = ()
 
 
+T = TypeVar('T')
+TDecodeMode = Union[Literal[True], str]
+
+
 class NvimError(Exception):
     pass
 
 
-class Remote(object):
+class IRemote(Protocol):
+    def request(self, name: str, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError
+
+
+class Remote(ABC):
 
     """Base class for Nvim objects(buffer/window/tabpage).
 
@@ -21,7 +38,7 @@ class Remote(object):
     object handle into consideration.
     """
 
-    def __init__(self, session, code_data):
+    def __init__(self, session: IRemote, code_data: Tuple[int, Any]):
         """Initialize from session and code_data immutable object.
 
         The `code_data` contains serialization information required for
@@ -37,23 +54,28 @@ class Remote(object):
         self.options = RemoteMap(self, self._api_prefix + 'get_option',
                                  self._api_prefix + 'set_option')
 
-    def __repr__(self):
+    @property
+    @abstractmethod
+    def _api_prefix(self) -> str:
+        raise NotImplementedError()
+
+    def __repr__(self) -> str:
         """Get text representation of the object."""
         return '<%s(handle=%r)>' % (
             self.__class__.__name__,
             self.handle,
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Return True if `self` and `other` are the same object."""
         return (hasattr(other, 'code_data')
                 and other.code_data == self.code_data)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Return hash based on remote object id."""
         return self.code_data.__hash__()
 
-    def request(self, name, *args, **kwargs):
+    def request(self, name: str, *args: Any, **kwargs: Any) -> Any:
         """Wrapper for nvim.request."""
         return self._session.request(name, self, *args, **kwargs)
 
@@ -62,17 +84,20 @@ class RemoteApi(object):
 
     """Wrapper to allow api methods to be called like python methods."""
 
-    def __init__(self, obj, api_prefix):
+    def __init__(self, obj: IRemote, api_prefix: str):
         """Initialize a RemoteApi with object and api prefix."""
         self._obj = obj
         self._api_prefix = api_prefix
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Callable[..., Any]:
         """Return wrapper to named api method."""
         return functools.partial(self._obj.request, self._api_prefix + name)
 
 
-def transform_keyerror(exc):
+E = TypeVar('E', bound=Exception)
+
+
+def transform_keyerror(exc: E) -> Union[E, KeyError]:
     if isinstance(exc, NvimError):
         if exc.args[0].startswith('Key not found:'):
             return KeyError(exc.args[0])
@@ -94,7 +119,13 @@ class RemoteMap(object):
     _set = None
     _del = None
 
-    def __init__(self, obj, get_method, set_method=None, del_method=None):
+    def __init__(
+        self,
+        obj: IRemote,
+        get_method: str,
+        set_method: str = None,
+        del_method: str = None
+    ):
         """Initialize a RemoteMap with session, getter/setter."""
         self._get = functools.partial(obj.request, get_method)
         if set_method:
@@ -102,20 +133,20 @@ class RemoteMap(object):
         if del_method:
             self._del = functools.partial(obj.request, del_method)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         """Return a map value by key."""
         try:
             return self._get(key)
         except NvimError as exc:
             raise transform_keyerror(exc)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         """Set a map value by key(if the setter was provided)."""
         if not self._set:
             raise TypeError('This dict is read-only')
         self._set(key, value)
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         """Delete a map value by associating None with the key."""
         if not self._del:
             raise TypeError('This dict is read-only')
@@ -124,7 +155,7 @@ class RemoteMap(object):
         except NvimError as exc:
             raise transform_keyerror(exc)
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         """Check if key is present in the map."""
         try:
             self._get(key)
@@ -132,7 +163,13 @@ class RemoteMap(object):
         except Exception:
             return False
 
-    def get(self, key, default=None):
+    @overload
+    def get(self, key: str, default: T) -> T: ...
+
+    @overload
+    def get(self, key: str, default: Optional[T] = None) -> Optional[T]: ...
+
+    def get(self, key: str, default: Optional[T] = None) -> Optional[T]:
         """Return value for key if present, else a default value."""
         try:
             return self.__getitem__(key)
@@ -140,11 +177,11 @@ class RemoteMap(object):
             return default
 
 
-class RemoteSequence(object):
+class RemoteSequence(Generic[T]):
 
     """Represents a sequence of objects stored in Nvim.
 
-    This class is used to wrap msgapck-rpc functions that work on Nvim
+    This class is used to wrap msgpack-rpc functions that work on Nvim
     sequences(of lines, buffers, windows and tabpages) with an API that
     is similar to the one provided by the python-vim interface.
 
@@ -157,36 +194,46 @@ class RemoteSequence(object):
     locally(iteration, indexing, counting, etc).
     """
 
-    def __init__(self, session, method):
+    def __init__(self, session: IRemote, method: str):
         """Initialize a RemoteSequence with session, method."""
         self._fetch = functools.partial(session.request, method)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the length of the remote sequence."""
         return len(self._fetch())
 
-    def __getitem__(self, idx):
+    @overload
+    def __getitem__(self, idx: int) -> T: ...
+
+    @overload
+    def __getitem__(self, idx: slice) -> List[T]: ...
+
+    def __getitem__(self, idx: Union[slice, int]) -> Union[T, List[T]]:
         """Return a sequence item by index."""
         if not isinstance(idx, slice):
             return self._fetch()[idx]
         return self._fetch()[idx.start:idx.stop]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[T]:
         """Return an iterator for the sequence."""
         items = self._fetch()
         for item in items:
             yield item
 
-    def __contains__(self, item):
+    def __contains__(self, item: T) -> bool:
         """Check if an item is present in the sequence."""
         return item in self._fetch()
 
 
-def _identity(obj, session, method, kind):
-    return obj
+@overload
+def decode_if_bytes(obj: bytes, mode: TDecodeMode = True) -> str: ...
 
 
-def decode_if_bytes(obj, mode=True):
+@overload
+def decode_if_bytes(obj: T, mode: TDecodeMode = True) -> Union[T, str]: ...
+
+
+def decode_if_bytes(obj: T, mode: TDecodeMode = True) -> Union[T, str]:
     """Decode obj if it is bytes."""
     if mode is True:
         mode = unicode_errors_default
@@ -195,7 +242,7 @@ def decode_if_bytes(obj, mode=True):
     return obj
 
 
-def walk(fn, obj, *args, **kwargs):
+def walk(fn: Callable[..., Any], obj: Any, *args: Any, **kwargs: Any) -> Any:
     """Recursively walk an object graph applying `fn`/`args` to objects."""
     if type(obj) in [list, tuple]:
         return list(walk(fn, o, *args) for o in obj)

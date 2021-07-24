@@ -6,13 +6,19 @@ import logging
 import os
 import sys
 from types import SimpleNamespace as Version
+from typing import List, cast, overload
 
 from pynvim.api import Nvim, NvimError
-from pynvim.msgpack_rpc import (ErrorResponse, child_session, socket_session,
-                                stdio_session, tcp_session)
+from pynvim.msgpack_rpc import (ErrorResponse, Session, TTransportType, child_session,
+                                socket_session, stdio_session, tcp_session)
 from pynvim.plugin import (Host, autocmd, command, decode, encoding, function,
                            plugin, rpc_export, shutdown_hook)
 from pynvim.util import VERSION
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Literal
+else:
+    from typing import Literal
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
@@ -22,7 +28,7 @@ __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'ErrorResponse')
 
 
-def start_host(session=None):
+def start_host(session: Session = None) -> None:
     """Promote the current process into python plugin host for Nvim.
 
     Start msgpack-rpc event loop for `session`, listening for Nvim requests
@@ -77,8 +83,30 @@ def start_host(session=None):
     host.start(plugins)
 
 
-def attach(session_type, address=None, port=None,
-           path=None, argv=None, decode=True):
+@overload
+def attach(session_type: Literal['tcp'], address: str, port: int = 7450) -> Nvim: ...
+
+
+@overload
+def attach(session_type: Literal['socket'], *, path: str) -> Nvim: ...
+
+
+@overload
+def attach(session_type: Literal['child'], *, argv: List[str]) -> Nvim: ...
+
+
+@overload
+def attach(session_type: Literal['stdio']) -> Nvim: ...
+
+
+def attach(
+    session_type: TTransportType,
+    address: str = None,
+    port: int = 7450,
+    path: str = None,
+    argv: List[str] = None,
+    decode: Literal[True] = True
+) -> Nvim:
     """Provide a nicer interface to create python api sessions.
 
     Previous machinery to create python api sessions is still there. This only
@@ -107,11 +135,13 @@ def attach(session_type, address=None, port=None,
 
 
     """
-    session = (tcp_session(address, port) if session_type == 'tcp' else
-               socket_session(path) if session_type == 'socket' else
-               stdio_session() if session_type == 'stdio' else
-               child_session(argv) if session_type == 'child' else
-               None)
+    session = (
+        tcp_session(cast(str, address), port) if session_type == 'tcp' else
+        socket_session(cast(str, path)) if session_type == 'socket' else
+        stdio_session() if session_type == 'stdio' else
+        child_session(cast(List[str], argv)) if session_type == 'child' else
+        None
+    )
 
     if not session:
         raise Exception('Unknown session type "%s"' % session_type)
@@ -119,7 +149,7 @@ def attach(session_type, address=None, port=None,
     return Nvim.from_session(session).with_decode(decode)
 
 
-def setup_logging(name):
+def setup_logging(name: str) -> None:
     """Setup logging according to environment variables."""
     logger = logging.getLogger(__name__)
     if 'NVIM_PYTHON_LOG_FILE' in os.environ:
@@ -141,13 +171,3 @@ def setup_logging(name):
                 logger.warning('Invalid NVIM_PYTHON_LOG_LEVEL: %r, using INFO.',
                                env_log_level)
         logger.setLevel(level)
-
-
-# Required for python 2.6
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-
-
-if not logging.root.handlers:
-    logging.root.addHandler(NullHandler())
