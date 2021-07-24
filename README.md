@@ -28,8 +28,8 @@ Python Plugin API
 -----------------
 
 Pynvim supports python _remote plugins_ (via the language-agnostic Nvim rplugin
-interface), as well as _Vim plugins_ (via the `:python[3]` interface). Thus when
-pynvim is installed Neovim will report support for the `+python[3]` Vim feature.
+interface), as well as _Vim plugins_ (via the `:python3` interface). Thus when
+pynvim is installed Neovim will report support for the `+python3` Vim feature.
 
 The rplugin interface allows plugins to handle vimL function calls as well as
 defining commands and autocommands, and such plugins can operate asynchronously

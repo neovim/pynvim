@@ -5,8 +5,6 @@ provides a pure python implementation of an event loop library. It is used
 as a fallback in case pyuv is not available(on python implementations other
 than CPython).
 
-Earlier python versions are supported through the `trollius` package, which
-is a backport of `asyncio` that works on Python 2.6+.
 """
 from __future__ import absolute_import
 
