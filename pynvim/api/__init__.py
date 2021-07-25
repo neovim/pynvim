@@ -8,8 +8,8 @@ from pynvim.api.buffer import Buffer
 from pynvim.api.common import decode_if_bytes, walk
 from pynvim.api.nvim import Nvim, NvimError
 from pynvim.api.tabpage import Tabpage
-from pynvim.api.window import Window
+from pynvim.api.window import Window, WindowConfig
 
 
 __all__ = ('Nvim', 'Buffer', 'Window', 'Tabpage', 'NvimError',
-           'decode_if_bytes', 'walk')
+           'decode_if_bytes', 'walk', 'WindowConfig')

@@ -2,16 +2,20 @@
 import functools
 import sys
 from abc import ABC, abstractmethod
-from typing import (Any, Callable, Generic, Iterator, List, Optional, Tuple, TypeVar,
-                    Union, overload)
+from typing import (Any, Callable, Dict, Generic, Iterator, List, Optional,
+                    TYPE_CHECKING, Tuple, TypeVar, Union, overload)
 
 from msgpack import unpackb
 if sys.version_info < (3, 8):
-    from typing_extensions import Literal, Protocol
+    from typing_extensions import Protocol, Literal, TypedDict
 else:
-    from typing import Literal, Protocol
+    from typing import Protocol, Literal, TypedDict
 
 from pynvim.compat import unicode_errors_default
+
+if TYPE_CHECKING:
+    from pynvim.api import Buffer, Nvim, Window
+    from pynvim.api.window import WindowConfig
 
 __all__ = ()
 
@@ -92,6 +96,60 @@ class RemoteApi(object):
     def __getattr__(self, name: str) -> Callable[..., Any]:
         """Return wrapper to named api method."""
         return functools.partial(self._obj.request, self._api_prefix + name)
+
+
+class NvimMode(TypedDict):
+    mode: str
+    blocking: bool
+
+
+class RootApi(RemoteApi):
+    def __init__(self, obj: 'Nvim'):
+        super().__init__(obj, 'nvim_')
+
+    def create_buf(self, listed: bool, scratch: bool) -> 'Buffer':
+        """Creates a new, empty, unnamed buffer."""
+        return self._obj.request('nvim_create_buf', listed, scratch)
+
+    def create_namespace(self, ns: str) -> int:
+        """Creates a new namespace, or gets an existing one."""
+        return self._obj.request('nvim_create_namespace', ns)
+
+    def open_win(
+        self, buffer: 'Buffer', enter: bool, config: 'WindowConfig'
+    ) -> 'Window':
+        """Opens a new window."""
+        return self._obj.request('nvim_open_win', buffer, enter, config)
+
+    def del_keymap(self, mode: str, lhs: str) -> None:
+        """Unmaps a global mapping for the given mode."""
+        return self._obj.request('nvim_del_keymap', mode, lhs)
+
+    def get_mode(self) -> NvimMode:
+        """Gets the current mode."""
+        return self._obj.request('nvim_get_mode')
+
+    def get_namespaces(self) -> Dict[str, int]:
+        """Gets existing, non-anonymous namespaces."""
+        return self._obj.request('nvim_get_namespaces')
+
+    def put(
+        self,
+        lines: List[str],
+        type: Union[Literal[''], Literal['b'], Literal['c'], Literal['l']],
+        after: bool,
+        follow: bool
+    ) -> None:
+        """Puts text at cursor, in any mode."""
+        return self._obj.request('nvim_put', lines, type, after, follow)
+
+    def set_keymap(
+        self, mode: str, lhs: str, rhs: str, opts: Dict[str, bool] = None
+    ) -> None:
+        """Sets a global mapping for the given mode."""
+        if opts is None:
+            opts = {}
+        return self._obj.request('nvim_set_keymap', mode, lhs, rhs, opts)
 
 
 E = TypeVar('E', bound=Exception)

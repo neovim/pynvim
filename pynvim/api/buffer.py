@@ -1,6 +1,6 @@
 """API for working with a Nvim Buffer."""
-from typing import (Any, Iterator, List, Optional, TYPE_CHECKING, Tuple, Union, cast,
-                    overload)
+from typing import (Any, Dict, Iterator, List, Optional, Sequence, TYPE_CHECKING, Tuple,
+                    Union, cast, overload)
 
 from pynvim.api.common import Remote
 from pynvim.compat import check_async
@@ -190,10 +190,26 @@ class Buffer(Remote):
             "nvim_buf_clear_highlight", src_id, line_start, line_end, async_=async_
         )
 
+    def clear_namespace(
+        self,
+        src_id: int,
+        line_start: int = 0,
+        line_end: int = -1,
+        async_: bool = None,
+    ) -> None:
+        """Clear namespaced objects (highlights, extmarks, virtual text)."""
+        self.request(
+            "nvim_buf_clear_namespace", src_id, line_start, line_end, async_=async_
+        )
+
+    def del_keymap(self, mode: str, lhs: str) -> None:
+        """Unmaps a buffer-local mapping for the given mode."""
+        return self.request('nvim_buf_del_keymap', mode, lhs)
+
     def update_highlights(
         self,
         src_id: int,
-        hls: List[Union[Tuple[str, int], Tuple[str, int, int, int]]],
+        hls: Sequence[Union[Tuple[str, int, int, int], Tuple[str, int]]],
         clear_start: Optional[int] = None,
         clear_end: int = -1,
         clear: bool = False,
@@ -218,6 +234,26 @@ class Buffer(Remote):
             clear_start = 0
         lua = self._session._get_lua_private()
         lua.update_highlights(self, src_id, hls, clear_start, clear_end, async_=async_)
+
+    def set_virtual_text(
+        self,
+        line: int,
+        chunks: Sequence[Union[Tuple[str, str], Tuple[str]]],
+        src_id: int = -1,
+        opts: Dict[str, Any] = None
+    ) -> None:
+        """Set the virtual text (annotation) for a buffer line."""
+        if opts is None:
+            opts = {}
+        return self.request("nvim_buf_set_virtual_text", src_id, line, chunks, opts)
+
+    def set_keymap(
+        self, mode: str, lhs: str, rhs: str, opts: Dict[str, bool] = None
+    ) -> None:
+        """Sets a buffer-local mapping for the given mode."""
+        if opts is None:
+            opts = {}
+        return self.request("nvim_buf_set_keymap", mode, lhs, rhs, opts)
 
     @property
     def name(self) -> str:

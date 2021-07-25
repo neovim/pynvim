@@ -5,13 +5,13 @@ import threading
 from functools import partial
 from traceback import format_stack
 from types import SimpleNamespace
-from typing import (Any, AnyStr, Callable, Dict, Iterator, List, Optional,
-                    TYPE_CHECKING, Union)
+from typing import (Any, AnyStr, Callable, Dict, Iterator, List, Optional, Sequence,
+                    TYPE_CHECKING, Tuple, Union)
 
 from msgpack import ExtType
 
 from pynvim.api.buffer import Buffer
-from pynvim.api.common import (NvimError, Remote, RemoteApi, RemoteMap, RemoteSequence,
+from pynvim.api.common import (NvimError, Remote, RemoteMap, RemoteSequence, RootApi,
                                TDecodeMode, decode_if_bytes, walk)
 from pynvim.api.tabpage import Tabpage
 from pynvim.api.window import Window
@@ -121,7 +121,7 @@ class Nvim(object):
         version = metadata.get("version", {"api_level": 0})
         self.version = SimpleNamespace(**version)
         self.types = types
-        self.api = RemoteApi(self, 'nvim_')
+        self.api = RootApi(self)
         self.vars = RemoteMap(self, 'nvim_get_var', 'nvim_set_var', 'nvim_del_var')
         self.vvars = RemoteMap(self, 'nvim_get_vvar', None, None)
         self.options = RemoteMap(self, 'nvim_get_option', 'nvim_set_option')
@@ -437,6 +437,17 @@ class Nvim(object):
             return
         return self.request('nvim_err_write', msg, **kwargs)
 
+    def echo(
+        self,
+        chunks: Sequence[Union[Tuple[str], Tuple[str, str]]],
+        history: bool,
+        opts: Dict[str, Any] = None
+    ) -> None:
+        """Echo a message."""
+        if opts is None:
+            opts = {}
+        self.request('nvim_echo', chunks, history, opts)
+
     def _thread_invalid(self) -> bool:
         return (self._session._loop_thread is not None
                 and threading.current_thread() != self._session._loop_thread)
@@ -571,6 +582,16 @@ class Current(object):
         return self._session.request('nvim_set_current_tabpage', tabpage)
 
 
+WinType = Union[
+    Literal['autocmd'],
+    Literal['popup'],
+    Literal['preview'],
+    Literal['command'],
+    Literal[''],
+    Literal['unknown'],
+]
+
+
 class Funcs(object):
 
     """Helper class for functional vimscript interface."""
@@ -580,6 +601,53 @@ class Funcs(object):
 
     def __getattr__(self, name: str) -> Callable[..., Any]:
         return partial(self._nvim.call, name)
+
+    def win_findbuf(self, buffer: Union[int, Buffer]) -> List[int]:
+        """Returns a list of Windows that contain the buffer."""
+        return self._nvim.call('win_findbuf', buffer)
+
+    def win_gettype(self, window: Union[int, Window] = None) -> WinType:
+        """Return the type of the window."""
+        args = (window,) if window is not None else ()
+        return self._nvim.call('win_gettype', *args)
+
+    def win_execute(
+        self, window: Union[int, Window], command: str, silent: str = ''
+    ) -> None:
+        """Like execute() but in the context of window."""
+        return self._nvim.call('win_execute', window, command, silent)
+
+    def strlen(self, string: str) -> int:
+        """The length of the string in bytes."""
+        return self._nvim.call('strlen', string)
+
+    def strchars(self, string: str, skipcc: int = 0) -> int:
+        """The number of characters in the string."""
+        return self._nvim.call('strchars', string, skipcc)
+
+    def strdisplaywidth(self, string: str, col: int = 0) -> int:
+        """The number of display cells the string occupies when it starts at col."""
+        return self._nvim.call('strdisplaywidth', string, col)
+
+    def strwidth(self, string: str) -> int:
+        """The number of display cells the string occupies."""
+        return self._nvim.call('strwidth', string)
+
+    def prompt_getprompt(self, buffer: Union[int, Buffer]) -> str:
+        """Returns the effective prompt text for the buffer."""
+        return self._nvim.call('prompt_getprompt', buffer)
+
+    def prompt_setcallback(self, buffer: Union[int, Buffer], expr: str) -> None:
+        """Set prompt callback for buffer {buf} to {expr}."""
+        return self._nvim.call('prompt_setcallback', buffer, expr)
+
+    def prompt_setinterrupt(self, buffer: Union[int, Buffer], expr: str) -> None:
+        """Set a callback for <C-c> in insert mode."""
+        return self._nvim.call('prompt_setinterrupt', buffer, expr)
+
+    def prompt_setprompt(self, buffer: Union[int, Buffer], text: str) -> None:
+        """Set prompt text for buffer."""
+        return self._nvim.call('prompt_setprompt', buffer, text)
 
 
 class LuaFuncs(object):
