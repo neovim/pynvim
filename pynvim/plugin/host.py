@@ -89,9 +89,9 @@ class Host(object):
         self._discover_functions(plugin, module_handlers, path, False)
 
         if sync:
-            self._request_handlers[name](*args)
+            return self._request_handlers[name](*args)
         else:
-            self._notification_handlers[name](*args)
+            return self._notification_handlers[name](*args)
 
     def _wrap_function(self, fn, sync, decode, nvim_bind, name, *args):
         if decode:
