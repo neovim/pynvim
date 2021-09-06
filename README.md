@@ -2,7 +2,7 @@ Pynvim: Python client to [Neovim](https://github.com/neovim/neovim)
 ===================================================================
 
 [![Build Status](https://travis-ci.org/neovim/pynvim.svg?branch=master)](https://travis-ci.org/neovim/pynvim)
-[![Documentation Status](https://readthedocs.org/projects/pynvim/badge/?version=latest)](http://pynvim.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/pynvim/badge/?version=latest)](https://pynvim.readthedocs.io/en/latest/?badge=latest)
 [![Code coverage](https://codecov.io/gh/neovim/pynvim/branch/master/graph/badge.svg)](https://codecov.io/gh/neovim/pynvim)
 
 Pynvim implements support for python plugins in Nvim. It also works as a library for
