@@ -1,7 +1,7 @@
 Installation
 ============
 
-The Neovim Python client supports Python 3.6 or later.
+The Neovim Python client supports Python 3.7 or later.
 
 Using pip
 ---------
