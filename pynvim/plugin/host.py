@@ -1,4 +1,4 @@
-# type: ignore[no-untyped-def]
+# type: ignore
 """Implements a Nvim host for python plugins."""
 import inspect
 import logging

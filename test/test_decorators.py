@@ -1,4 +1,4 @@
-# type: ignore[attr-defined]
+# type: ignore
 from pynvim.plugin.decorators import command
 
 
