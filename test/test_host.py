@@ -28,3 +28,10 @@ def test_host_async_error(vim):
     assert event[1] == 'nvim_error_event'
     assert 'rplugin-host: Async request caused an error:\nboom\n' \
            in h._on_error_event(None, 'boom')
+
+def test_legacy_vim_eval(vim):
+    h = ScriptHost(vim)
+    assert h.legacy_vim.eval('1') == '1'
+    assert h.legacy_vim.eval('v:null') == None
+    assert h.legacy_vim.eval('v:true') == True
+    assert h.legacy_vim.eval('v:false') == False
