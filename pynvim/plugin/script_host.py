@@ -194,7 +194,7 @@ else:
 
 
 def num_to_str(obj):
-    if isinstance(obj, num_types):
+    if isinstance(obj, num_types) and not isinstance(obj, bool):
         return str(obj)
     else:
         return obj
