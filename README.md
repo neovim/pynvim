@@ -6,12 +6,12 @@ Pynvim: Python client to [Neovim](https://github.com/neovim/neovim)
 [![Code coverage](https://codecov.io/gh/neovim/pynvim/branch/master/graph/badge.svg)](https://codecov.io/gh/neovim/pynvim)
 
 Pynvim implements support for python plugins in Nvim. It also works as a library for
-connecting to and scripting Nvim processes through its msgpack-rpc API.
+connecting to, and scripting Nvim processes through its msgpack-rpc API.
 
 Install
 -------
 
-Supports python 2.7, and 3.4 or later.
+Supports python 2.7, 3.4, or later.
 
 ```sh
 pip2 install pynvim
