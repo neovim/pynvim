@@ -38,7 +38,7 @@ class Session(object):
             try:
                 fn(*args, **kwargs)
             except Exception:
-                warn("error caught while excecuting async callback\n%s\n",
+                warn("error caught while executing async callback\n%s\n",
                      format_exc())
 
         def greenlet_wrapper():
