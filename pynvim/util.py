@@ -39,4 +39,4 @@ def get_client_info(kind, type_, method_spec):
     return (name, VERSION.__dict__, type_, method_spec, attributes)
 
 
-VERSION = Version(major=0, minor=4, patch=3, prerelease='')
+VERSION = Version(major=0, minor=4, patch=4, prerelease='')
