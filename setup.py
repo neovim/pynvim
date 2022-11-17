@@ -35,7 +35,7 @@ if platform.python_implementation() != 'PyPy':
     install_requires.append('greenlet')
 
 setup(name='pynvim',
-      version='0.4.4',
+      version='0.4.3',
       description='Python client to neovim',
       url='http://github.com/neovim/pynvim',
       download_url='https://github.com/neovim/pynvim/archive/0.4.3.tar.gz',
