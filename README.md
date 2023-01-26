@@ -129,8 +129,8 @@ Release
    - bump the version in `pynvim/util.py` and `setup.py` (3 places in total)
 2. Make a release on GitHub with the same commit/version tag and copy the message.
 3. Run `scripts/disable_log_statements.sh`
-4. Run `python setup.py sdist`
+4. Run `python -m build`
     - diff the release tarball `dist/pynvim-x.y.z.tar.gz` against the previous one.
-5. Run `twine upload -r pypi dist/pynvim-x.y.z.tar.gz`
+5. Run `twine upload -r pypi dist/*`
     - Assumes you have a pypi account with permissions.
 6. Run `scripts/enable_log_statements.sh` or `git reset --hard` to restore the working dir.
