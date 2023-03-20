@@ -83,6 +83,9 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         self._queued_data = deque()
         self._fact = lambda: self
         self._raw_transport = None
+        if os.name != 'nt':
+            self._child_watcher = asyncio.get_child_watcher()
+            self._child_watcher.attach_loop(self._loop)
 
     def _connect_tcp(self, address, port):
         coroutine = self._loop.create_connection(self._fact, address, port)
@@ -118,9 +121,6 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         debug("native stdout connection successful")
 
     def _connect_child(self, argv):
-        if os.name != 'nt':
-            self._child_watcher = asyncio.get_child_watcher()
-            self._child_watcher.attach_loop(self._loop)
         coroutine = self._loop.subprocess_exec(self._fact, *argv)
         self._loop.run_until_complete(coroutine)
 
