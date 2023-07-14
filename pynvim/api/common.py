@@ -123,8 +123,8 @@ class RemoteMap(object):
         self,
         obj: IRemote,
         get_method: str,
-        set_method: str = None,
-        del_method: str = None
+        set_method: Optional[str] = None,
+        del_method: Optional[str] = None
     ):
         """Initialize a RemoteMap with session, getter/setter."""
         self._get = functools.partial(obj.request, get_method)

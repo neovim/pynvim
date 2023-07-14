@@ -13,7 +13,7 @@ __all__ = ('Buffer',)
 
 
 @overload
-def adjust_index(idx: int, default: int = None) -> int:
+def adjust_index(idx: int, default: Optional[int] = None) -> int:
     ...
 
 
@@ -23,11 +23,11 @@ def adjust_index(idx: Optional[int], default: int) -> int:
 
 
 @overload
-def adjust_index(idx: Optional[int], default: int = None) -> Optional[int]:
+def adjust_index(idx: Optional[int], default: Optional[int] = None) -> Optional[int]:
     ...
 
 
-def adjust_index(idx: Optional[int], default: int = None) -> Optional[int]:
+def adjust_index(idx: Optional[int], default: Optional[int] = None) -> Optional[int]:
     """Convert from python indexing convention to nvim indexing convention."""
     if idx is None:
         return default
@@ -161,7 +161,7 @@ class Buffer(Remote):
         col_start: int = 0,
         col_end: int = -1,
         src_id: int = -1,
-        async_: bool = None,
+        async_: Optional[bool] = None,
         **kwargs: Any
     ) -> int:
         """Add a highlight to the buffer."""
@@ -181,7 +181,7 @@ class Buffer(Remote):
         src_id: int,
         line_start: int = 0,
         line_end: int = -1,
-        async_: bool = None,
+        async_: Optional[bool] = None,
         **kwargs: Any
     ) -> None:
         """Clear highlights from the buffer."""
@@ -301,7 +301,7 @@ class Range(object):
             yield self._buffer[i]
 
     def append(
-        self, lines: Union[str, bytes, List[Union[str, bytes]]], i: int = None
+        self, lines: Union[str, bytes, List[Union[str, bytes]]], i: Optional[int] = None
     ) -> None:
         i = self._normalize_index(i)
         if i is None:

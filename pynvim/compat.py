@@ -21,6 +21,7 @@ def find_module(fullname, path):  # type: ignore
             else:
                 newpath.append(element)
         path = newpath
+    from imp import find_module as original_find_module
     return original_find_module(fullname, path)
 
 

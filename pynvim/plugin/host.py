@@ -10,7 +10,6 @@ from traceback import format_exc
 from typing import Any, Sequence
 
 from pynvim.api import Nvim, decode_if_bytes, walk
-from pynvim.compat import find_module
 from pynvim.msgpack_rpc import ErrorResponse
 from pynvim.plugin import script_host
 from pynvim.util import format_exc_skip, get_client_info

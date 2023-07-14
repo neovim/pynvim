@@ -3,7 +3,7 @@
 import inspect
 import logging
 import sys
-from typing import Any, Callable, Dict, TypeVar, Union
+from typing import Any, Callable, Dict, Optional, TypeVar, Union
 
 from pynvim.compat import unicode_errors_default
 
@@ -52,14 +52,14 @@ def rpc_export(rpc_method_name: str, sync: bool = False) -> Callable[[F], F]:
 def command(
     name: str,
     nargs: Union[str, int] = 0,
-    complete: str = None,
-    range: Union[str, int] = None,
-    count: int = None,
+    complete: Optional[str] = None,
+    range: Optional[Union[str, int]] = None,
+    count: Optional[int] = None,
     bang: bool = False,
     register: bool = False,
     sync: bool = False,
     allow_nested: bool = False,
-    eval: str = None
+    eval: Optional[str] = None
 ) -> Callable[[F], F]:
     """Tag a function or plugin method as a Nvim command handler."""
     def dec(f: F) -> F:
@@ -112,7 +112,7 @@ def autocmd(
     pattern: str = '*',
     sync: bool = False,
     allow_nested: bool = False,
-    eval: str = None
+    eval: Optional[str] = None
 ) -> Callable[[F], F]:
     """Tag a function or plugin method as a Nvim autocommand handler."""
     def dec(f: F) -> F:
@@ -150,7 +150,7 @@ def function(
     range: Union[bool, str, int] = False,
     sync: bool = False,
     allow_nested: bool = False,
-    eval: str = None
+    eval: Optional[str] = None
 ) -> Callable[[F], F]:
     """Tag a function or plugin method as a Nvim function handler."""
     def dec(f: F) -> F:
