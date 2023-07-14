@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from types import SimpleNamespace as Version
-from typing import List, cast, overload
+from typing import List, Optional, cast, overload
 
 from pynvim.api import Nvim, NvimError
 from pynvim.msgpack_rpc import (ErrorResponse, Session, TTransportType, child_session,
@@ -28,7 +28,7 @@ __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'ErrorResponse')
 
 
-def start_host(session: Session = None) -> None:
+def start_host(session: Optional[Session] = None) -> None:
     """Promote the current process into python plugin host for Nvim.
 
     Start msgpack-rpc event loop for `session`, listening for Nvim requests
@@ -101,10 +101,10 @@ def attach(session_type: Literal['stdio']) -> Nvim: ...
 
 def attach(
     session_type: TTransportType,
-    address: str = None,
+    address: Optional[str] = None,
     port: int = 7450,
-    path: str = None,
-    argv: List[str] = None,
+    path: Optional[str] = None,
+    argv: Optional[List[str]] = None,
     decode: Literal[True] = True
 ) -> Nvim:
     """Provide a nicer interface to create python api sessions.

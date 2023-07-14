@@ -140,7 +140,7 @@ class Session(object):
     def run(self,
             request_cb: Callable[[str, List[Any]], None],
             notification_cb: Callable[[str, List[Any]], None],
-            setup_cb: Callable[[], None] = None) -> None:
+            setup_cb: Optional[Callable[[], None]] = None) -> None:
         """Run the event loop to receive requests and notifications from Nvim.
 
         Like `AsyncSession.run()`, but `request_cb` and `notification_cb` are

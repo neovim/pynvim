@@ -3,10 +3,10 @@
 import sys
 from traceback import format_exception
 from types import SimpleNamespace
-from typing import Any, Dict, Tuple, TypeVar
+from typing import Any, Dict, Optional, Tuple, TypeVar
 
 
-def format_exc_skip(skip: int, limit: int = None) -> str:
+def format_exc_skip(skip: int, limit: Optional[int] = None) -> str:
     """Like traceback.format_exc but allow skipping the first frames."""
     etype, val, tb = sys.exc_info()
     for _ in range(skip):

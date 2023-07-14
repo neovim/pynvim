@@ -112,7 +112,7 @@ class Nvim(object):
         metadata: Dict[str, Any],
         types: Dict[int, Any],
         decode: TDecodeMode = True,
-        err_cb: Callable[[str], None] = None
+        err_cb: Optional[Callable[[str], None]] = None
     ):
         """Initialize a new Nvim instance. This method is module-private."""
         self._session = session
@@ -142,7 +142,7 @@ class Nvim(object):
             self._err_cb = err_cb
         self.loop = self._session.loop._loop
 
-    def _from_nvim(self, obj: Any, decode: TDecodeMode = None) -> Any:
+    def _from_nvim(self, obj: Any, decode: Optional[TDecodeMode] = None) -> Any:
         if decode is None:
             decode = self._decode
         if type(obj) is ExtType:
@@ -213,8 +213,8 @@ class Nvim(object):
         self,
         request_cb: Optional[Callable[[str, List[Any]], Any]],
         notification_cb: Optional[Callable[[str, List[Any]], Any]],
-        setup_cb: Callable[[], None] = None,
-        err_cb: Callable[[str], Any] = None
+        setup_cb: Optional[Callable[[], None]] = None,
+        err_cb: Optional[Callable[[str], Any]] = None
     ) -> None:
         """Run the event loop to receive requests and notifications from Nvim.
 
@@ -275,7 +275,7 @@ class Nvim(object):
                     self.metadata, self.types, decode, self._err_cb)
 
     def ui_attach(
-        self, width: int, height: int, rgb: bool = None, **kwargs: Any
+        self, width: int, height: int, rgb: Optional[bool] = None, **kwargs: Any
     ) -> None:
         """Register as a remote UI.
 
