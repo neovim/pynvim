@@ -59,15 +59,15 @@ jobs:
 
     - name: install dependencies
       run: |
-        pip install .  # Install from setup.py
-        pip install -q pytest
+        pip3 install .  # Install from setup.py
+        pip3 install -q pytest
 
     - name: test
       run: |
         echo $PATH
         which nvim
         nvim --version
-        python -m pytest
+        python3 -m pytest
 
     - uses: codecov/codecov-action@v3
       if: runner.os == 'macOS'
@@ -82,7 +82,7 @@ jobs:
 # after_script:
 #   - if [ $CI_TARGET = tests ]; then
 #       set -x;
-#       pip install coverage;
+#       pip3 install coverage;
 #       coverage combine;
 #       coverage report -m;
 #       coverage xml;
