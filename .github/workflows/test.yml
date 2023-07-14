@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PYTEST_ADDOPTS: '-vv --cov-append'
+  PYTEST_ADDOPTS: '-vv'
 
 jobs:
   lint:
@@ -79,32 +79,3 @@ jobs:
         which nvim
         nvim --version
         tox
-
-    - if: matrix.target == 'tests'
-      name: Run coverage report
-      run: |
-        pip install coverage
-        coverage report -m
-        coverage xml
-
-    - if: matrix.target == 'tests'
-      uses: codecov/codecov-action@v3
-      with:
-        file: coverage.xml
-        verbose: true
-
-# TODO: tox, codecov steps from old travis workflow
-#
-# env: CI_TARGET=checkqa TOXENV=checkqa,docs
-# script:
-#   - tox
-# after_script:
-#   - if [ $CI_TARGET = tests ]; then
-#       set -x;
-#       pip install coverage;
-#       coverage combine;
-#       coverage report -m;
-#       coverage xml;
-#       bash <(curl --retry 5 --silent --fail https://codecov.io/bash) -f coverage.xml;
-#       set +x;
-#     fi
