@@ -107,7 +107,7 @@ def test_options(vim):
     vim.current.buffer.options['define'] = 'test'
     assert vim.current.buffer.options['define'] == 'test'
     # Doesn't change the global value
-    assert vim.options['define'] == r'^\s*#\s*define'
+    assert vim.options['define'] == ''
 
     with pytest.raises(KeyError) as excinfo:
         vim.current.buffer.options['doesnotexist']
