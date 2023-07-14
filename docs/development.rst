@@ -3,7 +3,6 @@ Development
 
 If you change the code, you need to run::
 
-    pip2 install .
     pip3 install .
 
 for the changes to have effect.
@@ -45,9 +44,9 @@ You can run the plugin host in Neovim with logging enabled to debug errors::
     NVIM_PYTHON_LOG_FILE=logfile NVIM_PYTHON_LOG_LEVEL=DEBUG nvim
 
 As more than one Python host process might be started,
-the log filenames take the pattern ``logfile_pyX_KIND``
-where ``X`` is the major python version (2 or 3)
-and ``KIND`` is either "rplugin" or "script" (for the ``:python[3]`` script interface).
+the log filenames take the pattern ``logfile_py3_KIND``
+where ``KIND`` is either "rplugin" or "script" (for the ``:python3`` script
+interface).
 
 If the host cannot start at all,
 the error could be found in ``~/.nvimlog`` if ``nvim`` was compiled with logging.

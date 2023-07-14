@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from pynvim.api import Nvim
 
 
-def test_receiving_events(vim):
+def test_receiving_events(vim: Nvim) -> None:
     vim.command('call rpcnotify(%d, "test-event", 1, 2, 3)' % vim.channel_id)
     event = vim.next_message()
     assert event[1] == 'test-event'
@@ -14,7 +15,7 @@ def test_receiving_events(vim):
     assert event[2] == [vim.current.buffer.number]
 
 
-def test_sending_notify(vim):
+def test_sending_notify(vim: Nvim) -> None:
     # notify after notify
     vim.command("let g:test = 3", async_=True)
     cmd = 'call rpcnotify(%d, "test-event", g:test)' % vim.channel_id
@@ -28,14 +29,14 @@ def test_sending_notify(vim):
     assert vim.eval('g:data') == 'xyz'
 
 
-def test_async_error(vim):
+def test_async_error(vim: Nvim) -> None:
     # Invoke a bogus Ex command via notify (async).
     vim.command("lolwut", async_=True)
     event = vim.next_message()
     assert event[1] == 'nvim_error_event'
 
 
-def test_broadcast(vim):
+def test_broadcast(vim: Nvim) -> None:
     vim.subscribe('event2')
     vim.command('call rpcnotify(0, "event1", 1, 2, 3)')
     vim.command('call rpcnotify(0, "event2", 4, 5, 6)')

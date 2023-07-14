@@ -1,13 +1,14 @@
+# type: ignore
 """Legacy python/python3-vim emulation."""
 import imp
 import io
 import logging
 import os
 import sys
+from importlib.machinery import PathFinder
 from types import ModuleType
 
 from pynvim.api import Nvim, walk
-from pynvim.compat import IS_PYTHON3
 from pynvim.msgpack_rpc import ErrorResponse
 from pynvim.plugin.decorators import plugin, rpc_export
 from pynvim.util import format_exc_skip
@@ -17,16 +18,6 @@ __all__ = ('ScriptHost',)
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warn,)
-
-if IS_PYTHON3:
-    basestring = str
-
-    if sys.version_info >= (3, 4):
-        from importlib.machinery import PathFinder
-
-    PYTHON_SUBDIR = 'python3'
-else:
-    PYTHON_SUBDIR = 'python2'
 
 
 @plugin
@@ -143,7 +134,7 @@ class ScriptHost(object):
                     sstart += len(newlines) + 1
                     newlines = []
                     pass
-                elif isinstance(result, basestring):
+                elif isinstance(result, str):
                     newlines.append(result)
                 else:
                     exception = TypeError('pydo should return a string '
@@ -187,10 +178,7 @@ class RedirectStream(io.IOBase):
         self.redirect_handler('\n'.join(seq))
 
 
-if IS_PYTHON3:
-    num_types = (int, float)
-else:
-    num_types = (int, long, float)  # noqa: F821
+num_types = (int, float)
 
 
 def num_to_str(obj):
@@ -265,7 +253,7 @@ def discover_runtime_directories(nvim):
     for rtp in nvim.list_runtime_paths():
         if not os.path.exists(rtp):
             continue
-        for subdir in ['pythonx', PYTHON_SUBDIR]:
+        for subdir in ['pythonx', 'python3']:
             path = os.path.join(rtp, subdir)
             if os.path.exists(path):
                 rv.append(path)

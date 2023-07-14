@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 import time
+from typing import List
+
+from pynvim.api import Nvim
 
 
-def test_call_and_reply(vim):
+def test_call_and_reply(vim: Nvim) -> None:
     cid = vim.channel_id
 
-    def setup_cb():
+    def setup_cb() -> None:
         cmd = 'let g:result = rpcrequest(%d, "client-call", 1, 2, 3)' % cid
         vim.command(cmd)
         assert vim.vars['result'] == [4, 5, 6]
         vim.stop_loop()
 
-    def request_cb(name, args):
+    def request_cb(name: str, args: List[int]) -> List[int]:
         assert name == 'client-call'
         assert args == [1, 2, 3]
         return [4, 5, 6]
@@ -19,25 +22,25 @@ def test_call_and_reply(vim):
     vim.run_loop(request_cb, None, setup_cb)
 
 
-def test_call_api_before_reply(vim):
+def test_call_api_before_reply(vim: Nvim) -> None:
     cid = vim.channel_id
 
-    def setup_cb():
+    def setup_cb() -> None:
         cmd = 'let g:result = rpcrequest(%d, "client-call2", 1, 2, 3)' % cid
         vim.command(cmd)
         assert vim.vars['result'] == [7, 8, 9]
         vim.stop_loop()
 
-    def request_cb(name, args):
+    def request_cb(name: str, args: List[int]) -> List[int]:
         vim.command('let g:result2 = [7, 8, 9]')
         return vim.vars['result2']
 
     vim.run_loop(request_cb, None, setup_cb)
 
 
-def test_async_call(vim):
+def test_async_call(vim: Nvim) -> None:
 
-    def request_cb(name, args):
+    def request_cb(name: str, args: List[int]) -> None:
         if name == "test-event":
             vim.vars['result'] = 17
         vim.stop_loop()
@@ -53,10 +56,10 @@ def test_async_call(vim):
     assert vim.vars['result'] == 17
 
 
-def test_recursion(vim):
+def test_recursion(vim: Nvim) -> None:
     cid = vim.channel_id
 
-    def setup_cb():
+    def setup_cb() -> None:
         vim.vars['result1'] = 0
         vim.vars['result2'] = 0
         vim.vars['result3'] = 0
@@ -69,7 +72,7 @@ def test_recursion(vim):
         assert vim.vars['result4'] == 32
         vim.stop_loop()
 
-    def request_cb(name, args):
+    def request_cb(name: str, args: List[int]) -> int:
         n = args[0]
         n *= 2
         if n <= 16:
