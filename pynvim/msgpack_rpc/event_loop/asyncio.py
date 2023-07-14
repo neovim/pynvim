@@ -23,7 +23,7 @@ debug, info, warn = (logger.debug, logger.info, logger.warning,)
 
 loop_cls = asyncio.SelectorEventLoop
 if os.name == 'nt':
-    from asyncio.windows_utils import PipeHandle
+    from asyncio.windows_utils import PipeHandle  # type: ignore[attr-defined]
     import msvcrt
 
     # On windows use ProactorEventLoop which support pipes and is backed by the
@@ -114,7 +114,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
             )
         else:
             pipe = os.fdopen(rename_stdout, 'wb')
-        coroutine = self._loop.connect_write_pipe(self._fact, pipe)
+        coroutine = self._loop.connect_write_pipe(self._fact, pipe)  # type: ignore[assignment]
         self._loop.run_until_complete(coroutine)
         debug("native stdout connection successful")
 
