@@ -36,7 +36,7 @@ if platform.python_implementation() != 'PyPy':
 
 setup(name='pynvim',
       version='0.4.3',
-      description='Python client to neovim',
+      description='Python client for Neovim',
       url='http://github.com/neovim/pynvim',
       download_url='https://github.com/neovim/pynvim/archive/0.4.3.tar.gz',
       author='Thiago de Arruda',

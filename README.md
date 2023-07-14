@@ -1,7 +1,6 @@
 Pynvim: Python client to [Neovim](https://github.com/neovim/neovim)
 ===================================================================
 
-[![Build Status](https://travis-ci.org/neovim/pynvim.svg?branch=master)](https://travis-ci.org/neovim/pynvim)
 [![Documentation Status](https://readthedocs.org/projects/pynvim/badge/?version=latest)](https://pynvim.readthedocs.io/en/latest/?badge=latest)
 [![Code coverage](https://codecov.io/gh/neovim/pynvim/branch/master/graph/badge.svg)](https://codecov.io/gh/neovim/pynvim)
 
@@ -11,29 +10,19 @@ connecting to and scripting Nvim processes through its msgpack-rpc API.
 Install
 -------
 
-Supports python 2.7, and 3.4 or later.
+Supports python 3.10 or later.
 
-```sh
-pip2 install pynvim
-pip3 install pynvim
-```
+    pip3 install pynvim
 
-If you only use one of python2 or python3, it is enough to install that
-version. You can install the package without being root by adding the `--user`
-flag.
-
+You can install the package without being root by adding the `--user` flag.
 Anytime you upgrade Neovim, make sure to upgrade pynvim as well:
-```sh
-pip2 install --upgrade pynvim
-pip3 install --upgrade pynvim
-```
 
-Alternatively, the master version could be installed by executing the following
-in the root of this repository:
-```sh
-pip2 install .
-pip3 install .
-```
+    pip3 install --upgrade pynvim
+
+Alternatively, you can install the development version by cloning this
+repository and executing the following at the top level:
+
+    pip3 install .
 
 Python Plugin API
 -----------------
@@ -61,8 +50,8 @@ Development
 
 Use (and activate) a local virtualenv.
 
-    python3 -m venv env36
-    source env36/bin/activate
+    python3 -m virtualenv venv
+    source venv/bin/activate
 
 If you change the code, you must reinstall for the changes to take effect:
 
