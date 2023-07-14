@@ -103,10 +103,11 @@ def test_options(vim: Nvim) -> None:
     vim.current.buffer.options['shiftwidth'] = 4
     assert vim.current.buffer.options['shiftwidth'] == 4
     # global-local option
+    global_define = vim.options['define']
     vim.current.buffer.options['define'] = 'test'
     assert vim.current.buffer.options['define'] == 'test'
     # Doesn't change the global value
-    assert vim.options['define'] == ''
+    assert vim.options['define'] == global_define
 
     with pytest.raises(KeyError) as excinfo:
         vim.current.buffer.options['doesnotexist']
