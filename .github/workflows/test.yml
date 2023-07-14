@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ['3.11', '3.12']
+        python: ['3.10', '3.11']
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
         include:
         - os: ubuntu-latest
@@ -59,15 +59,15 @@ jobs:
 
     - name: install dependencies
       run: |
-        pip3 install .  # Install from setup.py
-        pip3 install -q pytest
+        pip install .  # Install from setup.py
+        pip install -q pytest
 
     - name: test
       run: |
         echo $PATH
         which nvim
         nvim --version
-        python3 -m pytest
+        python -m pytest
 
     - uses: codecov/codecov-action@v3
       if: runner.os == 'macOS'
@@ -82,7 +82,7 @@ jobs:
 # after_script:
 #   - if [ $CI_TARGET = tests ]; then
 #       set -x;
-#       pip3 install coverage;
+#       pip install coverage;
 #       coverage combine;
 #       coverage report -m;
 #       coverage xml;
