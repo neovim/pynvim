@@ -1,0 +1,91 @@
+name: test
+on:
+  push:
+  pull_request:
+    branches:
+      - 'master'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.repository_owner == 'neovim' && github.sha || github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  PYTEST_ADDOPTS: '-vv'
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['3.11', '3.12']
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
+        include:
+        - os: ubuntu-latest
+          NIGHTLY: nvim-linux64.tar.gz
+          NVIM_BIN_PATH: nvim-linux64/bin
+          EXTRACT: tar xzf
+        - os: macos-latest
+          NIGHTLY: nvim-macos.tar.gz
+          NVIM_BIN_PATH: nvim-macos/bin
+          EXTRACT: tar xzf
+        - os: windows-latest
+          NIGHTLY: nvim-win64.zip
+          NVIM_BIN_PATH: nvim-win64/bin
+          EXTRACT: unzip
+
+    runs-on: ${{ matrix.os }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        cache: 'pip'
+        python-version: ${{ matrix.python }}
+
+    - name: install neovim
+      run: |
+        curl -LO 'https://github.com/neovim/neovim/releases/download/nightly/${{ matrix.NIGHTLY }}'
+        ${{ matrix.EXTRACT }} ${{ matrix.NIGHTLY }}
+        echo '${{ runner.os }}'
+
+    - name: update path (bash)
+      if: runner.os != 'Windows'
+      run: echo "$(pwd)/${{ matrix.NVIM_BIN_PATH }}" >> $GITHUB_PATH
+
+    - name: update path (windows)
+      if: runner.os == 'Windows'
+      run: echo "$(pwd)/${{ matrix.NVIM_BIN_PATH }}" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: install dependencies
+      run: |
+        pip install .  # Install from setup.py
+        pip install -q pytest
+
+    - name: test
+      run: |
+        echo $PATH
+        which nvim
+        nvim --version
+        python -m pytest
+
+    - uses: codecov/codecov-action@v3
+      if: runner.os == 'macOS'
+      with:
+        verbose: true # optional (default = false)
+
+# TODO: tox, codecov steps from old travis workflow
+#
+# env: CI_TARGET=checkqa TOXENV=checkqa,docs
+# script:
+#   - tox
+# after_script:
+#   - if [ $CI_TARGET = tests ]; then
+#       set -x;
+#       pip install coverage;
+#       coverage combine;
+#       coverage report -m;
+#       coverage xml;
+#       bash <(curl --retry 5 --silent --fail https://codecov.io/bash) -f coverage.xml;
+#       set +x;
+#     fi
