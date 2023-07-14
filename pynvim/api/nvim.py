@@ -375,14 +375,7 @@ class Nvim(object):
         return self.request('nvim_set_current_dir', dir_path)
 
     def feedkeys(self, keys: str, options: str = '', escape_csi: bool = True) -> None:
-        """Push `keys` to Nvim user input buffer.
-
-        Options can be a string with the following character flags:
-        - 'm': Remap keys. This is default.
-        - 'n': Do not remap keys.
-        - 't': Handle keys as if typed; otherwise they are handled as if coming
-               from a mapping. This matters for undo, opening folds, etc.
-        """
+        """Push `keys` to Nvim user input buffer."""
         return self.request('nvim_feedkeys', keys, options, escape_csi)
 
     def input(self, bytes: AnyStr) -> int:
