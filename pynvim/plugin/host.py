@@ -1,5 +1,4 @@
 """Implements a Nvim host for python plugins."""
-import imp
 import inspect
 import logging
 import os
@@ -9,7 +8,7 @@ from functools import partial
 from traceback import format_exc
 
 from pynvim.api import decode_if_bytes, walk
-from pynvim.compat import IS_PYTHON3, find_module
+from pynvim.compat import IS_PYTHON3
 from pynvim.msgpack_rpc import ErrorResponse
 from pynvim.plugin import script_host
 from pynvim.util import format_exc_skip, get_client_info
@@ -21,6 +20,27 @@ error, debug, info, warn = (logger.error, logger.debug, logger.info,
                             logger.warning,)
 
 host_method_spec = {"poll": {}, "specs": {"nargs": 1}, "shutdown": {}}
+
+
+def handle_import(directory, name):
+    """Import a python file given a known location.
+
+    Currently works on both python2 or 3.
+    """
+    try:  # Python3
+        from importlib.util import module_from_spec, spec_from_file_location
+    except ImportError:  # Python2.7
+        import imp
+        from pynvim.compat import find_module
+        file, pathname, descr = find_module(name, [directory])
+        module = imp.load_module(name, file, pathname, descr)
+        return module
+    else:
+        spec = spec_from_file_location(name, location=directory)
+        if spec is not None:
+            return module_from_spec(spec)
+        else:
+            raise ImportError
 
 
 class Host(object):
@@ -161,8 +181,10 @@ class Host(object):
                     has_script = True
                 else:
                     directory, name = os.path.split(os.path.splitext(path)[0])
-                    file, pathname, descr = find_module(name, [directory])
-                    module = imp.load_module(name, file, pathname, descr)
+                    try:
+                        module = handle_import(directory, name)
+                    except ImportError:
+                        return
                 handlers = []
                 self._discover_classes(module, handlers, path)
                 self._discover_functions(module, handlers, path, False)
@@ -232,12 +254,12 @@ class Host(object):
             if sync:
                 if method in self._request_handlers:
                     raise Exception(('Request handler for "{}" is '
-                                    + 'already registered').format(method))
+                                     + 'already registered').format(method))
                 self._request_handlers[method] = fn_wrapped
             else:
                 if method in self._notification_handlers:
                     raise Exception(('Notification handler for "{}" is '
-                                    + 'already registered').format(method))
+                                     + 'already registered').format(method))
                 self._notification_handlers[method] = fn_wrapped
             if hasattr(fn, '_nvim_rpc_spec'):
                 specs.append(fn._nvim_rpc_spec)
