@@ -1,10 +1,13 @@
 # type: ignore
 """Implements a Nvim host for python plugins."""
+
+import importlib
 import inspect
 import logging
 import os
 import os.path
 import re
+import sys
 from functools import partial
 from traceback import format_exc
 from typing import Any, Sequence
@@ -23,25 +26,18 @@ error, debug, info, warn = (logger.error, logger.debug, logger.info,
 host_method_spec = {"poll": {}, "specs": {"nargs": 1}, "shutdown": {}}
 
 
-def handle_import(directory, name):
-    """Import a python file given a known location.
+def _handle_import(path: str, name: str):
+    """Import python module `name` from a known file path or module directory.
 
-    Currently works on both python2 or 3.
+    The path should be the base directory from which the module can be imported.
+    To support python 3.12, the use of `imp` should be avoided.
+    @see https://docs.python.org/3.12/whatsnew/3.12.html#imp
     """
-    try:  # Python3
-        from importlib.util import module_from_spec, spec_from_file_location
-    except ImportError:  # Python2.7
-        import imp
-        from pynvim.compat import find_module
-        file, pathname, descr = find_module(name, [directory])
-        module = imp.load_module(name, file, pathname, descr)
-        return module
-    else:
-        spec = spec_from_file_location(name, location=directory)
-        if spec is not None:
-            return module_from_spec(spec)
-        else:
-            raise ImportError
+    if not name:
+        raise ValueError("Missing module name.")
+
+    sys.path.append(path)
+    return importlib.import_module(name)
 
 
 class Host(object):
@@ -167,11 +163,20 @@ class Host(object):
         return msg
 
     def _load(self, plugins: Sequence[str]) -> None:
+        """Load the remote plugins and register handlers defined in the plugins.
+
+        Args:
+            plugins: List of plugin paths to rplugin python modules
+                registered by remote#host#RegisterPlugin('python3', ...)
+                (see the generated rplugin.vim manifest)
+        """
+        # self.nvim.err_write("host init _load\n", async_=True)
         has_script = False
         for path in plugins:
+            path = os.path.normpath(path)  # normalize path
             err = None
             if path in self._loaded:
-                error('{} is already loaded'.format(path))
+                warn('{} is already loaded'.format(path))
                 continue
             try:
                 if path == "script_host.py":
@@ -179,10 +184,7 @@ class Host(object):
                     has_script = True
                 else:
                     directory, name = os.path.split(os.path.splitext(path)[0])
-                    try:
-                        module = handle_import(directory, name)
-                    except ImportError:
-                        return
+                    module = _handle_import(directory, name)
                 handlers = []
                 self._discover_classes(module, handlers, path)
                 self._discover_functions(module, handlers, path, False)
