@@ -22,7 +22,7 @@ jobs:
         cache: 'pip'
         python-version: 3.11
     - name: install dependencies
-      run: pip install tox tox-gh-actions
+      run: python3 -m pip install tox tox-gh-actions
     - name: checkqa
       env:
         TOXENV: 'checkqa,docs'
@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.10', '3.11']
+        python: ['3.10', '3.11', '3.12-dev']
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
         include:
         - os: ubuntu-latest
@@ -71,11 +71,13 @@ jobs:
       run: echo "$(pwd)/${{ matrix.NVIM_BIN_PATH }}" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: install dependencies
-      run: pip install tox tox-gh-actions
+      run: python3 -m pip install tox tox-gh-actions
 
-    - name: test
+    - name: test with tox
       run: |
         echo $PATH
         which nvim
         nvim --version
+        which -a python3
+        python3 --version
         tox

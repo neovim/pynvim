@@ -197,7 +197,11 @@ def test_hash(vim: Nvim) -> None:
     assert d[vim.current.buffer] == 'beta'
 
 
-def test_cwd(vim: Nvim, tmpdir: Any) -> None:
+def test_python3(vim: Nvim, tmpdir: Any) -> None:
+    python3_prog = vim.command_output('echom provider#python3#Prog()')
+    python3_err = vim.command_output('echom provider#python3#Error()')
+    assert python3_prog != "", python3_err
+
     vim.command('python3 import os')
     cwd_before = vim.command_output('python3 print(os.getcwd())')
 
