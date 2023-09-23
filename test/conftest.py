@@ -13,7 +13,10 @@ def vim() -> pynvim.Nvim:
     child_argv = os.environ.get('NVIM_CHILD_ARGV')
     listen_address = os.environ.get('NVIM_LISTEN_ADDRESS')
     if child_argv is None and listen_address is None:
-        child_argv = '["nvim", "-u", "NONE", "--embed", "--headless"]'
+        child_argv = json.dumps([
+            "nvim", "-u", "NONE", "--embed", "--headless",
+            "-c", "let g:python3_host_prog='python3'",  # workaround neovim/neovim#25316
+        ])
 
     if child_argv is not None:
         editor = pynvim.attach('child', argv=json.loads(child_argv))

@@ -24,7 +24,10 @@ extras_require = {
 
 if platform.python_implementation() != 'PyPy':
     # pypy already includes an implementation of the greenlet module
-    install_requires.append('greenlet')
+    if sys.version_info >= (3, 12):
+        install_requires.append('greenlet>=3.0.0rc3')
+    else:
+        install_requires.append('greenlet')
 
 if sys.version_info < (3, 8):
     install_requires.append('typing-extensions')
