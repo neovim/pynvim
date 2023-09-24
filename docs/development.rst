@@ -6,6 +6,7 @@ If you change the code, you need to run::
     pip3 install .
 
 for the changes to have effect.
+
 Alternatively you could execute Neovim with the ``$PYTHONPATH`` environment variable::
 
     PYTHONPATH=/path/to/pynvim nvim
@@ -25,7 +26,7 @@ directory added to ``sys.path``.
 
 If you want to test a different version than ``nvim`` in ``$PATH`` use::
 
-    NVIM_CHILD_ARGV='["/path/to/nvim", "-u", "NONE", "--embed", "--headless"]' pytest
+    NVIM_CHILD_ARGV='["/path/to/nvim", "--clean", "--embed", "--headless"]' pytest
 
 Alternatively, if you want to see the state of nvim, you could use::
 
@@ -35,6 +36,24 @@ Alternatively, if you want to see the state of nvim, you could use::
 
 But note you need to restart Neovim every time you run the tests!
 Substitute your favorite terminal emulator for ``xterm``.
+
+Contributing
+------------
+
+Before submitting any pull requests, please run linters and tests if possible.
+
+In the CI we run `flake8` and `mypy`:
+
+    flake8 pynvim test
+    mypy pynvim test
+
+If you have `tox`_, you can test with multiple python versions locally:
+
+    tox run                      # run on all available python environments
+    tox run -e py311,checkqa     # run on python3.11, and linters
+    tox run --parallell          # run everything in parallel
+
+.. _`tox`: https://tox.wiki/
 
 Troubleshooting
 ---------------

@@ -48,7 +48,7 @@ See the [Python Plugin API](http://pynvim.readthedocs.io/en/latest/usage/python-
 Development
 -----------
 
-Use (and activate) a local virtualenv.
+Use (and activate) a local virtualenv, for example:
 
     python3 -m virtualenv venv
     source venv/bin/activate

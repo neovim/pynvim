@@ -14,7 +14,11 @@ def vim() -> pynvim.Nvim:
     listen_address = os.environ.get('NVIM_LISTEN_ADDRESS')
     if child_argv is None and listen_address is None:
         child_argv = json.dumps([
-            "nvim", "-u", "NONE", "--embed", "--headless",
+            "nvim",
+            "--clean",  # no config and plugins (-u NONE), no SHADA
+            "-n",  # no swap file
+            "--embed",
+            "--headless",
             "-c", "let g:python3_host_prog='python3'",  # workaround neovim/neovim#25316
         ])
 
