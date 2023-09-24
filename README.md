@@ -33,7 +33,7 @@ pynvim is installed Neovim will report support for the `+python3` Vim feature.
 
 The rplugin interface allows plugins to handle vimL function calls as well as
 defining commands and autocommands, and such plugins can operate asynchronously
-without blocking nvim.  For details on the new rplugin interface, 
+without blocking nvim.  For details on the new rplugin interface,
 see the [Remote Plugin](http://pynvim.readthedocs.io/en/latest/usage/remote-plugins.html) documentation.
 
 Pynvim defines some extensions over the vim python API:
@@ -70,7 +70,7 @@ documentation.
 
 A number of different transports are supported, but the simplest way to get
 started is with the python REPL. First, start Nvim with a known address (or use
-the `$NVIM_LISTEN_ADDRESS` of a running instance): 
+the `$NVIM_LISTEN_ADDRESS` of a running instance):
 
 ```sh
 $ NVIM_LISTEN_ADDRESS=/tmp/nvim nvim
@@ -81,10 +81,10 @@ to the one exposed by the [python-vim
 bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim)):
 
 ```python
->>> from pynvim import attach
+>>> import pynvim
 # Create a python API session attached to unix domain socket created above:
->>> nvim = attach('socket', path='/tmp/nvim')
-# Now do some work. 
+>>> nvim = pynvim.attach('socket', path='/tmp/nvim')
+# Now do some work.
 >>> buffer = nvim.current.buffer # Get the current buffer
 >>> buffer[0] = 'replace first line'
 >>> buffer[:] = ['replace whole buffer']
@@ -99,16 +99,16 @@ You can embed Neovim into your python application instead of connecting to
 a running Neovim instance.
 
 ```python
->>> from pynvim import attach
->>> nvim = attach('child', argv=["/bin/env", "nvim", "--embed", "--headless"])
+>>> import pynvim
+>>> nvim = pynvim.attach('child', argv=["/usr/bin/env", "nvim", "--embed", "--headless"])
 ```
 
-- The ` --headless` argument tells `nvim` not to wait for a UI to connect.
+- The `--headless` argument tells `nvim` not to wait for a UI to connect.
 - Alternatively, use `--embed` _without_ `--headless` if your client is a UI
   and you want `nvim` to wait for your client to `nvim_ui_attach` before
   continuing startup.
 
-See the tests for more examples.
+See the [tests](https://github.com/neovim/pynvim/tree/master/test) for more examples.
 
 Release
 -------
@@ -123,3 +123,8 @@ Release
 5. Run `twine upload -r pypi dist/*`
     - Assumes you have a pypi account with permissions.
 6. Run `scripts/enable_log_statements.sh` or `git reset --hard` to restore the working dir.
+
+License
+-------
+
+[Apache License 2.0](https://github.com/neovim/pynvim/blob/master/LICENSE)
