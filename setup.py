@@ -14,7 +14,7 @@ setup_requires = [
 ] + pytest_runner,
 
 tests_require = [
-    'pytest>=3.4.0',
+    'pytest',
 ]
 
 extras_require = {
@@ -43,7 +43,7 @@ setup(name='pynvim',
       packages=['pynvim', 'pynvim.api', 'pynvim.msgpack_rpc',
                 'pynvim.msgpack_rpc.event_loop', 'pynvim.plugin',
                 'neovim', 'neovim.api'],
-      python_requires=">=3.6",
+      python_requires=">=3.7",
       install_requires=install_requires,
       setup_requires=setup_requires,
       tests_require=tests_require,
