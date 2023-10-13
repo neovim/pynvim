@@ -25,6 +25,8 @@ if os.name == 'nt':
     loop_cls = asyncio.ProactorEventLoop  # type: ignore[attr-defined,misc]
 
 
+# pylint: disable=logging-fstring-interpolation
+
 class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
                        asyncio.SubprocessProtocol):
     """`BaseEventLoop` subclass that uses `asyncio` as a backend."""
@@ -42,6 +44,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
 
     def connection_lost(self, exc):
         """Used to signal `asyncio.Protocol` of a lost connection."""
+        debug(f"connection_lost: exc = {exc}")
         self._on_error(exc.args[0] if exc else 'EOF')
 
     def data_received(self, data: bytes) -> None:
@@ -71,6 +74,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
 
     def process_exited(self) -> None:
         """Used to signal `asyncio.SubprocessProtocol` when the child exits."""
+        debug("process_exited")
         self._on_error('EOF')
 
     def _init(self) -> None:
@@ -81,50 +85,61 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         self._child_watcher = None
 
     def _connect_tcp(self, address: str, port: int) -> None:
-        coroutine = self._loop.create_connection(self._fact, address, port)
-        self._loop.run_until_complete(coroutine)
+        async def connect_tcp():
+            await self._loop.create_connection(self._fact, address, port)
+            debug(f"tcp connection successful: {address}:{port}")
+
+        self._loop.run_until_complete(connect_tcp())
 
     def _connect_socket(self, path: str) -> None:
-        if os.name == 'nt':
-            coroutine = self._loop.create_pipe_connection(  # type: ignore[attr-defined]
-                self._fact, path
-            )
-        else:
-            coroutine = self._loop.create_unix_connection(self._fact, path)
-        self._loop.run_until_complete(coroutine)
+        async def connect_socket():
+            if os.name == 'nt':
+                transport, _ = await self._loop.create_pipe_connection(self._fact, path)
+            else:
+                transport, _ = await self._loop.create_unix_connection(self._fact, path)
+            debug("socket connection successful: %s", transport)
+
+        self._loop.run_until_complete(connect_socket())
 
     def _connect_stdio(self) -> None:
-        if os.name == 'nt':
-            pipe: Any = PipeHandle(
-                msvcrt.get_osfhandle(sys.stdin.fileno())  # type: ignore[attr-defined]
-            )
-        else:
-            pipe = sys.stdin
-        coroutine = self._loop.connect_read_pipe(self._fact, pipe)
-        self._loop.run_until_complete(coroutine)
-        debug("native stdin connection successful")
+        async def connect_stdin():
+            if os.name == 'nt':
+                pipe = PipeHandle(msvcrt.get_osfhandle(sys.stdin.fileno()))
+            else:
+                pipe = sys.stdin
+            await self._loop.connect_read_pipe(self._fact, pipe)
+            debug("native stdin connection successful")
+        self._loop.run_until_complete(connect_stdin())
 
         # Make sure subprocesses don't clobber stdout,
         # send the output to stderr instead.
         rename_stdout = os.dup(sys.stdout.fileno())
         os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
 
-        if os.name == 'nt':
-            pipe = PipeHandle(
-                msvcrt.get_osfhandle(rename_stdout)  # type: ignore[attr-defined]
-            )
-        else:
-            pipe = os.fdopen(rename_stdout, 'wb')
-        coroutine = self._loop.connect_write_pipe(self._fact, pipe)  # type: ignore[assignment]
-        self._loop.run_until_complete(coroutine)
-        debug("native stdout connection successful")
+        async def connect_stdout():
+            if os.name == 'nt':
+                pipe = PipeHandle(msvcrt.get_osfhandle(rename_stdout))
+            else:
+                pipe = os.fdopen(rename_stdout, 'wb')
+
+            await self._loop.connect_write_pipe(self._fact, pipe)
+            debug("native stdout connection successful")
+
+        self._loop.run_until_complete(connect_stdout())
 
     def _connect_child(self, argv: List[str]) -> None:
         if os.name != 'nt':
-            self._child_watcher = asyncio.get_child_watcher()
-            self._child_watcher.attach_loop(self._loop)
-        coroutine = self._loop.subprocess_exec(self._fact, *argv)
-        self._loop.run_until_complete(coroutine)
+            # see #238, #241
+            _child_watcher = asyncio.get_child_watcher()
+            _child_watcher.attach_loop(self._loop)
+
+        async def create_subprocess():
+            transport: asyncio.SubprocessTransport
+            transport, protocol = await self._loop.subprocess_exec(self._fact, *argv)
+            pid = transport.get_pid()
+            debug("child subprocess_exec successful, PID = %s", pid)
+
+        self._loop.run_until_complete(create_subprocess())
 
     def _start_reading(self) -> None:
         pass
