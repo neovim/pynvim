@@ -8,12 +8,13 @@ import sys
 from types import SimpleNamespace as Version
 from typing import List, Optional, cast, overload
 
+from pynvim._version import VERSION, __version__
 from pynvim.api import Nvim, NvimError
-from pynvim.msgpack_rpc import (ErrorResponse, Session, TTransportType, child_session,
-                                socket_session, stdio_session, tcp_session)
+from pynvim.msgpack_rpc import (ErrorResponse, Session, TTransportType,
+                                child_session, socket_session, stdio_session,
+                                tcp_session)
 from pynvim.plugin import (Host, autocmd, command, decode, encoding, function,
                            plugin, rpc_export, shutdown_hook)
-from pynvim.util import VERSION
 
 if sys.version_info < (3, 8):
     from typing_extensions import Literal
@@ -24,8 +25,9 @@ else:
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',
            'start_host', 'autocmd', 'command', 'encoding', 'decode',
            'function', 'plugin', 'rpc_export', 'Host', 'Nvim', 'NvimError',
-           'Version', 'VERSION', 'shutdown_hook', 'attach', 'setup_logging',
-           'ErrorResponse')
+           'Version', 'VERSION', '__version__',
+           'shutdown_hook', 'attach', 'setup_logging', 'ErrorResponse',
+           )
 
 
 def start_host(session: Optional[Session] = None) -> None:

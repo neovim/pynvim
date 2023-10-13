@@ -10,7 +10,7 @@ connecting to and scripting Nvim processes through its msgpack-rpc API.
 Install
 -------
 
-Supports python 3.10 or later.
+Supports python 3.7 or later.
 
     pip3 install pynvim
 
@@ -115,7 +115,7 @@ Release
 
 1. Create a release commit with title `Pynvim x.y.z`
    - list significant changes in the commit message
-   - bump the version in `pynvim/util.py` and `setup.py` (3 places in total)
+   - bump the version in `pynvim/_version.py`
 2. Make a release on GitHub with the same commit/version tag and copy the message.
 3. Run `scripts/disable_log_statements.sh`
 4. Run `python -m build`
@@ -123,6 +123,7 @@ Release
 5. Run `twine upload -r pypi dist/*`
     - Assumes you have a pypi account with permissions.
 6. Run `scripts/enable_log_statements.sh` or `git reset --hard` to restore the working dir.
+7. Bump up to the next development version in `pynvim/_version.py`, with `prerelease` suffix `dev0`.
 
 License
 -------

@@ -2,8 +2,9 @@
 
 import sys
 from traceback import format_exception
-from types import SimpleNamespace
 from typing import Any, Dict, Optional, Tuple, TypeVar
+
+from pynvim._version import VERSION
 
 
 def format_exc_skip(skip: int, limit: Optional[int] = None) -> str:
@@ -26,6 +27,3 @@ def get_client_info(
     name = "python{}-{}".format(sys.version_info[0], kind)
     attributes = {"license": "Apache v2", "website": "github.com/neovim/pynvim"}
     return (name, VERSION.__dict__, type_, method_spec, attributes)
-
-
-VERSION = SimpleNamespace(major=0, minor=4, patch=3, prerelease="")
