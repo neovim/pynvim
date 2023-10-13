@@ -53,10 +53,12 @@ jobs:
           NIGHTLY: nvim-macos.tar.gz
           NVIM_BIN_PATH: nvim-macos/bin
           EXTRACT: tar xzf
-        - os: windows-latest
-          NIGHTLY: nvim-win64.zip
-          NVIM_BIN_PATH: nvim-win64/bin
-          EXTRACT: unzip
+        #- os: windows-latest
+        #  NIGHTLY: nvim-win64.zip
+        #  NVIM_BIN_PATH: nvim-win64/bin
+        #  EXTRACT: unzip
+        exclude:
+        - os: windows-latest  # until windows CI is fixed (see #505)
 
     runs-on: ${{ matrix.os }}
     steps:
