@@ -1,12 +1,4 @@
-"""Event loop implementation that uses the `asyncio` standard module.
-
-The `asyncio` module was added to python standard library on 3.4, and it
-provides a pure python implementation of an event loop library. It is used
-as a fallback in case pyuv is not available(on python implementations other
-than CPython).
-
-"""
-from __future__ import absolute_import
+"""Event loop implementation that uses the `asyncio` standard module."""
 
 import asyncio
 import logging
@@ -22,9 +14,10 @@ logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)
 
 loop_cls = asyncio.SelectorEventLoop
+
 if os.name == 'nt':
+    import msvcrt  # pylint: disable=import-error
     from asyncio.windows_utils import PipeHandle  # type: ignore[attr-defined]
-    import msvcrt
 
     # On windows use ProactorEventLoop which support pipes and is backed by the
     # more powerful IOCP facility

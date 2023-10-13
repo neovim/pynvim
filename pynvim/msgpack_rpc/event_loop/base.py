@@ -28,6 +28,10 @@ TTransportType = Union[
     Literal['child']
 ]
 
+# TODO: Since pynvim now supports python 3, the only available backend of the
+# msgpack_rpc BaseEventLoop is the built-in asyncio (see #294). We will have
+# to remove some unnecessary abstractions as well as greenlet. See also #489
+
 
 class BaseEventLoop(ABC):
 
