@@ -14,7 +14,7 @@ import os
 import sys
 from collections import deque
 from signal import Signals
-from typing import Any, Callable, Deque, List
+from typing import Any, Callable, Deque, List, Optional
 
 from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop
 
@@ -37,6 +37,8 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
     """`BaseEventLoop` subclass that uses `asyncio` as a backend."""
 
     _queued_data: Deque[bytes]
+    if os.name != 'nt':
+        _child_watcher: Optional['asyncio.AbstractChildWatcher']
 
     def connection_made(self, transport):
         """Used to signal `asyncio.Protocol` of a successful connection."""
@@ -78,6 +80,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         self._queued_data = deque()
         self._fact = lambda: self
         self._raw_transport = None
+        self._child_watcher = None
 
     def _connect_tcp(self, address: str, port: int) -> None:
         coroutine = self._loop.create_connection(self._fact, address, port)
@@ -145,6 +148,9 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         if self._raw_transport is not None:
             self._raw_transport.close()
         self._loop.close()
+        if self._child_watcher is not None:
+            self._child_watcher.close()
+            self._child_watcher = None
 
     def _threadsafe_call(self, fn: Callable[[], Any]) -> None:
         self._loop.call_soon_threadsafe(fn)
