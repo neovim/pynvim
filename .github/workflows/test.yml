@@ -27,37 +27,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12-dev']
+        python-version: ['3.12', '3.11', '3.10', '3.9', '3.8', '3.7']
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
+        exclude:
+          - os: 'ubuntu-latest'
+            python-version: '3.7'
         include:
-        - os: ubuntu-20.04
-          python-version: '3.7'
-          NIGHTLY: nvim-linux64.tar.gz
-          NVIM_BIN_PATH: nvim-linux64/bin
-          EXTRACT: tar xzf
-        - os: ubuntu-latest
-          python-version: '3.8'
-          NIGHTLY: nvim-linux64.tar.gz
-          NVIM_BIN_PATH: nvim-linux64/bin
-          EXTRACT: tar xzf
-        - os: ubuntu-latest
-          python-version: '3.9'
-          NIGHTLY: nvim-linux64.tar.gz
-          NVIM_BIN_PATH: nvim-linux64/bin
-          EXTRACT: tar xzf
-        - os: ubuntu-latest
-          NIGHTLY: nvim-linux64.tar.gz
-          NVIM_BIN_PATH: nvim-linux64/bin
-          EXTRACT: tar xzf
-        - os: macos-latest
-          NIGHTLY: nvim-macos.tar.gz
-          NVIM_BIN_PATH: nvim-macos/bin
-          EXTRACT: tar xzf
-        - os: windows-latest
-          NIGHTLY: nvim-win64.zip
-          NVIM_BIN_PATH: nvim-win64/bin
-          EXTRACT: unzip
+          - os: 'ubuntu-20.04'
+            python-version: '3.7'
+            NIGHTLY: nvim-linux64.tar.gz
+            NVIM_BIN_PATH: nvim-linux64/bin
+            EXTRACT: tar xzf
+          - os: 'ubuntu-latest'
+            NIGHTLY: nvim-linux64.tar.gz
+            NVIM_BIN_PATH: nvim-linux64/bin
+            EXTRACT: tar xzf
+          - os: 'macos-latest'
+            NIGHTLY: nvim-macos.tar.gz
+            NVIM_BIN_PATH: nvim-macos/bin
+            EXTRACT: tar xzf
+          - os: 'windows-latest'
+            NIGHTLY: nvim-win64.zip
+            NVIM_BIN_PATH: nvim-win64/bin
+            EXTRACT: unzip
 
+    name: "test (python ${{ matrix.python-version }}, ${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -65,12 +59,6 @@ jobs:
       with:
         cache: 'pip'
         python-version: ${{ matrix.python-version }}
-
-    - name: install neovim
-      run: |
-        curl -LO 'https://github.com/neovim/neovim/releases/download/nightly/${{ matrix.NIGHTLY }}'
-        ${{ matrix.EXTRACT }} ${{ matrix.NIGHTLY }}
-        echo '${{ runner.os }}'
 
     - name: update path (bash)
       if: runner.os != 'Windows'
@@ -80,16 +68,27 @@ jobs:
       if: runner.os == 'Windows'
       run: echo "$(pwd)/${{ matrix.NVIM_BIN_PATH }}" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+    - name: install neovim
+      run: |
+        curl -LO 'https://github.com/neovim/neovim/releases/download/nightly/${{ matrix.NIGHTLY }}'
+        ${{ matrix.EXTRACT }} ${{ matrix.NIGHTLY }}
+        echo '${{ runner.os }}'
+        nvim --version
+
     - name: install dependencies
       run: |
         python3 -m pip install -U pip
         python3 -m pip install tox tox-gh-actions
 
+    - name: check neovim
+      run: |
+        python3 -m pip install -e .   # install pynvim
+        nvim --headless --clean -c 'checkhealth | %+print | q'
+
     - name: test with tox
       run: |
         echo $PATH
         which nvim
-        nvim --version
         which -a python3
         python3 --version
         tox run
