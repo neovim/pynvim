@@ -6,9 +6,14 @@ import os
 import sys
 from collections import deque
 from signal import Signals
-from typing import Any, Callable, Deque, List, Optional
+from typing import Any, Callable, Deque, List, Optional, cast
 
-from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop
+if sys.version_info >= (3, 12):
+    from typing import Final, override
+else:
+    from typing_extensions import Final, override
+
+from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop, TTransportType
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)
@@ -27,88 +32,136 @@ if os.name == 'nt':
 
 # pylint: disable=logging-fstring-interpolation
 
-class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
-                       asyncio.SubprocessProtocol):
-    """`BaseEventLoop` subclass that uses `asyncio` as a backend."""
+class Protocol(asyncio.Protocol, asyncio.SubprocessProtocol):
+    """The protocol class used for asyncio-based RPC communication."""
 
-    _queued_data: Deque[bytes]
-    if os.name != 'nt':
-        _child_watcher: Optional['asyncio.AbstractChildWatcher']
+    def __init__(self, on_data, on_error):
+        """Initialize the Protocol object."""
+        assert on_data is not None
+        assert on_error is not None
+        self._on_data = on_data
+        self._on_error = on_error
 
+    @override
     def connection_made(self, transport):
         """Used to signal `asyncio.Protocol` of a successful connection."""
-        self._transport = transport
-        self._raw_transport = transport
-        if isinstance(transport, asyncio.SubprocessTransport):
-            self._transport = transport.get_pipe_transport(0)
+        del transport  # no-op
 
-    def connection_lost(self, exc):
+    @override
+    def connection_lost(self, exc: Optional[Exception]) -> None:
         """Used to signal `asyncio.Protocol` of a lost connection."""
         debug(f"connection_lost: exc = {exc}")
-        self._on_error(exc.args[0] if exc else 'EOF')
+        self._on_error(exc if exc else EOFError())
 
+    @override
     def data_received(self, data: bytes) -> None:
         """Used to signal `asyncio.Protocol` of incoming data."""
-        if self._on_data:
-            self._on_data(data)
-            return
-        self._queued_data.append(data)
+        self._on_data(data)
 
-    def pipe_connection_lost(self, fd, exc):
+    @override
+    def pipe_connection_lost(self, fd: int, exc: Optional[Exception]) -> None:
         """Used to signal `asyncio.SubprocessProtocol` of a lost connection."""
         debug("pipe_connection_lost: fd = %s, exc = %s", fd, exc)
         if os.name == 'nt' and fd == 2:  # stderr
             # On windows, ignore piped stderr being closed immediately (#505)
             return
-        self._on_error(exc.args[0] if exc else 'EOF')
+        self._on_error(exc if exc else EOFError())
 
+    @override
     def pipe_data_received(self, fd, data):
         """Used to signal `asyncio.SubprocessProtocol` of incoming data."""
         if fd == 2:  # stderr fd number
             # Ignore stderr message, log only for debugging
             debug("stderr: %s", str(data))
-        elif self._on_data:
-            self._on_data(data)
-        else:
-            self._queued_data.append(data)
+        elif fd == 1:  # stdout
+            self.data_received(data)
 
+    @override
     def process_exited(self) -> None:
         """Used to signal `asyncio.SubprocessProtocol` when the child exits."""
         debug("process_exited")
-        self._on_error('EOF')
+        self._on_error(EOFError())
 
-    def _init(self) -> None:
-        self._loop = loop_cls()
-        self._queued_data = deque()
-        self._fact = lambda: self
+
+class AsyncioEventLoop(BaseEventLoop):
+    """`BaseEventLoop` subclass that uses core `asyncio` as a backend."""
+
+    _protocol: Optional[Protocol]
+    _transport: Optional[asyncio.WriteTransport]
+    _signals: List[Signals]
+    _data_buffer: Deque[bytes]
+    if os.name != 'nt':
+        _child_watcher: Optional['asyncio.AbstractChildWatcher']
+
+    def __init__(self,
+                 transport_type: TTransportType,
+                 *args: Any, **kwargs: Any):
+        """asyncio-specific initialization. see BaseEventLoop.__init__."""
+
+        # The underlying asyncio event loop.
+        self._loop: Final[asyncio.AbstractEventLoop] = loop_cls()
+
+        # Handle messages from nvim that may arrive before run() starts.
+        self._data_buffer = deque()
+
+        def _on_data(data: bytes) -> None:
+            if self._on_data is None:
+                self._data_buffer.append(data)
+                return
+            self._on_data(data)
+
+        # pylint: disable-next=unnecessary-lambda
+        self._protocol_factory = lambda: Protocol(
+            on_data=_on_data,
+            on_error=self._on_error,
+        )
+        self._protocol = None
+
+        # The communication channel (endpoint) created by _connect_*() method.
+        self._transport = None
         self._raw_transport = None
         self._child_watcher = None
 
+        super().__init__(transport_type, *args, **kwargs)
+
+    @override
     def _connect_tcp(self, address: str, port: int) -> None:
         async def connect_tcp():
-            await self._loop.create_connection(self._fact, address, port)
+            transport, protocol = await self._loop.create_connection(
+                self._protocol_factory, address, port)
             debug(f"tcp connection successful: {address}:{port}")
+            self._transport = transport
+            self._protocol = protocol
 
         self._loop.run_until_complete(connect_tcp())
 
+    @override
     def _connect_socket(self, path: str) -> None:
         async def connect_socket():
             if os.name == 'nt':
-                transport, _ = await self._loop.create_pipe_connection(self._fact, path)
+                _create_connection = self._loop.create_pipe_connection
             else:
-                transport, _ = await self._loop.create_unix_connection(self._fact, path)
-            debug("socket connection successful: %s", transport)
+                _create_connection = self._loop.create_unix_connection
+
+            transport, protocol = await _create_connection(
+                self._protocol_factory, path)
+            debug("socket connection successful: %s", self._transport)
+            self._transport = transport
+            self._protocol = protocol
 
         self._loop.run_until_complete(connect_socket())
 
+    @override
     def _connect_stdio(self) -> None:
         async def connect_stdin():
             if os.name == 'nt':
                 pipe = PipeHandle(msvcrt.get_osfhandle(sys.stdin.fileno()))
             else:
                 pipe = sys.stdin
-            await self._loop.connect_read_pipe(self._fact, pipe)
+            transport, protocol = await self._loop.connect_read_pipe(
+                self._protocol_factory, pipe)
             debug("native stdin connection successful")
+            del transport, protocol
         self._loop.run_until_complete(connect_stdin())
 
         # Make sure subprocesses don't clobber stdout,
@@ -122,52 +175,74 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
             else:
                 pipe = os.fdopen(rename_stdout, 'wb')
 
-            await self._loop.connect_write_pipe(self._fact, pipe)
+            transport, protocol = await self._loop.connect_write_pipe(
+                self._protocol_factory, pipe)
             debug("native stdout connection successful")
-
+            self._transport = transport
+            self._protocol = protocol
         self._loop.run_until_complete(connect_stdout())
 
+    @override
     def _connect_child(self, argv: List[str]) -> None:
         if os.name != 'nt':
             # see #238, #241
-            _child_watcher = asyncio.get_child_watcher()
-            _child_watcher.attach_loop(self._loop)
+            self._child_watcher = asyncio.get_child_watcher()
+            self._child_watcher.attach_loop(self._loop)
 
         async def create_subprocess():
-            transport: asyncio.SubprocessTransport
-            transport, protocol = await self._loop.subprocess_exec(self._fact, *argv)
+            transport: asyncio.SubprocessTransport  # type: ignore
+            transport, protocol = await self._loop.subprocess_exec(
+                self._protocol_factory, *argv)
             pid = transport.get_pid()
             debug("child subprocess_exec successful, PID = %s", pid)
 
+            self._transport = cast(asyncio.WriteTransport,
+                                   transport.get_pipe_transport(0))  # stdin
+            self._protocol = protocol
+
+        # await until child process have been launched and the transport has
+        # been established
         self._loop.run_until_complete(create_subprocess())
 
+    @override
     def _start_reading(self) -> None:
         pass
 
+    @override
     def _send(self, data: bytes) -> None:
+        assert self._transport, "connection has not been established."
         self._transport.write(data)
 
+    @override
     def _run(self) -> None:
-        while self._queued_data:
-            data = self._queued_data.popleft()
+        # process the early messages that arrived as soon as the transport
+        # channels are open and on_data is fully ready to receive messages.
+        while self._data_buffer:
+            data: bytes = self._data_buffer.popleft()
             if self._on_data is not None:
                 self._on_data(data)
+
         self._loop.run_forever()
 
+    @override
     def _stop(self) -> None:
         self._loop.stop()
 
+    @override
     def _close(self) -> None:
+        # TODO close all the transports
         if self._raw_transport is not None:
-            self._raw_transport.close()
+            self._raw_transport.close()  # type: ignore[unreachable]
         self._loop.close()
         if self._child_watcher is not None:
             self._child_watcher.close()
             self._child_watcher = None
 
+    @override
     def _threadsafe_call(self, fn: Callable[[], Any]) -> None:
         self._loop.call_soon_threadsafe(fn)
 
+    @override
     def _setup_signals(self, signals: List[Signals]) -> None:
         if os.name == 'nt':
             # add_signal_handler is not supported in win32
@@ -178,6 +253,7 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
         for signum in self._signals:
             self._loop.add_signal_handler(signum, self._on_signal, signum)
 
+    @override
     def _teardown_signals(self) -> None:
         for signum in self._signals:
             self._loop.remove_signal_handler(signum)

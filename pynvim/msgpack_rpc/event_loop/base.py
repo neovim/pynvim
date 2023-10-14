@@ -4,7 +4,7 @@ import signal
 import sys
 import threading
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Optional, Type, Union
+from typing import Any, Callable, List, Optional, Union
 
 if sys.version_info < (3, 8):
     from typing_extensions import Literal
@@ -34,12 +34,21 @@ TTransportType = Union[
 
 
 class BaseEventLoop(ABC):
-
     """Abstract base class for all event loops.
 
     Event loops act as the bottom layer for Nvim sessions created by this
     library. They hide system/transport details behind a simple interface for
     reading/writing bytes to the connected Nvim instance.
+
+    A lifecycle of event loop is as follows: (1. -> [2. -> 3.]* -> 4.)
+      1. initialization (__init__): connection to Nvim is established.
+      2. run(data_cb): run the event loop (blocks until the loop stops).
+         Requests are sent to the remote neovim by calling send(), and
+         responses (messages) from the remote neovim will be passed to the
+         given `data_cb` callback function while the event loop is running.
+         Note that run() may be called multiple times.
+      3. stop(): stop the event loop.
+      4. close(): close the event loop, destroying all the internal resources.
 
     This class exposes public methods for interacting with the underlying
     event loop and delegates implementation-specific work to the following
@@ -54,15 +63,17 @@ class BaseEventLoop(ABC):
       embedded Nvim that has its stdin/stdout connected to the event loop.
     - `_start_reading()`: Called after any of _connect_* methods. Can be used
       to perform any post-connection setup or validation.
-    - `_send(data)`: Send `data`(byte array) to Nvim. The data is only
+    - `_send(data)`: Send `data` (byte array) to Nvim (usually RPC request).
     - `_run()`: Runs the event loop until stopped or the connection is closed.
-      calling the following methods when some event happens:
-      actually sent when the event loop is running.
-      - `_on_data(data)`: When Nvim sends some data.
+      The following methods can be called upon some events by the event loop:
+      - `_on_data(data)`: When Nvim sends some data (usually RPC response).
       - `_on_signal(signum)`: When a signal is received.
-      - `_on_error(message)`: When a non-recoverable error occurs(eg:
-        connection lost)
-    - `_stop()`: Stop the event loop
+      - `_on_error(exc)`: When a non-recoverable error occurs (e.g:
+        connection lost, or any other OSError)
+      Note that these _on_{data,signal,error} methods are not 'final', may be
+      changed around an execution of run(). The subclasses are expected to
+      handle any early messages arriving while _on_data is not yet set.
+    - `_stop()`: Stop the event loop.
     - `_interrupt(data)`: Like `stop()`, but may be called from other threads
       this.
     - `_setup_signals(signals)`: Add implementation-specific listeners for
@@ -77,43 +88,26 @@ class BaseEventLoop(ABC):
         configuration, like this:
 
         >>> BaseEventLoop('tcp', '127.0.0.1', 7450)
-        Traceback (most recent call last):
-            ...
-        AttributeError: 'BaseEventLoop' object has no attribute '_init'
         >>> BaseEventLoop('socket', '/tmp/nvim-socket')
-        Traceback (most recent call last):
-            ...
-        AttributeError: 'BaseEventLoop' object has no attribute '_init'
         >>> BaseEventLoop('stdio')
-        Traceback (most recent call last):
-            ...
-        AttributeError: 'BaseEventLoop' object has no attribute '_init'
-        >>> BaseEventLoop('child',
-                ['nvim', '--embed', '--headless', '-u', 'NONE'])
-        Traceback (most recent call last):
-            ...
-        AttributeError: 'BaseEventLoop' object has no attribute '_init'
+        >>> BaseEventLoop('child', ['nvim', '--embed', '--headless', '-u', 'NONE'])
 
-        This calls the implementation-specific initialization
-        `_init`, one of the `_connect_*` methods(based on `transport_type`)
-        and `_start_reading()`
+        Implementation-specific initialization should be made in the __init__
+        constructor of the subclass, which must call the constructor of the
+        super class (BaseEventLoop), in which one of the `_connect_*` methods
+        (based on `transport_type`) and then `_start_reading()`.
         """
         self._transport_type = transport_type
         self._signames = dict((k, v) for v, k in signal.__dict__.items()
                               if v.startswith('SIG'))
         self._on_data: Optional[Callable[[bytes], None]] = None
         self._error: Optional[BaseException] = None
-        self._init()
         try:
             getattr(self, '_connect_{}'.format(transport_type))(*args, **kwargs)
         except Exception as e:
             self.close()
             raise e
         self._start_reading()
-
-    @abstractmethod
-    def _init(self) -> None:
-        raise NotImplementedError()
 
     @abstractmethod
     def _start_reading(self) -> None:
@@ -172,17 +166,23 @@ class BaseEventLoop(ABC):
         """
         self._threadsafe_call(fn)
 
-    def run(self, data_cb):
-        """Run the event loop."""
+    @abstractmethod
+    def _threadsafe_call(self, fn: Callable[[], Any]) -> None:
+        raise NotImplementedError()
+
+    def run(self, data_cb: Callable[[bytes], None]) -> None:
+        """Run the event loop, and receives response messages to a callback."""
         if self._error:
             err = self._error
             if isinstance(self._error, KeyboardInterrupt):
-                # KeyboardInterrupt is not destructive(it may be used in
+                # KeyboardInterrupt is not destructive (it may be used in
                 # the REPL).
                 # After throwing KeyboardInterrupt, cleanup the _error field
                 # so the loop may be started again
                 self._error = None
             raise err
+
+        # data_cb: e.g., MsgpackStream._on_data
         self._on_data = data_cb
         if threading.current_thread() == main_thread:
             self._setup_signals([signal.SIGINT, signal.SIGTERM])
@@ -193,6 +193,10 @@ class BaseEventLoop(ABC):
             self._teardown_signals()
             signal.signal(signal.SIGINT, default_int_handler)
         self._on_data = None
+
+    @abstractmethod
+    def _run(self) -> None:
+        raise NotImplementedError()
 
     def stop(self) -> None:
         """Stop the event loop."""
@@ -213,23 +217,32 @@ class BaseEventLoop(ABC):
         raise NotImplementedError()
 
     def _on_signal(self, signum: signal.Signals) -> None:
-        msg = 'Received {}'.format(self._signames[signum])
+        # pylint: disable-next=consider-using-f-string
+        msg = 'Received signal {}'.format(self._signames[signum])
         debug(msg)
+
         if signum == signal.SIGINT and self._transport_type == 'stdio':
             # When the transport is stdio, we are probably running as a Nvim
             # child process. In that case, we don't want to be killed by
             # ctrl+C
             return
-        cls: Type[BaseException] = Exception
+
         if signum == signal.SIGINT:
-            cls = KeyboardInterrupt
-        self._error = cls(msg)
+            self._error = KeyboardInterrupt()
+        else:
+            self._error = Exception(msg)
         self.stop()
 
-    def _on_error(self, error: str) -> None:
-        debug(error)
-        self._error = OSError(error)
+    def _on_error(self, exc: Exception) -> None:
+        debug(str(exc))
+        self._error = exc
         self.stop()
 
     def _on_interrupt(self) -> None:
         self.stop()
+
+    def _setup_signals(self, signals: List[signal.Signals]) -> None:
+        pass  # no-op by default
+
+    def _teardown_signals(self) -> None:
+        pass  # no-op by default
