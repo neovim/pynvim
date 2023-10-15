@@ -1,4 +1,6 @@
 """Main Nvim interface."""
+
+import asyncio
 import os
 import sys
 import threading
@@ -140,7 +142,16 @@ class Nvim(object):
             self._err_cb: Callable[[str], Any] = lambda _: None
         else:
             self._err_cb = err_cb
-        self.loop = self._session.loop._loop
+
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        """Get the event loop (exposed to rplugins)."""  # noqa
+
+        # see #294: for python 3.4+, the only available and guaranteed
+        # implementation of msgpack_rpc BaseEventLoop is the AsyncioEventLoop.
+        # The underlying asyncio event loop is exposed to rplugins.
+        # pylint: disable=protected-access
+        return self._session.loop._loop  # type: ignore
 
     def _from_nvim(self, obj: Any, decode: Optional[TDecodeMode] = None) -> Any:
         if decode is None:

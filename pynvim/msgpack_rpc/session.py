@@ -11,6 +11,7 @@ import greenlet
 
 from pynvim.compat import check_async
 from pynvim.msgpack_rpc.async_session import AsyncSession
+from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop
 
 if sys.version_info < (3, 8):
     from typing_extensions import Literal
@@ -42,7 +43,7 @@ class Notification(NamedTuple):
 Message = Union[Request, Notification]
 
 
-class Session(object):
+class Session:
 
     """Msgpack-rpc session layer that uses coroutines for a synchronous API.
 
@@ -59,10 +60,14 @@ class Session(object):
         self._pending_messages: Deque[Message] = deque()
         self._is_running = False
         self._setup_exception: Optional[Exception] = None
-        self.loop = async_session.loop
         self._loop_thread: Optional[threading.Thread] = None
         self.error_wrapper: Callable[[Tuple[int, str]], Exception] = \
             lambda e: Exception(e[1])
+
+    @property
+    def loop(self) -> BaseEventLoop:
+        """Get the underlying msgpack EventLoop."""
+        return self._async_session.loop
 
     def threadsafe_call(
         self, fn: Callable[..., Any], *args: Any, **kwargs: Any
