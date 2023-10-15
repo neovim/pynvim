@@ -60,12 +60,17 @@ class AsyncioEventLoop(BaseEventLoop, asyncio.Protocol,
 
     def pipe_connection_lost(self, fd, exc):
         """Used to signal `asyncio.SubprocessProtocol` of a lost connection."""
+        debug("pipe_connection_lost: fd = %s, exc = %s", fd, exc)
+        if os.name == 'nt' and fd == 2:  # stderr
+            # On windows, ignore piped stderr being closed immediately (#505)
+            return
         self._on_error(exc.args[0] if exc else 'EOF')
 
     def pipe_data_received(self, fd, data):
         """Used to signal `asyncio.SubprocessProtocol` of incoming data."""
         if fd == 2:  # stderr fd number
-            self._on_stderr(data)
+            # Ignore stderr message, log only for debugging
+            debug("stderr: %s", str(data))
         elif self._on_data:
             self._on_data(data)
         else:
