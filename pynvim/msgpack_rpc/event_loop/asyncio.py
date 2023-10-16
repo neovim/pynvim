@@ -117,9 +117,10 @@ class AsyncioEventLoop(BaseEventLoop):
         )
         self._protocol = None
 
-        # The communication channel (endpoint) created by _connect_*() method.
+        # The communication channel (endpoint) created by _connect_*() methods,
+        # where we write request messages to be sent to neovim
         self._transport = None
-        self._raw_transport = None
+        self._to_close: List[asyncio.BaseTransport] = []
         self._child_watcher = None
 
         super().__init__(transport_type, *args, **kwargs)
@@ -161,7 +162,8 @@ class AsyncioEventLoop(BaseEventLoop):
             transport, protocol = await self._loop.connect_read_pipe(
                 self._protocol_factory, pipe)
             debug("native stdin connection successful")
-            del transport, protocol
+            self._to_close.append(transport)
+            del protocol
         self._loop.run_until_complete(connect_stdin())
 
         # Make sure subprocesses don't clobber stdout,
@@ -200,6 +202,16 @@ class AsyncioEventLoop(BaseEventLoop):
                                    transport.get_pipe_transport(0))  # stdin
             self._protocol = protocol
 
+            # proactor transport implementations do not close the pipes
+            # automatically, so make sure they are closed upon shutdown
+            def _close_later(transport):
+                if transport is not None:
+                    self._to_close.append(transport)
+
+            _close_later(transport.get_pipe_transport(1))
+            _close_later(transport.get_pipe_transport(2))
+            _close_later(transport)
+
         # await until child process have been launched and the transport has
         # been established
         self._loop.run_until_complete(create_subprocess())
@@ -230,10 +242,28 @@ class AsyncioEventLoop(BaseEventLoop):
 
     @override
     def _close(self) -> None:
-        # TODO close all the transports
-        if self._raw_transport is not None:
-            self._raw_transport.close()  # type: ignore[unreachable]
+        def _close_transport(transport):
+            transport.close()
+
+            # Windows: for ProactorBasePipeTransport, close() doesn't take in
+            # effect immediately (closing happens asynchronously inside the
+            # event loop), need to wait a bit for completing graceful shutdown.
+            if os.name == 'nt' and hasattr(transport, '_sock'):
+                async def wait_until_closed():
+                    # pylint: disable-next=protected-access
+                    while transport._sock is not None:
+                        await asyncio.sleep(0.01)
+                self._loop.run_until_complete(wait_until_closed())
+
+        if self._transport:
+            _close_transport(self._transport)
+            self._transport = None
+        for transport in self._to_close:
+            _close_transport(transport)
+        self._to_close[:] = []
+
         self._loop.close()
+
         if self._child_watcher is not None:
             self._child_watcher.close()
             self._child_watcher = None
