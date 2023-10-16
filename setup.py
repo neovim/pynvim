@@ -20,6 +20,7 @@ setup_requires = [
 
 tests_require = [
     'pytest',
+    'pytest_timeout',
 ]
 
 extras_require = {
