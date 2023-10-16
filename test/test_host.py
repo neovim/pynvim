@@ -11,15 +11,19 @@ __PATH__ = os.path.abspath(os.path.dirname(__file__))
 
 def test_host_imports(vim):
     h = ScriptHost(vim)
-    assert h.module.__dict__['vim']
-    assert h.module.__dict__['vim'] == h.legacy_vim
-    assert h.module.__dict__['sys']
+    try:
+        assert h.module.__dict__['vim']
+        assert h.module.__dict__['vim'] == h.legacy_vim
+        assert h.module.__dict__['sys']
+    finally:
+        h.teardown()
 
 
 def test_host_import_rplugin_modules(vim):
     # Test whether a Host can load and import rplugins (#461).
     # See also $VIMRUNTIME/autoload/provider/pythonx.vim.
     h = Host(vim)
+
     plugins: Sequence[str] = [  # plugin paths like real rplugins
         os.path.join(__PATH__, "./fixtures/simple_plugin/rplugin/python3/simple_nvim.py"),
         os.path.join(__PATH__, "./fixtures/module_plugin/rplugin/python3/mymodule/"),
@@ -56,7 +60,10 @@ def test_host_async_error(vim):
 
 def test_legacy_vim_eval(vim):
     h = ScriptHost(vim)
-    assert h.legacy_vim.eval('1') == '1'
-    assert h.legacy_vim.eval('v:null') is None
-    assert h.legacy_vim.eval('v:true') is True
-    assert h.legacy_vim.eval('v:false') is False
+    try:
+        assert h.legacy_vim.eval('1') == '1'
+        assert h.legacy_vim.eval('v:null') is None
+        assert h.legacy_vim.eval('v:true') is True
+        assert h.legacy_vim.eval('v:false') is False
+    finally:
+        h.teardown()

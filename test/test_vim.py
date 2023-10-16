@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import tempfile
 from typing import Any
@@ -31,7 +30,10 @@ def test_command(vim: Nvim) -> None:
     assert os.path.isfile(fname)
     with open(fname) as f:
         assert f.read() == 'testing\npython\napi\n'
-    os.unlink(fname)
+    try:
+        os.unlink(fname)
+    except OSError:
+        pass  # on windows, this can be flaky; ignore it
 
 
 def test_command_output(vim: Nvim) -> None:

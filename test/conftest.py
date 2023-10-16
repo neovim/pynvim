@@ -1,5 +1,9 @@
+"""Configs for pytest."""
+
+import gc
 import json
 import os
+from typing import Generator
 
 import pytest
 
@@ -9,7 +13,10 @@ pynvim.setup_logging("test")
 
 
 @pytest.fixture
-def vim() -> pynvim.Nvim:
+def vim() -> Generator[pynvim.Nvim, None, None]:
+    """Create an embedded, sub-process Nvim fixture instance."""
+    editor: pynvim.Nvim
+
     child_argv = os.environ.get('NVIM_CHILD_ARGV')
     listen_address = os.environ.get('NVIM_LISTEN_ADDRESS')
     if child_argv is None and listen_address is None:
@@ -28,4 +35,13 @@ def vim() -> pynvim.Nvim:
         assert listen_address is not None and listen_address != ''
         editor = pynvim.attach('socket', path=listen_address)
 
-    return editor
+    try:
+        yield editor
+
+    finally:
+        # Ensure all internal resources (pipes, transports, etc.) are always
+        # closed properly. Otherwise, during GC finalizers (__del__) will raise
+        # "Event loop is closed" error.
+        editor.close()
+
+        gc.collect()  # force-run GC, to early-detect potential leakages
