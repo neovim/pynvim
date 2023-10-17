@@ -1,11 +1,12 @@
 import os
 import sys
 import tempfile
+import textwrap
 from pathlib import Path
 
 import pytest
 
-from pynvim.api import Nvim
+from pynvim.api import Nvim, NvimError
 
 
 def source(vim: Nvim, code: str) -> None:
@@ -39,6 +40,10 @@ def test_command(vim: Nvim) -> None:
 
 def test_command_output(vim: Nvim) -> None:
     assert vim.command_output('echo "test"') == 'test'
+
+    # can capture multi-line outputs
+    vim.command("let g:multiline_string = join(['foo', 'bar'], nr2char(10))")
+    assert vim.command_output('echo g:multiline_string') == "foo\nbar"
 
 
 def test_command_error(vim: Nvim) -> None:
@@ -211,6 +216,35 @@ def test_python3(vim: Nvim) -> None:
         'python3 import sys; print(sys.executable)')
 
     assert 1 == vim.eval('has("python3")')
+
+
+def test_python3_ex_eval(vim: Nvim) -> None:
+    assert '42' == vim.command_output('python3 =42')
+    assert '42' == vim.command_output('python3 =   42     ')
+    assert '42' == vim.command_output('py3=    42     ')
+    assert '42' == vim.command_output('py=42')
+
+    # On syntax error or evaluation error, stacktrace information is printed
+    # Note: the pynvim API command_output() throws an exception on error
+    # because the Ex command :python will throw (wrapped with provider#python3#Call)
+    with pytest.raises(NvimError) as excinfo:
+        vim.command('py3= 1/0')
+    assert textwrap.dedent('''\
+        Traceback (most recent call last):
+          File "<string>", line 1, in <module>
+        ZeroDivisionError: division by zero
+        ''').strip() in excinfo.value.args[0]
+
+    vim.command('python3 def raise_error(): raise RuntimeError("oops")')
+    with pytest.raises(NvimError) as excinfo:
+        vim.command_output('python3 =print("nooo", raise_error())')
+    assert textwrap.dedent('''\
+        Traceback (most recent call last):
+          File "<string>", line 1, in <module>
+          File "<string>", line 1, in raise_error
+        RuntimeError: oops
+        ''').strip() in excinfo.value.args[0]
+    assert 'nooo' not in vim.command_output(':messages')
 
 
 def test_python_cwd(vim: Nvim, tmp_path: Path) -> None:
