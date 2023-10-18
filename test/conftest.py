@@ -3,6 +3,7 @@
 import gc
 import json
 import os
+import sys
 from typing import Generator
 
 import pytest
@@ -26,7 +27,8 @@ def vim() -> Generator[pynvim.Nvim, None, None]:
             "-n",  # no swap file
             "--embed",
             "--headless",
-            "-c", "let g:python3_host_prog='python3'",  # workaround neovim/neovim#25316
+            # Always use the same exact python executable regardless of $PATH
+            "--cmd", f"let g:python3_host_prog='{sys.executable}'",
         ])
 
     if child_argv is not None:
