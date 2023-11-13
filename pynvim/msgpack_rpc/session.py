@@ -243,12 +243,12 @@ class Session(object):
                       + 'sending %s as response', gr, rv)
                 response.send(rv)
             except ErrorResponse as err:
-                warn("error response from request '%s %s': %s", name,
-                     args, format_exc())
+                debug("error response from request '%s %s': %s",
+                      name, args, format_exc())
                 response.send(err.args[0], error=True)
             except Exception as err:
-                warn("error caught while processing request '%s %s': %s", name,
-                     args, format_exc())
+                warn("error caught while processing request '%s %s': %s",
+                     name, args, format_exc())
                 response.send(repr(err) + "\n" + format_exc(5), error=True)
             debug('greenlet %s is now dying...', gr)
 

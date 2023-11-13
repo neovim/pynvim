@@ -81,10 +81,19 @@ class ScriptHost(object):
     def python_execute(self, script, range_start, range_stop):
         """Handle the `python` ex command."""
         self._set_current_range(range_start, range_stop)
+
+        if script.startswith('='):
+            # Handle ":py= ...". Evaluate as an expression and print.
+            # (note: a valid python statement can't start with "=")
+            expr = script[1:]
+            print(self.python_eval(expr))
+            return
+
         try:
+            # pylint: disable-next=exec-used
             exec(script, self.module.__dict__)
-        except Exception:
-            raise ErrorResponse(format_exc_skip(1))
+        except Exception as exc:
+            raise ErrorResponse(format_exc_skip(1)) from exc
 
     @rpc_export('python_execute_file', sync=True)
     def python_execute_file(self, file_path, range_start, range_stop):
@@ -93,9 +102,10 @@ class ScriptHost(object):
         with open(file_path, 'rb') as f:
             script = compile(f.read(), file_path, 'exec')
             try:
+                # pylint: disable-next=exec-used
                 exec(script, self.module.__dict__)
-            except Exception:
-                raise ErrorResponse(format_exc_skip(1))
+            except Exception as exc:
+                raise ErrorResponse(format_exc_skip(1)) from exc
 
     @rpc_export('python_do_range', sync=True)
     def python_do_range(self, start, stop, code):
@@ -154,7 +164,11 @@ class ScriptHost(object):
     @rpc_export('python_eval', sync=True)
     def python_eval(self, expr):
         """Handle the `pyeval` vim function."""
-        return eval(expr, self.module.__dict__)
+        try:
+            # pylint: disable-next=eval-used
+            return eval(expr, self.module.__dict__)
+        except Exception as exc:
+            raise ErrorResponse(format_exc_skip(1)) from exc
 
     @rpc_export('python_chdir', sync=False)
     def python_chdir(self, cwd):
