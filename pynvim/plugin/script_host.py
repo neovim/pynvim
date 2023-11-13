@@ -83,7 +83,7 @@ class ScriptHost(object):
         self._set_current_range(range_start, range_stop)
 
         if script[0] == '=':
-            # if starts with '=', evaluated as an expression and printed.
+            # Handle ":py= ...". Evaluate as an expression and print.
             # (note: a valid python statement can't start with "=")
             expr = script[1:]
             print(self.python_eval(expr))
