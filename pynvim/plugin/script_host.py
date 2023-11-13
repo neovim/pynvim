@@ -82,7 +82,7 @@ class ScriptHost(object):
         """Handle the `python` ex command."""
         self._set_current_range(range_start, range_stop)
 
-        if script[0] == '=':
+        if script.startswith('='):
             # Handle ":py= ...". Evaluate as an expression and print.
             # (note: a valid python statement can't start with "=")
             expr = script[1:]
