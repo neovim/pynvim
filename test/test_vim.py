@@ -1,6 +1,7 @@
 import os
+import sys
 import tempfile
-from typing import Any
+from pathlib import Path
 
 import pytest
 
@@ -199,15 +200,25 @@ def test_hash(vim: Nvim) -> None:
     assert d[vim.current.buffer] == 'beta'
 
 
-def test_python3(vim: Nvim, tmpdir: Any) -> None:
+def test_python3(vim: Nvim) -> None:
+    """Tests whether python3 host can load."""
     python3_prog = vim.command_output('echom provider#python3#Prog()')
     python3_err = vim.command_output('echom provider#python3#Error()')
     assert python3_prog != "", python3_err
+    assert python3_prog == sys.executable
 
+    assert sys.executable == vim.command_output(
+        'python3 import sys; print(sys.executable)')
+
+    assert 1 == vim.eval('has("python3")')
+
+
+def test_python_cwd(vim: Nvim, tmp_path: Path) -> None:
     vim.command('python3 import os')
     cwd_before = vim.command_output('python3 print(os.getcwd())')
 
-    vim.command('cd {}'.format(tmpdir.strpath))
+    # handle DirChanged #296
+    vim.command('cd {}'.format(str(tmp_path)))
     cwd_vim = vim.command_output('pwd')
     cwd_python = vim.command_output('python3 print(os.getcwd())')
     assert cwd_python == cwd_vim
