@@ -1,4 +1,9 @@
-#!/bin/sh -e
+#!/bin/bash
+
+set -e
 
 cd pynvim
-find -name '*.py' | xargs -i{} ../scripts/logging_statement_modifier.py --restore {}
+for f in $(find . -name '*.py'); do
+    echo "Processing: $f"
+    ../scripts/logging_statement_modifier.py --restore "$f"
+done

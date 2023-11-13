@@ -66,7 +66,7 @@ PASS_LINE_CONTENTS = 'pass # replaces next logging statement\n'
 # include the whitespace, the logging method called, and the first argument if
 # possible
 RE_LOGGING_START = re.compile(r'^(\s+)' + STR_RE_LOGGING_CALL)
-RE_LOGGING_START_IN_COMMENT = re.compile(r'^(\s+)#' + STR_RE_LOGGING_CALL)
+RE_LOGGING_START_IN_COMMENT = re.compile(r'^(\s+)# ' + STR_RE_LOGGING_CALL)
 
 def main(argv=sys.argv[1:]):
     """Parses the command line comments."""
@@ -128,11 +128,11 @@ def comment_lines(lines):
     ret = []
     for line in lines:
         ws_prefix, rest, ignore = RE_LINE_SPLITTER_COMMENT.match(line).groups()
-        ret.append(ws_prefix + '#' + rest)
+        ret.append(ws_prefix + '# ' + rest)
     return ''.join(ret)
 
 # matches two main groups: 1) leading whitespace and 2) all following text
-RE_LINE_SPLITTER_UNCOMMENT = re.compile(r'^(\s*)#((.|\n)*)$')
+RE_LINE_SPLITTER_UNCOMMENT = re.compile(r'^(\s*)# ((.|\n)*)$')
 def uncomment_lines(lines):
     """Uncomment the given list of lines and return them.  The first hash mark
     following any amount of whitespace will be removed on each line."""
