@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """\
 Logging Statement Modifier - replace logging calls with pass (or vice versa)
