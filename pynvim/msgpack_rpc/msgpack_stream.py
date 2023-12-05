@@ -4,20 +4,20 @@ import logging
 from msgpack import Packer, Unpacker
 
 from pynvim.compat import unicode_errors_default
+from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)
 
 
-class MsgpackStream(object):
-
+class MsgpackStream:
     """Two-way msgpack stream that wraps a event loop byte stream.
 
     This wraps the event loop interface for reading/writing bytes and
     exposes an interface for reading/writing msgpack documents.
     """
 
-    def __init__(self, event_loop):
+    def __init__(self, event_loop: BaseEventLoop) -> None:
         """Wrap `event_loop` on a msgpack-aware interface."""
         self.loop = event_loop
         self._packer = Packer(unicode_errors=unicode_errors_default)
@@ -30,7 +30,7 @@ class MsgpackStream(object):
 
     def send(self, msg):
         """Queue `msg` for sending to Nvim."""
-        debug('sent %s', msg)
+        debug('sending %s', msg)
         self.loop.send(self._packer.pack(msg))
 
     def run(self, message_cb):
@@ -51,14 +51,15 @@ class MsgpackStream(object):
         """Close the event loop."""
         self.loop.close()
 
-    def _on_data(self, data):
+    def _on_data(self, data: bytes) -> None:
         self._unpacker.feed(data)
         while True:
             try:
                 debug('waiting for message...')
                 msg = next(self._unpacker)
                 debug('received message: %s', msg)
-                self._message_cb(msg)
+                assert self._message_cb is not None
+                self._message_cb(msg)  # type: ignore[unreachable]
             except StopIteration:
                 debug('unpacker needs more data...')
                 break

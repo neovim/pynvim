@@ -23,7 +23,6 @@ tests_require = [
 ]
 
 extras_require = {
-    'pyuv': ['pyuv>=1.0.0'],
     'test': tests_require,
 }
 
@@ -31,8 +30,8 @@ if platform.python_implementation() != 'PyPy':
     # pypy already includes an implementation of the greenlet module
     install_requires.append('greenlet>=3.0')
 
-if sys.version_info < (3, 8):
-    install_requires.append('typing-extensions')
+if sys.version_info < (3, 12):
+    install_requires.append('typing-extensions>=4.5')
 
 
 # __version__: see pynvim/_version.py

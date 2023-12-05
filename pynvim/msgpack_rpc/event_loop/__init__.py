@@ -1,6 +1,6 @@
 """Event loop abstraction subpackage.
 
-Tries to use pyuv as a backend, falling back to the asyncio implementation.
+We use python's built-in asyncio as the backend.
 """
 
 from pynvim.msgpack_rpc.event_loop.asyncio import AsyncioEventLoop as EventLoop
