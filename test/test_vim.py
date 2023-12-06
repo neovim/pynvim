@@ -1,3 +1,5 @@
+"""Tests interaction with neovim via Nvim API (with child process)."""
+
 import os
 import sys
 import tempfile
