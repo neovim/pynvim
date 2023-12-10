@@ -1,8 +1,12 @@
 """API for working with Nvim tabpages."""
+
+from __future__ import annotations
+
 from typing import Any, TYPE_CHECKING, Tuple
 
 from pynvim.api.common import Remote, RemoteSequence
 from pynvim.api.window import Window
+
 if TYPE_CHECKING:
     from pynvim.api.nvim import Nvim
 
@@ -15,7 +19,7 @@ class Tabpage(Remote):
 
     _api_prefix = "nvim_tabpage_"
 
-    def __init__(self, session: 'Nvim', code_data: Tuple[int, Any]):
+    def __init__(self, session: Nvim, code_data: Tuple[int, Any]):
         """Initialize from session and code_data immutable object.
 
         The `code_data` contains serialization information required for

@@ -1,5 +1,7 @@
 """Event loop implementation that uses the `asyncio` standard module."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
@@ -91,7 +93,7 @@ class AsyncioEventLoop(BaseEventLoop):
     _signals: List[Signals]
     _data_buffer: Deque[bytes]
     if os.name != 'nt':
-        _child_watcher: Optional['asyncio.AbstractChildWatcher']
+        _child_watcher: Optional[asyncio.AbstractChildWatcher]
 
     def __init__(self,
                  transport_type: TTransportType,

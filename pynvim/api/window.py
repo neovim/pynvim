@@ -1,4 +1,7 @@
 """API for working with Nvim windows."""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Tuple, cast
 
 from pynvim.api.buffer import Buffer
@@ -63,7 +66,7 @@ class Window(Remote):
         return self.request('nvim_win_get_position')[1]
 
     @property
-    def tabpage(self) -> 'Tabpage':
+    def tabpage(self) -> Tabpage:
         """Get the `Tabpage` that contains the window."""
         return self.request('nvim_win_get_tabpage')
 
