@@ -17,6 +17,8 @@ sphinx:
   fail_on_warning: true
 
 python:
-   install:
-   - method: pip
-     path: .
+  install:
+  - method: pip
+    path: .
+    extra_requirements:
+      - sphinx_rtd_theme
