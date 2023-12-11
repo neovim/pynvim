@@ -242,6 +242,11 @@ class AsyncioEventLoop(BaseEventLoop):
 
     @override
     def _close(self) -> None:
+
+        if self._child_watcher is not None:
+            self._child_watcher.close()
+            self._child_watcher = None
+
         def _close_transport(transport):
             transport.close()
 
@@ -263,10 +268,6 @@ class AsyncioEventLoop(BaseEventLoop):
         self._to_close[:] = []
 
         self._loop.close()
-
-        if self._child_watcher is not None:
-            self._child_watcher.close()
-            self._child_watcher = None
 
     @override
     def _threadsafe_call(self, fn: Callable[[], Any]) -> None:
