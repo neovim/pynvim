@@ -23,8 +23,14 @@ tests_require = [
     'pytest_timeout',
 ]
 
+docs_require = [
+    'sphinx',
+    'sphinx-rtd-theme',
+]
+
 extras_require = {
     'test': tests_require,
+    'docs': docs_require,
 }
 
 if platform.python_implementation() != 'PyPy':
