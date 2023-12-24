@@ -3,14 +3,14 @@
 import inspect
 import logging
 import sys
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
-
-from pynvim.compat import unicode_errors_default
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, TypeVar, Union
 
 if sys.version_info < (3, 8):
-    from typing_extensions import Literal
+    from typing_extensions import Literal, TypedDict
 else:
-    from typing import Literal
+    from typing import Literal, TypedDict
+
+from pynvim.compat import unicode_errors_default
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)
@@ -19,6 +19,16 @@ __all__ = ('plugin', 'rpc_export', 'command', 'autocmd', 'function',
 
 T = TypeVar('T')
 F = TypeVar('F', bound=Callable[..., Any])
+
+
+if TYPE_CHECKING:
+    class RpcSpec(TypedDict):
+        type: Literal['command', 'autocmd', 'function']
+        name: str
+        sync: Union[bool, Literal['urgent']]
+        opts: Any
+else:
+    RpcSpec = dict
 
 
 def plugin(cls: T) -> T:

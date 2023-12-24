@@ -24,10 +24,6 @@ from pynvim.util import format_exc_skip
 if TYPE_CHECKING:
     from pynvim.msgpack_rpc import Session
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
 
 __all__ = ['Nvim']
 
@@ -281,7 +277,7 @@ class Nvim:
         """
         self.close()
 
-    def with_decode(self, decode: Literal[True] = True) -> Nvim:
+    def with_decode(self, decode: TDecodeMode = True) -> Nvim:
         """Initialize a new Nvim instance."""
         return Nvim(self._session, self.channel_id,
                     self.metadata, self.types, decode, self._err_cb)

@@ -3,13 +3,14 @@
 import os
 from typing import Sequence
 
+from pynvim.api.nvim import Nvim
 from pynvim.plugin.host import Host, host_method_spec
 from pynvim.plugin.script_host import ScriptHost
 
 __PATH__ = os.path.abspath(os.path.dirname(__file__))
 
 
-def test_host_imports(vim):
+def test_host_imports(vim: Nvim):
     h = ScriptHost(vim)
     try:
         assert h.module.__dict__['vim']
@@ -19,7 +20,7 @@ def test_host_imports(vim):
         h.teardown()
 
 
-def test_host_import_rplugin_modules(vim):
+def test_host_import_rplugin_modules(vim: Nvim):
     # Test whether a Host can load and import rplugins (#461).
     # See also $VIMRUNTIME/autoload/provider/pythonx.vim.
     h = Host(vim)
@@ -47,18 +48,20 @@ def test_host_clientinfo(vim):
 
 
 # Smoke test for Host._on_error_event(). #425
-def test_host_async_error(vim):
+def test_host_async_error(vim: Nvim):
     h = Host(vim)
     h._load([])
     # Invoke a bogus Ex command via notify (async).
     vim.command("lolwut", async_=True)
     event = vim.next_message()
     assert event[1] == 'nvim_error_event'
-    assert 'rplugin-host: Async request caused an error:\nboom\n' \
-           in h._on_error_event(None, 'boom')
+
+    h._on_error_event(None, 'boom')
+    msg = vim.command_output('messages')
+    assert 'rplugin-host: Async request caused an error:\nboom' in msg
 
 
-def test_legacy_vim_eval(vim):
+def test_legacy_vim_eval(vim: Nvim):
     h = ScriptHost(vim)
     try:
         assert h.legacy_vim.eval('1') == '1'
