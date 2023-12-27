@@ -194,44 +194,72 @@ class Host:
     def _load(self, plugins: Sequence[str]) -> None:
         """Load the remote plugins and register handlers defined in the plugins.
 
-        Args:
-            plugins: List of plugin paths to rplugin python modules
-                registered by remote#host#RegisterPlugin('python3', ...)
-                (see the generated ~/.local/share/nvim/rplugin.vim manifest)
+        Parameters
+        ----------
+        plugins: List of plugin paths to rplugin python modules registered by
+            `remote#host#RegisterPlugin('python3', ...)`. Each element should
+            be either:
+            (1) "script_host.py": this is a special plugin for python3
+                rplugin host. See $VIMRUNTIME/autoload/provider/python3.vim
+                ; or
+            (2) (absolute) path to the top-level plugin module directory;
+                e.g., for a top-level python module `mymodule`: it would be
+                `"/path/to/plugin/rplugin/python3/mymodule"`.
+                See the generated ~/.local/share/nvim/rplugin.vim manifest
+                for real examples.
         """
         # self.nvim.err_write("host init _load\n", async_=True)
         has_script = False
         for path in plugins:
             path = os.path.normpath(path)  # normalize path
-            err = None
-            if path in self._loaded:
-                warn('{} is already loaded'.format(path))
-                continue
             try:
-                if path == "script_host.py":
-                    module = script_host
-                    has_script = True
-                else:
-                    directory, name = os.path.split(os.path.splitext(path)[0])
-                    module = _handle_import(directory, name)
-                handlers: List[Handler] = []
-                self._discover_classes(module, handlers, path)
-                self._discover_functions(module, handlers, path, delay=False)
-                if not handlers:
-                    error('{} exports no handlers'.format(path))
+                plugin_spec = self._load_plugin(path=path)
+                if not plugin_spec:
                     continue
-                self._loaded[path] = {'handlers': handlers, 'module': module}
+                if plugin_spec["path"] == "script_host.py":
+                    has_script = True
             except Exception as e:
-                err = ('Encountered {} loading plugin at {}: {}\n{}'
-                       .format(type(e).__name__, path, e, format_exc(5)))
-                error(err)
-                self._load_errors[path] = err
+                errmsg: str = (
+                    'Encountered {} loading plugin at {}: {}\n{}'.format(
+                        type(e).__name__, path, e, format_exc(5)))
+                error(errmsg)
+                self._load_errors[path] = errmsg
 
         kind = ("script-host" if len(plugins) == 1 and has_script
                 else "rplugin-host")
         info = get_client_info(kind, 'host', host_method_spec)
         self.name = info[0]
         self.nvim.api.set_client_info(*info, async_=True)
+
+    def _load_plugin(
+        self, path: str, *,
+        module: Optional[ModuleType] = None,
+    ) -> Union[Dict[str, Any], None]:
+        # Note: path must be normalized.
+        if path in self._loaded:
+            warn('{} is already loaded'.format(path))
+            return None
+
+        if path == "script_host.py":
+            module = script_host
+        elif module is not None:
+            pass  # Note: module is provided only when testing
+        else:
+            directory, module_name = os.path.split(os.path.splitext(path)[0])
+            module = _handle_import(directory, module_name)
+        handlers: List[Handler] = []
+        self._discover_classes(module, handlers, path)
+        self._discover_functions(module, handlers, path, delay=False)
+        if not handlers:
+            error('{} exports no handlers'.format(path))
+            return None
+
+        self._loaded[path] = {
+            'handlers': handlers,
+            'module': module,
+            'path': path,
+        }
+        return self._loaded[path]
 
     def _unload(self) -> None:
         for path, plugin in self._loaded.items():
