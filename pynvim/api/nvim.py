@@ -1,5 +1,7 @@
 """Main Nvim interface."""
 
+from __future__ import annotations
+
 import asyncio
 import os
 import sys
@@ -56,8 +58,7 @@ _G["_pynvim_"..chid] = mod
 """
 
 
-class Nvim(object):
-
+class Nvim:
     """Class that represents a remote Nvim instance.
 
     This class is main entry point to Nvim remote API, it is a wrapper
@@ -81,7 +82,7 @@ class Nvim(object):
     """
 
     @classmethod
-    def from_session(cls, session: 'Session') -> 'Nvim':
+    def from_session(cls, session: Session) -> Nvim:
         """Create a new Nvim instance for a Session instance.
 
         This method must be called to create the first Nvim instance, since it
@@ -102,14 +103,14 @@ class Nvim(object):
         return cls(session, channel_id, metadata, types)
 
     @classmethod
-    def from_nvim(cls, nvim: 'Nvim') -> 'Nvim':
+    def from_nvim(cls, nvim: Nvim) -> Nvim:
         """Create a new Nvim instance from an existing instance."""
         return cls(nvim._session, nvim.channel_id, nvim.metadata,
                    nvim.types, nvim._decode, nvim._err_cb)
 
     def __init__(
         self,
-        session: 'Session',
+        session: Session,
         channel_id: int,
         metadata: Dict[str, Any],
         types: Dict[int, Any],
@@ -168,7 +169,7 @@ class Nvim(object):
             return ExtType(*obj.code_data)
         return obj
 
-    def _get_lua_private(self) -> 'LuaFuncs':
+    def _get_lua_private(self) -> LuaFuncs:
         if not getattr(self._session, "_has_lua", False):
             self.exec_lua(lua_module, self.channel_id)
             self._session._has_lua = True  # type: ignore[attr-defined]
@@ -269,7 +270,7 @@ class Nvim(object):
         """Close the nvim session and release its resources."""
         self._session.close()
 
-    def __enter__(self) -> 'Nvim':
+    def __enter__(self) -> Nvim:
         """Enter nvim session as a context manager."""
         return self
 
@@ -280,7 +281,7 @@ class Nvim(object):
         """
         self.close()
 
-    def with_decode(self, decode: Literal[True] = True) -> 'Nvim':
+    def with_decode(self, decode: Literal[True] = True) -> Nvim:
         """Initialize a new Nvim instance."""
         return Nvim(self._session, self.channel_id,
                     self.metadata, self.types, decode, self._err_cb)
@@ -575,8 +576,7 @@ class Current(object):
         return self._session.request('nvim_set_current_tabpage', tabpage)
 
 
-class Funcs(object):
-
+class Funcs:
     """Helper class for functional vimscript interface."""
 
     def __init__(self, nvim: Nvim):
@@ -586,15 +586,14 @@ class Funcs(object):
         return partial(self._nvim.call, name)
 
 
-class LuaFuncs(object):
-
+class LuaFuncs:
     """Wrapper to allow lua functions to be called like python methods."""
 
     def __init__(self, nvim: Nvim, name: str = ""):
         self._nvim = nvim
         self.name = name
 
-    def __getattr__(self, name: str) -> 'LuaFuncs':
+    def __getattr__(self, name: str) -> LuaFuncs:
         """Return wrapper to named api method."""
         prefix = self.name + "." if self.name else ""
         return LuaFuncs(self._nvim, prefix + name)

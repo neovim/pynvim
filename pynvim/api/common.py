@@ -80,8 +80,7 @@ class Remote(ABC):
         return self._session.request(name, self, *args, **kwargs)
 
 
-class RemoteApi(object):
-
+class RemoteApi:
     """Wrapper to allow api methods to be called like python methods."""
 
     def __init__(self, obj: IRemote, api_prefix: str):
@@ -106,7 +105,7 @@ def transform_keyerror(exc: E) -> Union[E, KeyError]:
     return exc
 
 
-class RemoteMap(object):
+class RemoteMap:
     """Represents a string->object map stored in Nvim.
 
     This is the dict counterpart to the `RemoteSequence` class, but it is used

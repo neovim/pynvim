@@ -1,4 +1,7 @@
 """API for working with a Nvim Buffer."""
+
+from __future__ import annotations
+
 from typing import (Any, Iterator, List, Optional, TYPE_CHECKING, Tuple, Union, cast,
                     overload)
 
@@ -44,7 +47,7 @@ class Buffer(Remote):
     _api_prefix = "nvim_buf_"
     _session: "Nvim"
 
-    def __init__(self, session: "Nvim", code_data: Tuple[int, Any]):
+    def __init__(self, session: Nvim, code_data: Tuple[int, Any]):
         """Initialize from Nvim and code_data immutable object."""
         super().__init__(session, code_data)
 
@@ -150,7 +153,7 @@ class Buffer(Remote):
         """Return (row, col) tuple for a named mark."""
         return cast(Tuple[int, int], tuple(self.request('nvim_buf_get_mark', name)))
 
-    def range(self, start: int, end: int) -> "Range":
+    def range(self, start: int, end: int) -> Range:
         """Return a `Range` object, which represents part of the Buffer."""
         return Range(self, start, end)
 
@@ -245,7 +248,8 @@ class Buffer(Remote):
         return self.handle
 
 
-class Range(object):
+class Range:
+
     def __init__(self, buffer: Buffer, start: int, end: int):
         self._buffer = buffer
         self.start = start - 1
