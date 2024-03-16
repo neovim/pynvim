@@ -209,10 +209,11 @@ def test_hash(vim: Nvim) -> None:
 
 def test_python3(vim: Nvim) -> None:
     """Tests whether python3 host can load."""
-    python3_prog = vim.command_output('echom provider#python3#Prog()')
-    python3_err = vim.command_output('echom provider#python3#Error()')
-    assert python3_prog != "", python3_err
-    assert python3_prog == sys.executable
+    rv = vim.exec_lua('''
+        local prog, err = vim.provider.python.detect_by_module("neovim")
+        return { prog = prog, err = err }''')
+    assert rv['prog'] != "", rv['err']
+    assert rv['prog'] == sys.executable
 
     assert sys.executable == vim.command_output(
         'python3 import sys; print(sys.executable)')
