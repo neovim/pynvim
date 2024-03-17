@@ -44,6 +44,8 @@ def start_host(session: Optional[Session] = None) -> None:
     This function is normally called at program startup and could have been
     defined as a separate executable. It is exposed as a library function for
     testing purposes only.
+
+    See also $VIMRUNTIME/autoload/provider/pythonx.vim for python host startup.
     """
     plugins = []
     for arg in sys.argv:
