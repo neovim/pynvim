@@ -276,6 +276,7 @@ class Host(object):
 
     def _on_specs_request(self, path):
         path = decode_if_bytes(path)
+        path = os.path.normpath(path)
         if path in self._load_errors:
             self.nvim.out_write(self._load_errors[path] + '\n')
         return self._specs.get(path, 0)
