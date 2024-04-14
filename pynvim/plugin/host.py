@@ -6,6 +6,7 @@ import inspect
 import logging
 import os
 import os.path
+import pathlib
 import re
 import sys
 from functools import partial
@@ -173,7 +174,7 @@ class Host(object):
         # self.nvim.err_write("host init _load\n", async_=True)
         has_script = False
         for path in plugins:
-            path = os.path.normpath(path)  # normalize path
+            path = pathlib.Path(os.path.normpath(path)).as_posix()  # normalize path
             err = None
             if path in self._loaded:
                 warn('{} is already loaded'.format(path))
@@ -276,6 +277,7 @@ class Host(object):
 
     def _on_specs_request(self, path):
         path = decode_if_bytes(path)
+        path = pathlib.Path(os.path.normpath(path)).as_posix()  # normalize path
         if path in self._load_errors:
             self.nvim.out_write(self._load_errors[path] + '\n')
         return self._specs.get(path, 0)
