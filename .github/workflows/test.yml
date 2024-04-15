@@ -43,8 +43,8 @@ jobs:
             NVIM_BIN_PATH: nvim-linux64/bin
             EXTRACT: tar xzf
           - os: 'macos-latest'
-            NIGHTLY: nvim-macos.tar.gz
-            NVIM_BIN_PATH: nvim-macos/bin
+            NIGHTLY: nvim-macos-x86_64.tar.gz
+            NVIM_BIN_PATH: nvim-macos-x86_64/bin
             EXTRACT: tar xzf
           - os: 'windows-latest'
             NIGHTLY: nvim-win64.zip
