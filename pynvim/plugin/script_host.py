@@ -16,7 +16,7 @@ __all__ = ('ScriptHost',)
 
 
 logger = logging.getLogger(__name__)
-debug, info, warn = (logger.debug, logger.info, logger.warn,)
+debug, info, warn = (logger.debug, logger.info, logger.warning,)
 
 
 @plugin
