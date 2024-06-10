@@ -37,20 +37,17 @@ def test_async_error(vim: Nvim) -> None:
 
 
 def test_broadcast(vim: Nvim) -> None:
-    vim.subscribe('event2')
     vim.command('call rpcnotify(0, "event1", 1, 2, 3)')
     vim.command('call rpcnotify(0, "event2", 4, 5, 6)')
     vim.command('call rpcnotify(0, "event2", 7, 8, 9)')
     event = vim.next_message()
-    assert event[1] == 'event2'
-    assert event[2] == [4, 5, 6]
+    assert event[1] == 'event1'
+    assert event[2] == [1, 2, 3]
     event = vim.next_message()
     assert event[1] == 'event2'
-    assert event[2] == [7, 8, 9]
-    vim.unsubscribe('event2')
-    vim.subscribe('event1')
+    assert event[2] == [4, 5, 6]
     vim.command('call rpcnotify(0, "event2", 10, 11, 12)')
     vim.command('call rpcnotify(0, "event1", 13, 14, 15)')
     msg = vim.next_message()
-    assert msg[1] == 'event1'
-    assert msg[2] == [13, 14, 15]
+    assert msg[1] == 'event2'
+    assert msg[2] == [7, 8, 9]
