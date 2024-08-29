@@ -19,7 +19,7 @@ def vim() -> Generator[pynvim.Nvim, None, None]:
     editor: pynvim.Nvim
 
     child_argv = os.environ.get('NVIM_CHILD_ARGV')
-    listen_address = os.environ.get('NVIM_LISTEN_ADDRESS')
+    listen_address = os.environ.get('NVIM')
     if child_argv is None and listen_address is None:
         child_argv = json.dumps([
             "nvim",
