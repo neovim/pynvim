@@ -72,12 +72,13 @@ documentation.
 ### Usage from the Python REPL
 
 A number of different transports are supported, but the simplest way to get
-started is with the python REPL. First, start Nvim with a known address (or use
-the `$NVIM_LISTEN_ADDRESS` of a running instance):
+started is with the python REPL. First, start Nvim with a known address:
 
 ```sh
-$ NVIM_LISTEN_ADDRESS=/tmp/nvim nvim
+$ nvim --listen /tmp/nvim.sock
 ```
+
+Or alternatively, note the `v:servername` address of a running Nvim instance.
 
 In another terminal, connect a python REPL to Nvim (note that the API is similar
 to the one exposed by the [python-vim
@@ -85,8 +86,8 @@ bridge](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim)):
 
 ```python
 >>> import pynvim
-# Create a python API session attached to unix domain socket created above:
->>> nvim = pynvim.attach('socket', path='/tmp/nvim')
+# Create a session attached to Nvim's address (`v:servername`).
+>>> nvim = pynvim.attach('socket', path='/tmp/nvim.sock')
 # Now do some work.
 >>> buffer = nvim.current.buffer # Get the current buffer
 >>> buffer[0] = 'replace first line'

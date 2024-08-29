@@ -7,7 +7,7 @@ If you change the code, you need to run::
 
 for the changes to have effect.
 
-Alternatively you could execute Neovim with the ``$PYTHONPATH`` environment variable::
+Alternatively you could execute Nvim with the ``$PYTHONPATH`` environment variable::
 
     PYTHONPATH=/path/to/pynvim nvim
 
@@ -15,13 +15,13 @@ But note this is not completely reliable,
 as installed packages can appear before ``$PYTHONPATH`` in the python search path.
 
 You need to rerun this command if you have changed the code,
-in order for Neovim to use it for the plugin host.
+in order for Nvim to use it for the plugin host.
 
 To run the tests execute::
 
     python -m pytest
 
-This will run the tests in an embedded instance of Neovim, with the current
+This will run the tests in an embedded instance of Nvim, with the current
 directory added to ``sys.path``.
 
 If you want to test a different version than ``nvim`` in ``$PATH`` use::
@@ -30,11 +30,11 @@ If you want to test a different version than ``nvim`` in ``$PATH`` use::
 
 Alternatively, if you want to see the state of nvim, you could use::
 
-    export NVIM_LISTEN_ADDRESS=/tmp/nvimtest
-    xterm -e "nvim -u NONE"&
+    export NVIM=/tmp/nvimtest
+    xterm -e "nvim --listen $NVIM -u NONE" &
     python -m pytest
 
-But note you need to restart Neovim every time you run the tests!
+But note you need to restart Nvim every time you run the tests!
 Substitute your favorite terminal emulator for ``xterm``.
 
 Contributing
@@ -58,7 +58,7 @@ If you have `tox`_, you can test with multiple python versions locally:
 Troubleshooting
 ---------------
 
-You can run the plugin host in Neovim with logging enabled to debug errors::
+You can run the plugin host in Nvim with logging enabled to debug errors::
 
     NVIM_PYTHON_LOG_FILE=logfile NVIM_PYTHON_LOG_LEVEL=DEBUG nvim
 
@@ -75,18 +75,18 @@ Usage through the Python REPL
 
 A number of different transports are supported,
 but the simplest way to get started is with the python REPL.
-First, start Neovim with a known address (or use the ``$NVIM_LISTEN_ADDRESS`` of a running instance)::
+First, start Nvim with a known address (or use the ``v:servername`` of a running instance)::
 
-    NVIM_LISTEN_ADDRESS=/tmp/nvim nvim
+    nvim --listen /tmp/nvim.sock
 
 In another terminal,
-connect a python REPL to Neovim (note that the API is similar to the one exposed by the `python-vim bridge`_):
+connect a python REPL to Nvim (note that the API is similar to the one exposed by the `python-vim bridge`_):
 
 .. code-block:: python
 
     >>> from pynvim import attach
-    # Create a python API session attached to unix domain socket created above:
-    >>> nvim = attach('socket', path='/tmp/nvim')
+    # Create a session attached to Nvim's address (`v:servername`).
+    >>> nvim = attach('socket', path='/tmp/nvim.sock')
     # Now do some work. 
     >>> buffer = nvim.current.buffer # Get the current buffer
     >>> buffer[0] = 'replace first line'
@@ -99,7 +99,7 @@ connect a python REPL to Neovim (note that the API is similar to the one exposed
 
 .. _`python-vim bridge`: http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#python-vim
 
-You can embed Neovim into your python application instead of binding to a running neovim instance:
+You can embed Nvim into your python application instead of binding to a running neovim instance:
 
 .. code-block:: python
 
