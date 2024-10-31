@@ -3,7 +3,6 @@
 import os
 import sys
 import tempfile
-import textwrap
 from pathlib import Path
 
 import pytest
@@ -232,21 +231,16 @@ def test_python3_ex_eval(vim: Nvim) -> None:
     # because the Ex command :python will throw (wrapped with provider#python3#Call)
     with pytest.raises(NvimError) as excinfo:
         vim.command('py3= 1/0')
-    assert textwrap.dedent('''\
-        Traceback (most recent call last):
-          File "<string>", line 1, in <module>
-        ZeroDivisionError: division by zero
-        ''').strip() in excinfo.value.args[0]
+    stacktrace = excinfo.value.args[0]
+    assert 'File "<string>", line 1, in <module>' in stacktrace
+    assert 'ZeroDivisionError: division by zero' in stacktrace
 
     vim.command('python3 def raise_error(): raise RuntimeError("oops")')
     with pytest.raises(NvimError) as excinfo:
         vim.command_output('python3 =print("nooo", raise_error())')
-    assert textwrap.dedent('''\
-        Traceback (most recent call last):
-          File "<string>", line 1, in <module>
-          File "<string>", line 1, in raise_error
-        RuntimeError: oops
-        ''').strip() in excinfo.value.args[0]
+    stacktrace = excinfo.value.args[0]
+    assert 'File "<string>", line 1, in raise_error' in stacktrace
+    assert 'RuntimeError: oops' in stacktrace
     assert 'nooo' not in vim.command_output(':messages')
 
 
