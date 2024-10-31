@@ -35,21 +35,6 @@ jobs:
         include:
           - os: 'ubuntu-20.04'
             python-version: '3.7'
-            NIGHTLY: nvim-linux64.tar.gz
-            NVIM_BIN_PATH: nvim-linux64/bin
-            EXTRACT: tar xzf
-          - os: 'ubuntu-latest'
-            NIGHTLY: nvim-linux64.tar.gz
-            NVIM_BIN_PATH: nvim-linux64/bin
-            EXTRACT: tar xzf
-          - os: 'macos-latest'
-            NIGHTLY: nvim-macos-x86_64.tar.gz
-            NVIM_BIN_PATH: nvim-macos-x86_64/bin
-            EXTRACT: tar xzf
-          - os: 'windows-latest'
-            NIGHTLY: nvim-win64.zip
-            NVIM_BIN_PATH: nvim-win64/bin
-            EXTRACT: unzip
 
     name: "test (python ${{ matrix.python-version }}, ${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
@@ -60,20 +45,36 @@ jobs:
         cache: 'pip'
         python-version: ${{ matrix.python-version }}
 
-    - name: update path (bash)
+    - name: install neovim (Linux/macOS)
       if: runner.os != 'Windows'
-      run: echo "$(pwd)/${{ matrix.NVIM_BIN_PATH }}" >> $GITHUB_PATH
-
-    - name: update path (windows)
-      if: runner.os == 'Windows'
-      run: echo "$(pwd)/${{ matrix.NVIM_BIN_PATH }}" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-    - name: install neovim
       run: |
-        curl -LO 'https://github.com/neovim/neovim/releases/download/nightly/${{ matrix.NIGHTLY }}'
-        ${{ matrix.EXTRACT }} ${{ matrix.NIGHTLY }}
-        echo '${{ runner.os }}'
-        nvim --version
+        set -eu -o pipefail
+
+        if [[ "$RUNNER_OS" == "Linux" ]]; then
+          BASE="nvim-linux64"
+        elif [[ "$RUNNER_OS" == "macOS" ]]; then
+          BASE="nvim-macos-x86_64"
+        else
+          echo "$RUNNER_OS not supported"; exit 1;
+        fi
+
+        curl -LO "https://github.com/neovim/neovim/releases/download/nightly/${BASE}.tar.gz"
+        tar xzf "${BASE}.tar.gz"
+        echo "RUNNER_OS = $RUNNER_OS"
+        $BASE/bin/nvim --version
+
+        # update $PATH for later steps
+        echo "$(pwd)/$BASE/bin" >> $GITHUB_PATH
+
+    - name: install neovim (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        curl -LO "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.zip"
+        unzip nvim-win64.zip
+        nvim-win64/bin/nvim --version
+
+        # update $PATH for later steps
+        echo "$(pwd)/nvim-win64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: install dependencies
       run: |
