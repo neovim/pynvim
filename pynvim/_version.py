@@ -4,7 +4,7 @@
 from types import SimpleNamespace
 
 # see also setup.py
-VERSION = SimpleNamespace(major=0, minor=5, patch=1, prerelease="")
+VERSION = SimpleNamespace(major=0, minor=5, patch=2, prerelease="dev0")
 
 # e.g. "0.5.0", "0.5.0.dev0" (PEP-440)
 __version__ = '{major}.{minor}.{patch}'.format(**vars(VERSION))
