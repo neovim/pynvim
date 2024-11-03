@@ -63,5 +63,4 @@ setup(name='pynvim',
       setup_requires=setup_requires,
       tests_require=tests_require,
       extras_require=extras_require,
-      options={"bdist_wheel": {"universal": True}},
       )
