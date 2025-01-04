@@ -9,7 +9,7 @@ __PATH__ = os.path.abspath(os.path.dirname(__file__))
 from setuptools import setup
 
 install_requires = [
-    'msgpack>=0.5.0',
+    'msgpack>=1.0.0',
     'greenlet>=3.0; python_implementation != "PyPy"',
     'typing-extensions>=4.5; python_version < "3.12"',
 ]
