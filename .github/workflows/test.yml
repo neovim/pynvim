@@ -27,35 +27,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.12', '3.11', '3.10', '3.9', '3.8', '3.7']
-        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        exclude:
-          - os: 'ubuntu-latest'
-            python-version: '3.7'
-          - os: 'macos-latest'
-            python-version: '3.7'
-          - os: 'macos-latest'
-            python-version: '3.8'
-          - os: 'macos-latest'
-            python-version: '3.9'
-        include:
-          - os: 'ubuntu-20.04'
-            python-version: '3.7'
-          - os: 'macos-12'
-            python-version: '3.7'
-          - os: 'macos-12'
-            python-version: '3.8'
-          - os: 'macos-12'
-            python-version: '3.9'
+        config: [
+          { python-version: '3.12' },
+          { python-version: '3.11' },
+          { python-version: '3.10' },
+          # for python 3.7~3.9, use older version of OS (ubuntu-20.04 and macos-12)
+          { python-version: '3.9', ubuntu: '20.04', macos: '13' },
+          { python-version: '3.8', ubuntu: '20.04', macos: '13' },
+          { python-version: '3.7', ubuntu: '20.04', macos: '13' },
+        ]
+        os: ['ubuntu', 'macos', 'windows']
 
-    name: "test (python ${{ matrix.python-version }}, ${{ matrix.os }})"
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }}
+    name:
+      test (python ${{ matrix.config.python-version }},
+            ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }})
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
         cache: 'pip'
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ matrix.config.python-version }}
 
     - name: install neovim (Linux/macOS)
       if: runner.os != 'Windows'
