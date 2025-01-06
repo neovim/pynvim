@@ -28,7 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         config: [
-          { python-version: '3.12' },
+          { python-version: '3.13', neovim-version: 'nightly' },
+          { python-version: '3.12', neovim-version: 'nightly' },
+          { python-version: '3.12', neovim-version: 'stable' },
           { python-version: '3.11' },
           { python-version: '3.10' },
           # for python 3.7~3.9, use older version of OS (ubuntu-20.04 and macos-12)
@@ -38,10 +40,11 @@ jobs:
         ]
         os: ['ubuntu', 'macos', 'windows']
 
-    runs-on: ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }}
     name:
       test (python ${{ matrix.config.python-version }},
+            ${{ matrix.config.neovim-version || 'nightly' }},
             ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }})
+    runs-on: ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }}
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -62,7 +65,7 @@ jobs:
           echo "$RUNNER_OS not supported"; exit 1;
         fi
 
-        curl -LO "https://github.com/neovim/neovim/releases/download/nightly/${BASE}.tar.gz"
+        curl -LO "https://github.com/neovim/neovim/releases/download/${{ matrix.config.neovim-version || 'nightly' }}/${BASE}.tar.gz"
         tar xzf "${BASE}.tar.gz"
         echo "RUNNER_OS = $RUNNER_OS"
         $BASE/bin/nvim --version
