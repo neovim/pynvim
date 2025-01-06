@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+import pytest
+
 from pynvim.api import Nvim
 
 
@@ -37,6 +38,10 @@ def test_async_error(vim: Nvim) -> None:
 
 
 def test_broadcast(vim: Nvim) -> None:
+    if (vim.version.major, vim.version.minor) < (0, 11):
+        # see #570, neovim/neovim#28487
+        pytest.skip("neovim/neovim#28487")
+
     vim.command('call rpcnotify(0, "event1", 1, 2, 3)')
     vim.command('call rpcnotify(0, "event2", 4, 5, 6)')
     vim.command('call rpcnotify(0, "event2", 7, 8, 9)')
