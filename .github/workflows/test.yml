@@ -27,35 +27,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.12', '3.11', '3.10', '3.9', '3.8', '3.7']
-        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        exclude:
-          - os: 'ubuntu-latest'
-            python-version: '3.7'
-          - os: 'macos-latest'
-            python-version: '3.7'
-          - os: 'macos-latest'
-            python-version: '3.8'
-          - os: 'macos-latest'
-            python-version: '3.9'
-        include:
-          - os: 'ubuntu-20.04'
-            python-version: '3.7'
-          - os: 'macos-12'
-            python-version: '3.7'
-          - os: 'macos-12'
-            python-version: '3.8'
-          - os: 'macos-12'
-            python-version: '3.9'
+        config: [
+          { python-version: '3.13', neovim-version: 'nightly' },
+          { python-version: '3.12', neovim-version: 'nightly' },
+          { python-version: '3.12', neovim-version: 'stable' },
+          { python-version: '3.11' },
+          { python-version: '3.10' },
+          # for python 3.7~3.9, use older version of OS (ubuntu-20.04 and macos-12)
+          { python-version: '3.9', ubuntu: '20.04', macos: '13' },
+          { python-version: '3.8', ubuntu: '20.04', macos: '13' },
+          { python-version: '3.7', ubuntu: '20.04', macos: '13' },
+        ]
+        os: ['ubuntu', 'macos', 'windows']
 
-    name: "test (python ${{ matrix.python-version }}, ${{ matrix.os }})"
-    runs-on: ${{ matrix.os }}
+    name:
+      test (python ${{ matrix.config.python-version }},
+            ${{ matrix.config.neovim-version || 'nightly' }},
+            ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }})
+    runs-on: ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }}
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
         cache: 'pip'
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ matrix.config.python-version }}
 
     - name: install neovim (Linux/macOS)
       if: runner.os != 'Windows'
@@ -70,7 +65,7 @@ jobs:
           echo "$RUNNER_OS not supported"; exit 1;
         fi
 
-        curl -LO "https://github.com/neovim/neovim/releases/download/nightly/${BASE}.tar.gz"
+        curl -LO "https://github.com/neovim/neovim/releases/download/${{ matrix.config.neovim-version || 'nightly' }}/${BASE}.tar.gz"
         tar xzf "${BASE}.tar.gz"
         echo "RUNNER_OS = $RUNNER_OS"
         $BASE/bin/nvim --version
