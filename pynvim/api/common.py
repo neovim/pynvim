@@ -241,11 +241,15 @@ def decode_if_bytes(obj: T, mode: TDecodeMode = True) -> Union[T, str]:
     return obj
 
 
-def walk(fn: Callable[..., Any], obj: Any, *args: Any, **kwargs: Any) -> Any:
-    """Recursively walk an object graph applying `fn`/`args` to objects."""
-    if type(obj) in [list, tuple]:
-        return list(walk(fn, o, *args) for o in obj)
-    if type(obj) is dict:
-        return dict((walk(fn, k, *args), walk(fn, v, *args)) for k, v in
-                    obj.items())
-    return fn(obj, *args, **kwargs)
+def walk(fn: Callable[[Any], Any], obj: Any) -> Any:
+    """Recursively walk an object graph applying `fn` to objects."""
+
+    # Note: this function is very hot, so it is worth being careful
+    # about performance.
+    type_ = type(obj)
+
+    if type_ is list or type_ is tuple:
+        return [walk(fn, o) for o in obj]
+    if type_ is dict:
+        return {walk(fn, k): walk(fn, v) for k, v in obj.items()}
+    return fn(obj)

@@ -112,7 +112,7 @@ class Host(object):
 
     def _wrap_function(self, fn, sync, decode, nvim_bind, name, *args):
         if decode:
-            args = walk(decode_if_bytes, args, decode)
+            args = walk(partial(decode_if_bytes, mode=decode), args)
         if nvim_bind is not None:
             args.insert(0, nvim_bind)
         try:

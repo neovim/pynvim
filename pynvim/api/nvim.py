@@ -209,7 +209,7 @@ class Nvim:
         decode = kwargs.pop('decode', self._decode)
         args = walk(self._to_nvim, args)
         res = self._session.request(name, *args, **kwargs)
-        return walk(self._from_nvim, res, decode=decode)
+        return walk(partial(self._from_nvim, decode=decode), res)
 
     def next_message(self) -> Any:
         """Block until a message(request or notification) is available.
