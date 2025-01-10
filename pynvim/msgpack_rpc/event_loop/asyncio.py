@@ -47,13 +47,14 @@ class Protocol(asyncio.Protocol, asyncio.SubprocessProtocol):
     @override
     def connection_made(self, transport):
         """Used to signal `asyncio.Protocol` of a successful connection."""
-        del transport  # no-op
+        self._transport = transport
 
     @override
     def connection_lost(self, exc: Optional[Exception]) -> None:
         """Used to signal `asyncio.Protocol` of a lost connection."""
-        debug(f"connection_lost: exc = {exc}")
-        self._on_error(exc if exc else EOFError())
+        warn(f"connection_lost: exc = {exc}")
+
+        self._on_error(exc if exc else EOFError("connection_lost"))
 
     @override
     def data_received(self, data: bytes) -> None:
@@ -63,11 +64,19 @@ class Protocol(asyncio.Protocol, asyncio.SubprocessProtocol):
     @override
     def pipe_connection_lost(self, fd: int, exc: Optional[Exception]) -> None:
         """Used to signal `asyncio.SubprocessProtocol` of a lost connection."""
-        debug("pipe_connection_lost: fd = %s, exc = %s", fd, exc)
+
+        assert isinstance(self._transport, asyncio.SubprocessTransport)
+        debug_info = {'fd': fd, 'exc': exc, 'pid': self._transport.get_pid()}
+        warn(f"pipe_connection_lost {debug_info}")
+
         if os.name == 'nt' and fd == 2:  # stderr
             # On windows, ignore piped stderr being closed immediately (#505)
             return
-        self._on_error(exc if exc else EOFError())
+
+        # pipe_connection_lost() *may* be called before process_exited() is
+        # called, when a Nvim subprocess crashes (SIGABRT). Do not handle
+        # errors here, as errors will be handled somewhere else
+        # self._on_error(exc if exc else EOFError("pipe_connection_lost"))
 
     @override
     def pipe_data_received(self, fd, data):
@@ -81,8 +90,13 @@ class Protocol(asyncio.Protocol, asyncio.SubprocessProtocol):
     @override
     def process_exited(self) -> None:
         """Used to signal `asyncio.SubprocessProtocol` when the child exits."""
-        debug("process_exited")
-        self._on_error(EOFError())
+        assert isinstance(self._transport, asyncio.SubprocessTransport)
+        pid = self._transport.get_pid()
+        return_code = self._transport.get_returncode()
+
+        warn("process_exited, pid = %s, return_code = %s", pid, return_code)
+        err = EOFError(f"process_exited: pid = {pid}, return_code = {return_code}")
+        self._on_error(err)
 
 
 class AsyncioEventLoop(BaseEventLoop):
