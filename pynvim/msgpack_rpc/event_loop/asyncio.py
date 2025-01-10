@@ -18,7 +18,7 @@ else:
 from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop, TTransportType
 
 logger = logging.getLogger(__name__)
-debug, info, warn = (logger.debug, logger.info, logger.warning,)
+debug, info, warn = (logger.debug, logger.info, logger.warning)
 
 loop_cls = asyncio.SelectorEventLoop
 
@@ -47,13 +47,14 @@ class Protocol(asyncio.Protocol, asyncio.SubprocessProtocol):
     @override
     def connection_made(self, transport):
         """Used to signal `asyncio.Protocol` of a successful connection."""
-        del transport  # no-op
+        self._transport = transport
 
     @override
     def connection_lost(self, exc: Optional[Exception]) -> None:
         """Used to signal `asyncio.Protocol` of a lost connection."""
-        debug(f"connection_lost: exc = {exc}")
-        self._on_error(exc if exc else EOFError())
+        warn(f"connection_lost: exc = {exc}")
+
+        self._on_error(exc if exc else EOFError("connection_lost"))
 
     @override
     def data_received(self, data: bytes) -> None:
@@ -63,11 +64,19 @@ class Protocol(asyncio.Protocol, asyncio.SubprocessProtocol):
     @override
     def pipe_connection_lost(self, fd: int, exc: Optional[Exception]) -> None:
         """Used to signal `asyncio.SubprocessProtocol` of a lost connection."""
-        debug("pipe_connection_lost: fd = %s, exc = %s", fd, exc)
+
+        assert isinstance(self._transport, asyncio.SubprocessTransport)
+        debug_info = {'fd': fd, 'exc': exc, 'pid': self._transport.get_pid()}
+        warn(f"pipe_connection_lost {debug_info}")
+
         if os.name == 'nt' and fd == 2:  # stderr
             # On windows, ignore piped stderr being closed immediately (#505)
             return
-        self._on_error(exc if exc else EOFError())
+
+        # pipe_connection_lost() *may* be called before process_exited() is
+        # called, when a Nvim subprocess crashes (SIGABRT). Do not handle
+        # errors here, as errors will be handled somewhere else
+        # self._on_error(exc if exc else EOFError("pipe_connection_lost"))
 
     @override
     def pipe_data_received(self, fd, data):
@@ -81,8 +90,13 @@ class Protocol(asyncio.Protocol, asyncio.SubprocessProtocol):
     @override
     def process_exited(self) -> None:
         """Used to signal `asyncio.SubprocessProtocol` when the child exits."""
-        debug("process_exited")
-        self._on_error(EOFError())
+        assert isinstance(self._transport, asyncio.SubprocessTransport)
+        pid = self._transport.get_pid()
+        return_code = self._transport.get_returncode()
+
+        warn("process_exited, pid = %s, return_code = %s", pid, return_code)
+        err = EOFError(f"process_exited: pid = {pid}, return_code = {return_code}")
+        self._on_error(err)
 
 
 class AsyncioEventLoop(BaseEventLoop):
@@ -131,7 +145,8 @@ class AsyncioEventLoop(BaseEventLoop):
     def _connect_tcp(self, address: str, port: int) -> None:
         async def connect_tcp():
             transport, protocol = await self._loop.create_connection(
-                self._protocol_factory, address, port)
+                self._protocol_factory, address, port
+            )
             debug(f"tcp connection successful: {address}:{port}")
             self._transport = transport
             self._protocol = protocol
@@ -146,8 +161,7 @@ class AsyncioEventLoop(BaseEventLoop):
             else:
                 _create_connection = self._loop.create_unix_connection
 
-            transport, protocol = await _create_connection(
-                self._protocol_factory, path)
+            transport, protocol = await _create_connection(self._protocol_factory, path)
             debug("socket connection successful: %s", self._transport)
             self._transport = transport
             self._protocol = protocol
@@ -162,10 +176,12 @@ class AsyncioEventLoop(BaseEventLoop):
             else:
                 pipe = sys.stdin
             transport, protocol = await self._loop.connect_read_pipe(
-                self._protocol_factory, pipe)
+                self._protocol_factory, pipe
+            )
             debug("native stdin connection successful")
             self._to_close.append(transport)
             del protocol
+
         self._loop.run_until_complete(connect_stdin())
 
         # Make sure subprocesses don't clobber stdout,
@@ -180,10 +196,12 @@ class AsyncioEventLoop(BaseEventLoop):
                 pipe = os.fdopen(rename_stdout, 'wb')
 
             transport, protocol = await self._loop.connect_write_pipe(
-                self._protocol_factory, pipe)
+                self._protocol_factory, pipe
+            )
             debug("native stdout connection successful")
             self._transport = transport
             self._protocol = protocol
+
         self._loop.run_until_complete(connect_stdout())
 
     @override
@@ -196,7 +214,8 @@ class AsyncioEventLoop(BaseEventLoop):
         async def create_subprocess():
             transport: asyncio.SubprocessTransport  # type: ignore
             transport, protocol = await self._loop.subprocess_exec(
-                self._protocol_factory, *argv)
+                self._protocol_factory, *argv
+            )
             pid = transport.get_pid()
             debug("child subprocess_exec successful, PID = %s", pid)
 
@@ -251,10 +270,12 @@ class AsyncioEventLoop(BaseEventLoop):
             # effect immediately (closing happens asynchronously inside the
             # event loop), need to wait a bit for completing graceful shutdown.
             if os.name == 'nt' and hasattr(transport, '_sock'):
+
                 async def wait_until_closed():
                     # pylint: disable-next=protected-access
                     while transport._sock is not None:
                         await asyncio.sleep(0.01)
+
                 self._loop.run_until_complete(wait_until_closed())
 
         if self._transport:
