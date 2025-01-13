@@ -188,10 +188,20 @@ class AsyncioEventLoop(BaseEventLoop):
 
     @override
     def _connect_child(self, argv: List[str]) -> None:
+        def get_child_watcher():
+            try:
+                return asyncio.get_child_watcher()
+            except AttributeError:  # Python 3.14
+                return None
+
+            return None
+
         if os.name != 'nt':
             # see #238, #241
-            self._child_watcher = asyncio.get_child_watcher()
-            self._child_watcher.attach_loop(self._loop)
+            watcher = get_child_watcher()
+            if watcher is not None:
+                watcher.attach_loop(self._loop)
+                self._child_watcher = watcher
 
         async def create_subprocess():
             transport: asyncio.SubprocessTransport  # type: ignore
@@ -250,7 +260,8 @@ class AsyncioEventLoop(BaseEventLoop):
             # Windows: for ProactorBasePipeTransport, close() doesn't take in
             # effect immediately (closing happens asynchronously inside the
             # event loop), need to wait a bit for completing graceful shutdown.
-            if os.name == 'nt' and hasattr(transport, '_sock'):
+            if (sys.version_info < (3, 13) and
+                    os.name == 'nt' and hasattr(transport, '_sock')):
                 async def wait_until_closed():
                     # pylint: disable-next=protected-access
                     while transport._sock is not None:
