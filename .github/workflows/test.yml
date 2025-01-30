@@ -58,21 +58,19 @@ jobs:
       run: |
         set -eu -o pipefail
 
-        if [[ "$RUNNER_OS" == "Linux" ]]; then
-          BASE="nvim-linux64"
-        elif [[ "$RUNNER_OS" == "macOS" ]]; then
-          BASE="nvim-macos-x86_64"
-        else
-          echo "$RUNNER_OS not supported"; exit 1;
+        NVIM_OS="$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')"
+        if ! [ "$NVIM_OS" = "linux" ] && ! [ "$NVIM_OS" = "macos" ]; then
+          echo "RUNNER_OS=${RUNNER_OS} not supported"; exit 1;
         fi
 
-        curl -LO "https://github.com/neovim/neovim/releases/download/${{ matrix.config.neovim-version || 'nightly' }}/${BASE}.tar.gz"
-        tar xzf "${BASE}.tar.gz"
+        NVIM_NAME="nvim-${NVIM_OS}-x86_64"
+        curl -LO "https://github.com/neovim/neovim/releases/download/${{ matrix.config.neovim-version || 'nightly' }}/${NVIM_NAME}.tar.gz"
+        tar xzf "${NVIM_NAME}.tar.gz"
         echo "RUNNER_OS = $RUNNER_OS"
-        $BASE/bin/nvim --version
+        "$NVIM_NAME/bin/nvim" --version
 
         # update $PATH for later steps
-        echo "$(pwd)/$BASE/bin" >> $GITHUB_PATH
+        echo "$(pwd)/$NVIM_NAME/bin" >> "$GITHUB_PATH"
 
     - name: install neovim (Windows)
       if: runner.os == 'Windows'
