@@ -125,7 +125,7 @@ def test_connect_stdio(vim: Nvim) -> None:
     ])
     # see :help jobstart(), *jobstart-options* |msgpack-rpc|
     jobid = vim.funcs.jobstart([
-        'python', '-c', remote_py_code,
+        'python3', '-c', remote_py_code,
     ], {'rpc': True, 'on_stderr': 'OutputHandler'})
     assert jobid > 0
     exitcode = vim.funcs.jobwait([jobid], 500)[0]
