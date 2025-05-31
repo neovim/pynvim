@@ -12,17 +12,35 @@ Install
 
 Supports python 3.7 or later.
 
-    pip3 install pynvim
+- Installation option #1: install using uv (recommended):
 
-You can install the package without being root by adding the `--user` flag.
-Anytime you upgrade Neovim, make sure to upgrade pynvim as well:
+  - Install uv (https://docs.astral.sh/uv/).
 
-    pip3 install --upgrade pynvim
+  - Install pynvim (the `--upgrade` switch ensures installation of the latest
+    version):
 
-Alternatively, you can install the development version by cloning this
-repository and executing the following at the top level:
+        uv tool install --upgrade pynvim
 
-    pip3 install .
+  - Anytime you upgrade Neovim, make sure to upgrade pynvim as well by
+    re-running the above command.
+
+- Installation option #2: install using pipx:
+
+  - Install pipx (https://pipx.pypa.io/stable/).
+
+  - Install pynvim (the `--upgrade` switch ensures installation of the latest
+    version):
+
+        pipx install --upgrade pynvim
+
+  - Anytime you upgrade Neovim, make sure to upgrade pynvim as well by
+    re-running the above command.
+
+- Other installation options:
+
+  - See [pynvim installation
+    documentation](https://pynvim.readthedocs.io/en/latest/installation.html)
+    for additional installation options and information.
 
 Python Plugin API
 -----------------
