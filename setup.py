@@ -58,4 +58,9 @@ setup(name='pynvim',
       setup_requires=setup_requires,
       tests_require=tests_require,
       extras_require=extras_require,
+      entry_points={
+              'console_scripts': [
+                  'pynvim-python=pynvim.python:main',
+              ],
+          },
       )

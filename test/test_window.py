@@ -61,10 +61,11 @@ def test_vars(vim: Nvim) -> None:
 def test_options(vim: Nvim) -> None:
     vim.current.window.options['colorcolumn'] = '4,3'
     assert vim.current.window.options['colorcolumn'] == '4,3'
+    old_global_statusline = vim.options['statusline']
     # global-local option
     vim.current.window.options['statusline'] = 'window-status'
     assert vim.current.window.options['statusline'] == 'window-status'
-    assert vim.options['statusline'] == ''
+    assert vim.options['statusline'] == old_global_statusline
 
     with pytest.raises(KeyError) as excinfo:
         vim.current.window.options['doesnotexist']
