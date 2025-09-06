@@ -12,7 +12,7 @@ Install
 
 Supports python 3.7 or later.
 
-- Installation option #1: install using uv (recommended):
+- Recommended installation option: using uv:
 
   - Install uv (https://docs.astral.sh/uv/).
 
@@ -20,18 +20,6 @@ Supports python 3.7 or later.
     version):
 
         uv tool install --upgrade pynvim
-
-  - Anytime you upgrade Neovim, make sure to upgrade pynvim as well by
-    re-running the above command.
-
-- Installation option #2: install using pipx:
-
-  - Install pipx (https://pipx.pypa.io/stable/).
-
-  - Install pynvim (the `--upgrade` switch ensures installation of the latest
-    version):
-
-        pipx install --upgrade pynvim
 
   - Anytime you upgrade Neovim, make sure to upgrade pynvim as well by
     re-running the above command.
