@@ -138,14 +138,22 @@ Release
 1. Create a release commit with title `Pynvim x.y.z`
    - list significant changes in the commit message
    - bump the version in `pynvim/_version.py`
-2. Make a release on GitHub with the same commit/version tag and copy the message.
-3. Run `scripts/disable_log_statements.sh`
-4. Run `python -m build`
-    - diff the release tarball `dist/pynvim-x.y.z.tar.gz` against the previous one.
-5. Run `twine upload -r pypi dist/*`
+2. Push to `master`.
+   ```
+   git push
+   ```
+3. Make a release on GitHub with the same commit/version tag and copy the message.
+4. Run `scripts/disable_log_statements.sh`
+5. Run `pipx run build`
+6. (Validation) Diff the release tarball `dist/pynvim-x.y.z.tar.gz` against the previous one.
+    - Fetch the previous tar.gz from https://pypi.org/manage/project/pynvim/releases/
+    - Unzip both.
+    - Unzip both.
+    - Diff them with `:DiffTool old/ new/` (plugin: https://github.com/deathbeam/difftool.nvim)
+7. Run `pipx run twine upload -r pypi dist/*`
     - Assumes you have a pypi account with permissions.
-6. Run `scripts/enable_log_statements.sh` or `git reset --hard` to restore the working dir.
-7. Bump up to the next development version in `pynvim/_version.py`, with `prerelease` suffix `dev0`.
+8. Run `scripts/enable_log_statements.sh` or `git reset --hard` to restore the working dir.
+9. Bump up to the next development version in `pynvim/_version.py`, with `prerelease` suffix `dev0`.
 
 License
 -------
