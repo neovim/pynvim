@@ -25,4 +25,4 @@ import sys
 
 def main() -> None:
     """Chain to Python interpreter, passing all command-line args."""
-    subprocess.run([sys.executable] + sys.argv[1:])
+    sys.exit(subprocess.run([sys.executable] + sys.argv[1:]).returncode)
