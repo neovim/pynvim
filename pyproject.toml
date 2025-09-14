@@ -1,3 +1,34 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pynvim"
+version = "0.6.0"
+description = "Python client for Neovim"
+readme = "README.md"
+license = {text = "Apache"}
+authors = [{name = "Neovim Authors"}]
+requires-python = ">=3.7"
+dependencies = [
+    "msgpack>=1.0.0",
+    "greenlet>=3.0; python_implementation != 'PyPy'",
+    "typing-extensions>=4.5; python_version < '3.12'",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest_timeout",
+]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+
+[project.scripts]
+pynvim-python = "pynvim.python:main"
+
+[project.urls]
+Homepage = "http://github.com/neovim/pynvim"
+Download = "https://github.com/neovim/pynvim/archive/0.6.0.tar.gz"
