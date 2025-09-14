@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,8 +7,10 @@ name = "pynvim"
 version = "0.6.0"
 description = "Python client for Neovim"
 readme = "README.md"
-license = {text = "Apache"}
-authors = [{name = "Neovim Authors"}]
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Neovim Authors" }
+]
 requires-python = ">=3.7"
 dependencies = [
     "msgpack>=1.0.0",
@@ -16,10 +18,23 @@ dependencies = [
     "typing-extensions>=4.5; python_version < '3.12'",
 ]
 
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pytest_timeout",
+    "pytest-timeout",
 ]
 docs = [
     "sphinx",
@@ -30,5 +45,6 @@ docs = [
 pynvim-python = "pynvim.python:main"
 
 [project.urls]
-Homepage = "http://github.com/neovim/pynvim"
+Homepage = "https://github.com/neovim/pynvim"
 Download = "https://github.com/neovim/pynvim/archive/0.6.0.tar.gz"
+Documentation = "https://pynvim.readthedocs.io"
