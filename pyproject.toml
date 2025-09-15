@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pynvim"
-version = "0.6.0"
+version = "0.6.1.dev0"
 description = "Python client for Neovim"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -33,12 +33,15 @@ classifiers = [
 
 [project.optional-dependencies]
 test = [
-    "pytest",
-    "pytest-timeout",
+  "pytest",
+  "pytest-timeout",
 ]
 docs = [
-    "sphinx",
-    "sphinx-rtd-theme",
+  "sphinx",
+  "sphinx-rtd-theme",
+]
+dev = [
+  "bump-my-version",
 ]
 
 [project.scripts]
@@ -46,5 +49,36 @@ pynvim-python = "pynvim.python:main"
 
 [project.urls]
 Homepage = "https://github.com/neovim/pynvim"
-Download = "https://github.com/neovim/pynvim/archive/0.6.0.tar.gz"
+Download = "https://github.com/neovim/pynvim/archive/refs/tags/0.6.1.dev0.tar.gz"
 Documentation = "https://pynvim.readthedocs.io"
+
+# Configuration for bumpversion / bump-my-version
+[tool.bumpversion]
+current_version = "0.6.1.dev0"
+commit = true
+tag = true
+
+# Regex that captures major/minor/patch/prerelease (prerelease optional)
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:\\.(?P<prerelease>[a-zA-Z]+\\d*))?"
+serialize = [
+    "{major}.{minor}.{patch}.{prerelease}",
+    "{major}.{minor}.{patch}"
+]
+
+# Update the version in pyproject.toml
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+# Update the version in pynvim/_version.py (non-hardcoded)
+[[tool.bumpversion.files]]
+filename = "pynvim/_version.py"
+search = 'VERSION = SimpleNamespace(major={current_major}, minor={current_minor}, patch={current_patch}, prerelease="{current_prerelease}")'
+replace = 'VERSION = SimpleNamespace(major={new_major}, minor={new_minor}, patch={new_patch}, prerelease="{new_prerelease}")'
+
+# Update the download URL in pyproject.toml
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'Download = "https://github.com/neovim/pynvim/archive/refs/tags/{current_version}.tar.gz"'
+replace = 'Download = "https://github.com/neovim/pynvim/archive/refs/tags/{new_version}.tar.gz"'
