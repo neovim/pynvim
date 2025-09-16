@@ -155,6 +155,34 @@ Release
 8. Run `scripts/enable_log_statements.sh` or `git reset --hard` to restore the working dir.
 9. Bump up to the next development version in `pynvim/_version.py`, with `prerelease` suffix `dev0`.
 
+### Releasing with bump-my-version
+
+`bump-my-version` automates the process of updating version strings, creating git commits, and tagging releases.
+
+1.  **Install `bump-my-version`:**
+    If you haven't already, install the development dependencies:
+    ```bash
+    pip install .[dev]
+    ```
+
+2.  **Bump the version:**
+    To increment the version, use one of the following commands:
+    *   **Patch release:** `bump-my-version bump patch` (e.g., `0.6.1` -> `0.6.2`)
+    *   **Minor release:** `bump-my-version bump minor` (e.g., `0.6.1` -> `0.7.0`)
+    *   **Major release:** `bump-my-version bump major` (e.g., `0.6.1` -> `1.0.0`)
+
+    This command will:
+    *   Update the `version` in `pyproject.toml`.
+    *   Update the `VERSION` in `pynvim/_version.py`.
+    *   Create a git commit with a message like "Bump version: 0.6.1 → 0.6.2".
+    *   Create a git tag (e.g., `v0.6.2`).
+
+3.  **Push changes and tags:**
+    After bumping the version, push the commit and the new tag to your remote repository:
+    ```bash
+    git push --follow-tags
+    ```
+
 License
 -------
 

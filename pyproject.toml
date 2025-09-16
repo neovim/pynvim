@@ -1,3 +1,84 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pynvim"
+version = "0.6.1.dev0"
+description = "Python client for Neovim"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Neovim Authors" }
+]
+requires-python = ">=3.7"
+dependencies = [
+    "msgpack>=1.0.0",
+    "greenlet>=3.0; python_implementation != 'PyPy'",
+    "typing-extensions>=4.5; python_version < '3.12'",
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-timeout",
+]
+docs = [
+  "sphinx",
+  "sphinx-rtd-theme",
+]
+dev = [
+  "bump-my-version",
+]
+
+[project.scripts]
+pynvim-python = "pynvim.python:main"
+
+[project.urls]
+Homepage = "https://github.com/neovim/pynvim"
+Download = "https://github.com/neovim/pynvim/archive/refs/tags/0.6.1.dev0.tar.gz"
+Documentation = "https://pynvim.readthedocs.io"
+
+# Configuration for bumpversion / bump-my-version
+[tool.bumpversion]
+current_version = "0.6.1.dev0"
+commit = true
+tag = true
+
+# Regex that captures major/minor/patch/prerelease (prerelease optional)
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:\\.(?P<prerelease>[a-zA-Z]+\\d*))?"
+serialize = [
+    "{major}.{minor}.{patch}.{prerelease}",
+    "{major}.{minor}.{patch}"
+]
+
+# Update the version in pyproject.toml
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+# Update the version in pynvim/_version.py (non-hardcoded)
+[[tool.bumpversion.files]]
+filename = "pynvim/_version.py"
+search = 'VERSION = SimpleNamespace(major={current_major}, minor={current_minor}, patch={current_patch}, prerelease="{current_prerelease}")'
+replace = 'VERSION = SimpleNamespace(major={new_major}, minor={new_minor}, patch={new_patch}, prerelease="{new_prerelease}")'
+
+# Update the download URL in pyproject.toml
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'Download = "https://github.com/neovim/pynvim/archive/refs/tags/{current_version}.tar.gz"'
+replace = 'Download = "https://github.com/neovim/pynvim/archive/refs/tags/{new_version}.tar.gz"'
