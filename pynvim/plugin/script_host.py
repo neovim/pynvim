@@ -195,7 +195,8 @@ num_types = (int, float)
 
 
 def num_to_str(obj):
-    if isinstance(obj, num_types):
+    obj_type = type(obj)
+    if obj_type is int or obj_type is float:
         return str(obj)
     else:
         return obj
