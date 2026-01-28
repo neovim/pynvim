@@ -63,9 +63,6 @@ Pynvim defines some extensions over the vim python API:
 
 See the [Python Plugin API](http://pynvim.readthedocs.io/en/latest/usage/python-plugin-api.html) documentation for usage of this new functionality.
 
-### Known Issues
-- Vim evaluates `'v:<bool>'` to `<class 'bool'>`, whereas neovim evaluates to `<class 'str'>`. This is expected behaviour due to the way booleans are implemented in python as explained [here](https://github.com/neovim/pynvim/issues/523#issuecomment-1495502011).
-
 Development
 -----------
 
