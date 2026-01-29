@@ -28,13 +28,14 @@ Supports python 3.7 or later.
 
   - Install pipx (https://pipx.pypa.io/stable/).
 
-  - Install pynvim (the `--upgrade` switch ensures installation of the latest
-    version):
+  - Install pynvim:
 
-        pipx install --upgrade pynvim
+        pipx install pynvim
 
   - Anytime you upgrade Neovim, make sure to upgrade pynvim as well by
-    re-running the above command.
+    running:
+
+        pipx upgrade pynvim
 
 - Other installation options:
 
@@ -62,6 +63,25 @@ Pynvim defines some extensions over the vim python API:
 * Support for thread-safety and async requests.
 
 See the [Python Plugin API](http://pynvim.readthedocs.io/en/latest/usage/python-plugin-api.html) documentation for usage of this new functionality.
+
+### Known issues
+
+As [Nvim does not support
+bindeval](https://github.com/neovim/neovim/issues/1898), accessing a Vimscript
+dictionary from Python (via `vim.vars`, `vim.vvars`, `Buffer.vars`, etc)
+returns a copy, not a reference. As a result, setting its fields directly will
+not write them back into Nvim. Instead, the whole dictionary must be written as
+one. This can be achieved by creating a short-lived temporary.
+
+Example:
+
+```python
+vim.vars['my_dict']['field1'] = 'value'   # Does not work
+
+my_dict = vim.vars['my_dict']             #
+my_dict['field1'] = 'value'               # Instead do
+vim.vars['my_dict'] = my_dict             #
+```
 
 Development
 -----------
