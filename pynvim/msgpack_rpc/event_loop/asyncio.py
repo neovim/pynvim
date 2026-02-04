@@ -203,12 +203,9 @@ class AsyncioEventLoop(BaseEventLoop):
     @override
     def _connect_child(self, argv: List[str]) -> None:
         def get_child_watcher():
-            try:
-                return asyncio.get_child_watcher()
-            except AttributeError:  # Python 3.14
+            if sys.version_info >= (3, 12):
                 return None
-
-            return None
+            return asyncio.get_child_watcher()
 
         if os.name != 'nt':
             # see #238, #241
