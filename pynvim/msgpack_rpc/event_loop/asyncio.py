@@ -114,8 +114,10 @@ class AsyncioEventLoop(BaseEventLoop):
                  *args: Any, **kwargs: Any):
         """asyncio-specific initialization. see BaseEventLoop.__init__."""
 
-        # The underlying asyncio event loop.
-        self._loop: Final[asyncio.AbstractEventLoop] = loop_cls()
+        if sys.version_info >= (3, 12):
+            self._loop: Final[asyncio.AbstractEventLoop] = asyncio.new_event_loop()
+        else:
+            self._loop: Final[asyncio.AbstractEventLoop] = loop_cls()
 
         # Handle messages from nvim that may arrive before run() starts.
         self._data_buffer = deque()
@@ -210,7 +212,7 @@ class AsyncioEventLoop(BaseEventLoop):
 
             return None
 
-        if os.name != 'nt':
+        if os.name != 'nt' and sys.version_info < (3, 12):
             # see #238, #241
             watcher = get_child_watcher()
             if watcher is not None:
