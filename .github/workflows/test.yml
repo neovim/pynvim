@@ -29,15 +29,12 @@ jobs:
       matrix:
         config: [
           # NOTE: don't forget updating tox.ini
+          { python-version: '3.14', neovim-version: 'nightly' },
           { python-version: '3.13', neovim-version: 'nightly' },
           { python-version: '3.12', neovim-version: 'nightly' },
           { python-version: '3.12', neovim-version: 'stable' },
           { python-version: '3.11' },
           { python-version: '3.10' },
-          # for python 3.7~3.9, use older version of OS (ubuntu-20.04 and macos-13)
-          { python-version: '3.9', ubuntu: '20.04', macos: '13' },
-          { python-version: '3.8', ubuntu: '20.04', macos: '13' },
-          { python-version: '3.7', ubuntu: '20.04', macos: '13' },
         ]
         os: ['ubuntu', 'macos', 'windows']
 

@@ -1,15 +1,10 @@
 """Code shared between the API classes."""
 import functools
-import sys
 from abc import ABC, abstractmethod
-from typing import (Any, Callable, Generic, Iterator, List, Optional, Tuple, TypeVar,
-                    Union, overload)
+from typing import (Any, Callable, Generic, Iterator, List, Literal, Optional, Protocol,
+                    Tuple, TypeVar, Union, overload)
 
 from msgpack import unpackb
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal, Protocol
-else:
-    from typing import Literal, Protocol
 
 from pynvim.compat import unicode_errors_default
 

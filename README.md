@@ -10,7 +10,7 @@ connecting to and scripting Nvim processes through its msgpack-rpc API.
 Install
 -------
 
-Supports python 3.7 or later.
+Supports python 3.10 or later.
 
 - Installation option #1: install using uv (recommended):
 

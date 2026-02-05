@@ -9,7 +9,7 @@ import threading
 from functools import partial
 from traceback import format_stack
 from types import SimpleNamespace
-from typing import (Any, AnyStr, Callable, Dict, Iterator, List, Optional,
+from typing import (Any, AnyStr, Callable, Dict, Iterator, List, Literal, Optional,
                     TYPE_CHECKING, Union)
 
 from msgpack import ExtType
@@ -23,11 +23,6 @@ from pynvim.util import format_exc_skip
 
 if TYPE_CHECKING:
     from pynvim.msgpack_rpc import Session
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
 
 __all__ = ['Nvim']
 
