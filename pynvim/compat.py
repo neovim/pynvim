@@ -3,28 +3,6 @@ import warnings
 from typing import Any, Dict, Optional
 
 
-def find_module(fullname, path):  # type: ignore
-    """Compatibility wrapper for imp.find_module.
-
-    Automatically decodes arguments of find_module, in Python3
-    they must be Unicode
-    """
-    if isinstance(fullname, bytes):
-        fullname = fullname.decode()
-    if isinstance(path, bytes):
-        path = path.decode()
-    elif isinstance(path, list):
-        newpath = []
-        for element in path:
-            if isinstance(element, bytes):
-                newpath.append(element.decode())
-            else:
-                newpath.append(element)
-        path = newpath
-    from imp import find_module as original_find_module
-    return original_find_module(fullname, path)
-
-
 unicode_errors_default = 'surrogateescape'
 
 NUM_TYPES = (int, float)

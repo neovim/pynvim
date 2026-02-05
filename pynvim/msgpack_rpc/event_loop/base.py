@@ -1,15 +1,9 @@
 """Common code for event loop implementations."""
 import logging
 import signal
-import sys
 import threading
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Optional, Union
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
+from typing import Any, Callable, List, Literal, Optional, Union
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)

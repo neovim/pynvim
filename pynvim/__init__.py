@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from types import SimpleNamespace as Version
-from typing import List, Optional, cast, overload
+from typing import List, Literal, Optional, cast, overload
 
 from pynvim._version import VERSION, __version__
 from pynvim.api import Nvim, NvimError
@@ -15,11 +15,6 @@ from pynvim.msgpack_rpc import (ErrorResponse, Session, TTransportType,
                                 tcp_session)
 from pynvim.plugin import (Host, autocmd, command, decode, encoding, function,
                            plugin, rpc_export, shutdown_hook)
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
 
 
 __all__ = ('tcp_session', 'socket_session', 'stdio_session', 'child_session',

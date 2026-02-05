@@ -1,22 +1,16 @@
 """Synchronous msgpack-rpc session layer."""
 import logging
-import sys
 import threading
 from collections import deque
 from traceback import format_exc
-from typing import (Any, AnyStr, Callable, Deque, List, NamedTuple, Optional, Sequence,
-                    Tuple, Union, cast)
+from typing import (Any, AnyStr, Callable, Deque, List, Literal, NamedTuple, Optional,
+                    Sequence, Tuple, Union, cast)
 
 import greenlet
 
 from pynvim.compat import check_async
 from pynvim.msgpack_rpc.async_session import AsyncSession
 from pynvim.msgpack_rpc.event_loop.base import BaseEventLoop
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
 
 logger = logging.getLogger(__name__)
 error, debug, info, warn = (logger.error, logger.debug, logger.info,

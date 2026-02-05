@@ -2,15 +2,9 @@
 
 import inspect
 import logging
-import sys
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, Literal, Optional, TypeVar, Union
 
 from pynvim.compat import unicode_errors_default
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
 
 logger = logging.getLogger(__name__)
 debug, info, warn = (logger.debug, logger.info, logger.warning,)

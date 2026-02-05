@@ -215,41 +215,7 @@ def path_hook(nvim):
             return []
         return discover_runtime_directories(nvim)
 
-    def _find_module(fullname, oldtail, path):
-        import imp
-        idx = oldtail.find('.')
-        if idx > 0:
-            name = oldtail[:idx]
-            tail = oldtail[idx + 1:]
-            fmr = imp.find_module(name, path)
-            module = imp.find_module(fullname[:-len(oldtail)] + name, *fmr)
-            return _find_module(fullname, tail, module.__path__)
-        else:
-            return imp.find_module(fullname, path)
-
-    class VimModuleLoader(object):
-        def __init__(self, module):
-            self.module = module
-
-        def load_module(self, fullname, path=None):
-            # Check sys.modules, required for reload (see PEP302).
-            try:
-                return sys.modules[fullname]
-            except KeyError:
-                pass
-            import imp
-            return imp.load_module(fullname, *self.module)
-
     class VimPathFinder(object):
-        @staticmethod
-        def find_module(fullname, path=None):
-            """Method for Python 2.7 and 3.3."""
-            try:
-                return VimModuleLoader(
-                    _find_module(fullname, fullname, path or _get_paths()))
-            except ImportError:
-                return None
-
         @staticmethod
         def find_spec(fullname, target=None):
             """Method for Python 3.4+."""
@@ -258,8 +224,7 @@ def path_hook(nvim):
     def hook(path):
         if path == nvim.VIM_SPECIAL_PATH:
             return VimPathFinder
-        else:
-            raise ImportError
+        raise ImportError
 
     return hook
 
