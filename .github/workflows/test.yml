@@ -96,3 +96,69 @@ jobs:
         which -a python3
         python3 --version
         tox run
+
+  test-upstream:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - python-version: '3.12'
+        os: ['ubuntu', 'macos', 'windows']
+
+    name:
+      test-upstream (python ${{ matrix.config.python-version }},
+            ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }})
+    runs-on: ${{ matrix.os }}-${{ matrix.config[matrix.os] || 'latest' }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        cache: 'pip'
+        python-version: ${{ matrix.config.python-version }}
+
+    - name: install pynvim
+      run: |
+        ./scripts/disable_log_statements.sh # Make pynvim in release-ready state
+        python3 -m pip install -e .
+
+    - name: clone nvim
+      run: |
+        git clone --depth=1 https://github.com/neovim/neovim.git neovim-repo
+
+    - name: install build deps (Windows)
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: UCRT64
+        update: true
+        install: unzip
+        pacboy: >-
+          cmake:p make:p gcc:p diffutils:p libiconv:p
+        release: false
+
+    - name: build nvim (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      working-directory: neovim-repo
+      run: mingw32-make VERBOSE=1
+
+    - name: build nvim (Linux/macOS)
+      if: runner.os != 'Windows'
+      working-directory: neovim-repo
+      run: make
+
+    - name: test-upstream (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      working-directory: neovim-repo
+      run: |
+        mingw32-make VERBOSE=1 oldtest TEST_FILE=test_python3.vim
+        mingw32-make VERBOSE=1 functionaltest TEST_FILE=./test/functional/provider/python3_spec.lua
+
+    - name: test-upstream (Linux/macOS)
+      if: runner.os != 'Windows'
+      working-directory: neovim-repo
+      run: |
+        make oldtest TEST_FILE=test_python3.vim
+        make functionaltest TEST_FILE=./test/functional/provider/python3_spec.lua
