@@ -29,7 +29,7 @@ Alternatively msgpack requests can be invoked directly:
 
 .. code-block:: python
 
-   result = vim.request("nvim_strwith", "some text")
+   result = vim.request("nvim_strwidth", "some text")
    length = vim.request("nvim_buf_line_count", buf)
 
 Both ``vim.api`` and ``vim.request`` can take an ``async_=True`` keyword argument
