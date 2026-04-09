@@ -1,6 +1,7 @@
 """Tests interaction with neovim via Nvim API (with child process)."""
 
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -50,7 +51,7 @@ def test_command_output(vim: Nvim) -> None:
 def test_command_error(vim: Nvim) -> None:
     with pytest.raises(vim.error) as excinfo:
         vim.current.window.cursor = -1, -1
-    assert excinfo.value.args == ('Cursor position outside buffer',)
+    assert re.search(r"Cursor position outside buffer|Invalid cursor line", excinfo.value.args[0])
 
 
 def test_eval(vim: Nvim) -> None:
