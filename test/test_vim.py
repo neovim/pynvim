@@ -77,6 +77,32 @@ def test_api(vim: Nvim) -> None:
     assert vim.api.eval('g:var') == 3
 
 
+# issue #52
+def test_replace_termcodes(vim: Nvim) -> None:
+    # Simple key sequences should round-trip through feedkeys.
+    esc = vim.replace_termcodes('<esc>')
+    assert isinstance(esc, str)
+    cr = vim.replace_termcodes('<cr>')
+    assert isinstance(cr, str)
+    assert cr == '\r'
+    # Special keys produce Nvim's internal representation (may contain
+    # non-UTF-8 bytes). With surrogateescape these become surrogate chars.
+    up = vim.replace_termcodes('<up>')
+    assert isinstance(up, str)
+    # feedkeys should accept the result without error.
+    vim.feedkeys(vim.replace_termcodes('<esc>'))
+    # Non-ASCII input (issue #52): replace_termcodes on literal unicode text
+    # should not raise, even though decode is enabled (surrogateescape).
+    result = vim.replace_termcodes('¬✓↓⏎')
+    assert isinstance(result, str)
+    assert result == '¬✓↓⏎'
+    # Unicode chars whose UTF-8 contains 0x80 (e.g. ‽ = \xe2\x80\xbd) get
+    # mangled by Nvim's internal key encoding. This is a known Nvim behavior.
+    result_mangled = vim.replace_termcodes('‽')
+    assert isinstance(result_mangled, str)
+    assert result_mangled != '‽'  # confirms the mangling
+
+
 def test_strwidth(vim: Nvim) -> None:
     assert vim.strwidth('abc') == 3
     # 6 + (neovim)
@@ -255,6 +281,16 @@ def test_python_cwd(vim: Nvim, tmp_path: Path) -> None:
     cwd_python = vim.command_output('python3 print(os.getcwd())')
     assert cwd_python == cwd_vim
     assert cwd_python != cwd_before
+
+
+# issue #442
+def test_python_cwd_utf8(vim: Nvim, tmp_path: Path) -> None:
+    utf8_dir = tmp_path / '日本語テスト'
+    utf8_dir.mkdir()
+    vim.command('python3 import os')
+    vim.command('cd {}'.format(str(utf8_dir)))
+    cwd_python = vim.command_output('python3 print(os.getcwd())')
+    assert cwd_python == str(utf8_dir)
 
 
 lua_code = """
