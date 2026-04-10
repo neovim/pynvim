@@ -157,9 +157,9 @@ jobs:
     - name: test-upstream oldtest (Windows)
       if: runner.os == 'Windows'
       shell: msys2 {0}
-      working-directory: neovim-repo
+      working-directory: neovim-repo/test/old/testdir
       run: |
-        mingw32-make VERBOSE=1 oldtest TEST_FILE=test_python3.vim
+        mingw32-make VERBOSE=1 SCRIPTS= test_python3
 
     - name: test-upstream functionaltest (Windows)
       if: runner.os == 'Windows'
