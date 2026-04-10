@@ -13,32 +13,26 @@ Install
 Supports python 3.10 or later.
 
 - Installation option #1: install using uv (recommended):
-
-  - Install uv (https://docs.astral.sh/uv/).
-
+  - Install [uv](https://docs.astral.sh/uv/).
   - Install pynvim (the `--upgrade` switch ensures installation of the latest
     version):
-
-        uv tool install --upgrade pynvim
-
+    ```
+    uv tool install --upgrade pynvim
+    ```
   - Anytime you upgrade Neovim, make sure to upgrade pynvim as well by
     re-running the above command.
-
 - Installation option #2: install using pipx:
-
   - Install pipx (https://pipx.pypa.io/stable/).
-
   - Install pynvim:
-
-        pipx install pynvim
-
+    ```
+    pipx install pynvim
+    ```
   - Anytime you upgrade Neovim, make sure to upgrade pynvim as well by
     running:
-
-        pipx upgrade pynvim
-
+    ```
+    pipx upgrade pynvim
+    ```
 - Other installation options:
-
   - See [pynvim installation
     documentation](https://pynvim.readthedocs.io/en/latest/installation.html)
     for additional installation options and information.
@@ -99,6 +93,12 @@ Use `pytest` to run the tests. Invoking with `python -m` prepends the current
 directory to `sys.path` (otherwise `pytest` might find other versions!):
 
     python -m pytest
+
+Or use [uv](https://docs.astral.sh/uv/) to run tests and linting without managing a virtualenv:
+
+    uvx --with pynvim --with pytest --with pytest-timeout pytest
+    uvx --with pynvim --with flake8-import-order --with flake8-docstrings --with pep8-naming flake8 pynvim test
+    uvx --with pynvim --with msgpack-types mypy --show-error-codes pynvim test
 
 For details about testing and troubleshooting, see the
 [development](http://pynvim.readthedocs.io/en/latest/development.html)
