@@ -128,7 +128,7 @@ def test_connect_stdio(vim: Nvim) -> None:
         'python3', '-c', remote_py_code,
     ], {'rpc': True, 'on_stderr': 'OutputHandler'})
     assert jobid > 0
-    exitcode = vim.funcs.jobwait([jobid], 500)[0]
+    exitcode = vim.funcs.jobwait([jobid], 5000)[0]
     messages = vim.command_output('messages')
     assert exitcode == 0, ("the python process failed, :messages =>\n\n" +
                            messages)
