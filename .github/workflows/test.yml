@@ -126,35 +126,48 @@ jobs:
       run: |
         git clone --depth=1 https://github.com/neovim/neovim.git neovim-repo
 
-    - name: install build deps (Windows)
+    - name: setup MSVC (Windows)
       if: runner.os == 'Windows'
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: UCRT64
-        update: true
-        install: unzip
-        pacboy: >-
-          cmake:p make:p gcc:p diffutils:p libiconv:p
-        release: false
+      run: neovim-repo/.github/scripts/env.ps1
 
     - name: build nvim (Windows)
       if: runner.os == 'Windows'
-      shell: msys2 {0}
       working-directory: neovim-repo
-      run: mingw32-make VERBOSE=1
+      run: |
+        cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
+        cmake --build .deps
+        cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo'
+        cmake --build build
 
     - name: build nvim (Linux/macOS)
       if: runner.os != 'Windows'
       working-directory: neovim-repo
       run: make
 
-    - name: test-upstream (Windows)
+    - name: install msys2 (Windows)
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: unzip
+        pacboy: >-
+          make:p diffutils:p
+        release: false
+
+    - name: test-upstream oldtest (Windows)
       if: runner.os == 'Windows'
       shell: msys2 {0}
       working-directory: neovim-repo
       run: |
         mingw32-make VERBOSE=1 oldtest TEST_FILE=test_python3.vim
-        mingw32-make VERBOSE=1 functionaltest TEST_FILE=./test/functional/provider/python3_spec.lua
+
+    - name: test-upstream functionaltest (Windows)
+      if: runner.os == 'Windows'
+      working-directory: neovim-repo
+      env:
+        TEST_FILE: ./test/functional/provider/python3_spec.lua
+      run: |
+        cmake --build build --target functionaltest
 
     - name: test-upstream (Linux/macOS)
       if: runner.os != 'Windows'
