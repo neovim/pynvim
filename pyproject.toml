@@ -15,7 +15,7 @@ requires-python = ">=3.10"
 dependencies = [
     "msgpack>=1.0.0",
     "greenlet>=3.0; python_implementation != 'PyPy'",
-    "typing-extensions>=4.5; python_version < '3.12'",
+    "typing-extensions>=4.5; python_version < '3.13'",
 ]
 
 classifiers = [

@@ -12,6 +12,11 @@ from types import SimpleNamespace
 from typing import (Any, AnyStr, Callable, Dict, Iterator, List, Literal, Optional,
                     TYPE_CHECKING, Union)
 
+if sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
+
 from msgpack import ExtType
 
 from pynvim.api.buffer import Buffer
@@ -177,12 +182,12 @@ class Nvim:
         functions have python wrapper functions. The `api` object can
         be also be used to call API functions as methods:
 
-            vim.api.err_write('ERROR\n', async_=True)
+            vim.api.echo([['ERROR', 'ErrorMsg']], True, {}, async_=True)
             vim.current.buffer.api.get_mark('.')
 
         is equivalent to
 
-            vim.request('nvim_err_write', 'ERROR\n', async_=True)
+            vim.request('nvim_echo', [['ERROR', 'ErrorMsg']], True, {}, async_=True)
             vim.request('nvim_buf_get_mark', vim.current.buffer, '.')
 
 
@@ -417,6 +422,7 @@ class Nvim:
         return self.request('nvim_replace_termcodes', string,
                             from_part, do_lt, special)
 
+    @deprecated('Use nvim.api.echo() instead.')
     def out_write(self, msg: str, **kwargs: Any) -> None:
         r"""Print `msg` as a normal message.
 
@@ -424,6 +430,7 @@ class Nvim:
         """
         return self.request('nvim_out_write', msg, **kwargs)
 
+    @deprecated('Use nvim.api.echo() instead.')
     def err_write(self, msg: str, **kwargs: Any) -> None:
         r"""Print `msg` as an error message.
 

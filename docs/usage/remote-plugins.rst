@@ -30,7 +30,7 @@ Rplugins follow the structure of this example:
 
        @pynvim.autocmd('BufEnter', pattern='*.py', eval='expand("<afile>")', sync=True)
        def on_bufenter(self, filename):
-           self.nvim.out_write('testplugin is in ' + filename + '\n')
+           self.nvim.api.echo([['testplugin is in ' + filename]], True, {})
 
 If ``sync=True`` is supplied Neovim will wait for the handler to finish
 (this is required for function return values),
