@@ -64,6 +64,9 @@ class ScriptHost(object):
         info('redirect sys.stdout and sys.stderr')
         self.saved_stdout = sys.stdout
         self.saved_stderr = sys.stderr
+        # TODO(justinmk): out_write, err_write are deprecated, but
+        # script_host.py itself is deprecated by:
+        # https://github.com/neovim/pynvim/issues/567
         sys.stdout = RedirectStream(lambda data: nvim.out_write(data))
         sys.stderr = RedirectStream(lambda data: nvim.err_write(data))
 

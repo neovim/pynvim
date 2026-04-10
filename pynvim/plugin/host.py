@@ -68,14 +68,14 @@ class Host(object):
 
     def _on_async_err(self, msg: str) -> None:
         # uncaught python exception
-        self.nvim.err_write(msg, async_=True)
+        self.nvim.request('nvim_echo', [[msg, 'ErrorMsg']], True, {}, async_=True)
 
     def _on_error_event(self, kind: Any, msg: str) -> None:
         # error from nvim due to async request
         # like nvim.command(..., async_=True)
-        errmsg = "{}: Async request caused an error:\n{}\n".format(
+        errmsg = "{}: Async request caused an error:\n{}".format(
             self.name, decode_if_bytes(msg))
-        self.nvim.err_write(errmsg, async_=True)
+        self.nvim.request('nvim_echo', [[errmsg, 'ErrorMsg']], True, {}, async_=True)
         return errmsg
 
     def start(self, plugins):
@@ -279,7 +279,7 @@ class Host(object):
         path = decode_if_bytes(path)
         path = pathlib.Path(os.path.normpath(path)).as_posix()  # normalize path
         if path in self._load_errors:
-            self.nvim.out_write(self._load_errors[path] + '\n')
+            self.nvim.request('nvim_echo', [[self._load_errors[path]]], True, {})
         return self._specs.get(path, 0)
 
     def _configure_nvim_for(self, obj):

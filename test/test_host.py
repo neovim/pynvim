@@ -54,5 +54,5 @@ def test_host_async_error(vim):
     vim.command("lolwut", async_=True)
     event = vim.next_message()
     assert event[1] == 'nvim_error_event'
-    assert 'rplugin-host: Async request caused an error:\nboom\n' \
-           in h._on_error_event(None, 'boom')
+    errmsg = h._on_error_event(None, 'boom')
+    assert 'Async request caused an error:\nboom' in errmsg
