@@ -18,33 +18,30 @@ from pynvim.api import Nvim
 # pylint: disable=redefined-outer-name
 
 
-xfail_on_windows = pytest.mark.xfail(
-    "os.name == 'nt'", reason="Broken in Windows, see #544")
-
-
 @pytest.fixture
-def tmp_socket() -> Generator[str, None, None]:
-    """Get a temporary UNIX socket file."""
-    # see cpython#93914
-    addr = tempfile.mktemp(prefix="test_python_", suffix='.sock',
-                           dir=os.path.curdir)
-    try:
-        yield addr
-    finally:
-        if os.path.exists(addr):
-            with contextlib.suppress(OSError):
-                os.unlink(addr)
+def server_addr() -> Generator[str, None, None]:
+    """Get a socket/named pipe address using serverstart().
+
+    On UNIX this is a socket path, on Windows a named pipe.
+    """
+    nvim = pynvim.attach('child', argv=[
+        "nvim", "--clean", "--embed",
+    ])
+    addr = nvim.funcs.serverstart()
+    nvim.funcs.serverstop(addr)
+    nvim.close()
+
+    yield addr
 
 
-@xfail_on_windows
-def test_connect_socket(tmp_socket: str) -> None:
-    """Tests UNIX socket connection."""
-    p = subprocess.Popen(["nvim", "--clean", "-n", "--headless",
-                          "--listen", tmp_socket])
+def test_connect_socket(server_addr: str) -> None:
+    """Tests socket/pipe connection."""
+    p = subprocess.Popen(["nvim", "--clean", "--headless",
+                          "--listen", server_addr])
     time.sleep(0.2)  # wait a bit until nvim starts up
 
     try:
-        nvim: Nvim = pynvim.attach('socket', path=tmp_socket)
+        nvim: Nvim = pynvim.attach('socket', path=server_addr)
         assert 42 == nvim.eval('42')
         assert "?" == nvim.command_output('echo "?"')
     finally:
@@ -69,7 +66,7 @@ def test_connect_tcp() -> None:
     """Tests TCP connection."""
     address = '127.0.0.1'
     port = find_free_port()
-    p = subprocess.Popen(["nvim", "--clean", "-n", "--headless",
+    p = subprocess.Popen(["nvim", "--clean", "--headless",
                           "--listen", f"{address}:{port}"])
     time.sleep(0.2)  # wait a bit until nvim starts up
 
@@ -91,7 +88,8 @@ def test_connect_tcp_no_server() -> None:
         pynvim.attach('tcp', address='127.0.0.1', port=port)
 
 
-@xfail_on_windows
+@pytest.mark.xfail("os.name == 'nt'",
+                   reason="stdio attach broken on Windows, see #544")
 def test_connect_stdio(vim: Nvim) -> None:
     """Tests stdio connection, using jobstart(..., {'rpc': v:true})."""
 
